@@ -38,7 +38,7 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
 
   return (
     <AppLayout>
-      <div className="max-w-2xl mx-auto">
+      <div>
         {/* Back */}
         <Link href="/to-trinh" className="inline-flex items-center gap-2 text-sm mb-6 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>
           <ArrowLeft size={16} /> Quay lại danh sách
@@ -112,23 +112,26 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
 
           {/* Phê duyệt */}
           <div className="rounded-xl p-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Tiến trình phê duyệt</h2>
-            <div className="space-y-3">
-              <ApprovalStep
-                label="Thẩm định"
-                name={thamDinhUser?.hoTen ?? '—'}
-                approved={!!tt.thamDinhLuc}
-                time={tt.thamDinhLuc}
-                pending={tt.trangThai === 'cho_duyet'}
-              />
-              <div className="w-px h-4 ml-4" style={{ background: 'var(--border)' }} />
-              <ApprovalStep
-                label="Phê duyệt"
-                name={pheDuyetUser?.hoTen ?? '—'}
-                approved={!!tt.pheDuyetLuc}
-                time={tt.pheDuyetLuc}
-                pending={tt.trangThai === 'tham_dinh'}
-              />
+            <h2 className="text-sm font-semibold mb-5" style={{ color: 'var(--text-primary)' }}>Tiến trình phê duyệt</h2>
+            <div className="relative pl-6">
+              {/* Vertical connector line */}
+              <div className="absolute left-[11px] top-5 bottom-5 w-0.5" style={{ background: 'var(--border)' }} />
+              <div className="space-y-5">
+                <ApprovalStep
+                  label="Thẩm định"
+                  name={thamDinhUser?.hoTen ?? '—'}
+                  approved={!!tt.thamDinhLuc}
+                  time={tt.thamDinhLuc}
+                  pending={tt.trangThai === 'cho_duyet'}
+                />
+                <ApprovalStep
+                  label="Phê duyệt"
+                  name={pheDuyetUser?.hoTen ?? '—'}
+                  approved={!!tt.pheDuyetLuc}
+                  time={tt.pheDuyetLuc}
+                  pending={tt.trangThai === 'tham_dinh'}
+                />
+              </div>
             </div>
           </div>
 
@@ -153,8 +156,8 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
               {canGui && (
                 <button
                   onClick={() => { guiToTrinh(tt.id); router.refresh(); }}
-                  className="flex-1 py-3 rounded-xl text-sm font-semibold text-white"
-                  style={{ background: 'var(--primary)' }}
+                  className="flex-1 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
+                  style={{ background: 'var(--primary)', boxShadow: '0 2px 8px color-mix(in srgb, var(--primary) 30%, transparent)' }}
                 >
                   Gửi tờ trình
                 </button>
@@ -163,15 +166,15 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
                 <>
                   <button
                     onClick={() => { tuChoi(tt.id); }}
-                    className="flex-1 py-3 rounded-xl text-sm font-semibold"
-                    style={{ background: 'color-mix(in srgb, var(--danger) 10%, transparent)', color: 'var(--danger)', border: '1px solid color-mix(in srgb, var(--danger) 30%, transparent)' }}
+                    className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
+                    style={{ background: 'var(--danger-muted)', color: 'var(--danger)', border: '1px solid color-mix(in srgb, var(--danger) 30%, transparent)' }}
                   >
                     Từ chối
                   </button>
                   <button
                     onClick={() => { canThamDinh ? thamDinh(tt.id) : pheDuyet(tt.id); }}
-                    className="flex-1 py-3 rounded-xl text-sm font-semibold text-white"
-                    style={{ background: 'var(--success)' }}
+                    className="flex-1 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
+                    style={{ background: 'var(--success)', boxShadow: '0 2px 8px color-mix(in srgb, var(--success) 30%, transparent)' }}
                   >
                     {canThamDinh ? 'Thẩm định' : 'Phê duyệt'}
                   </button>
@@ -199,15 +202,22 @@ function ApprovalStep({ label, name, approved, time, pending }: {
 }) {
   const Icon = approved ? CheckCircle2 : pending ? Clock : XCircle;
   const color = approved ? 'var(--success)' : pending ? 'var(--warning)' : 'var(--text-muted)';
+  const bgColor = approved ? 'var(--success-muted)' : pending ? 'var(--warning-muted)' : 'var(--surface-2)';
 
   return (
-    <div className="flex items-center gap-3">
-      <Icon size={20} style={{ color, flexShrink: 0 }} />
-      <div>
-        <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{label}: </span>
-        <span className="text-sm font-semibold" style={{ color }}>{name}</span>
-        {time && <span className="text-xs ml-2" style={{ color: 'var(--text-muted)' }}>{new Date(time).toLocaleString('vi-VN')}</span>}
-        {pending && !approved && <span className="text-xs ml-2" style={{ color: 'var(--warning)' }}>Đang chờ...</span>}
+    <div className="flex items-start gap-3">
+      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 relative z-10" style={{ background: bgColor, border: `1.5px solid ${color}` }}>
+        <Icon size={13} style={{ color }} />
+      </div>
+      <div className="flex-1 pb-0.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>{label}</span>
+          <span className="text-sm font-bold" style={{ color }}>{name}</span>
+          {pending && !approved && (
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--warning-muted)', color: 'var(--warning)' }}>Đang chờ</span>
+          )}
+        </div>
+        {time && <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{new Date(time).toLocaleString('vi-VN')}</p>}
       </div>
     </div>
   );

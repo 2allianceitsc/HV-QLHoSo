@@ -79,7 +79,7 @@ export default function TaoToTrinhPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-3xl">
         {/* Back */}
         <Link href="/to-trinh" className="inline-flex items-center gap-2 text-sm mb-6 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>
           <ArrowLeft size={16} /> Quay lại danh sách
