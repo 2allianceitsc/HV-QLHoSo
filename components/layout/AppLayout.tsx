@@ -1,7 +1,7 @@
 'use client';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FileText, LogOut, Moon, Sun, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, LogOut, Moon, Sun, Menu, X, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
@@ -9,6 +9,7 @@ import { getInitials } from '@/lib/utils';
 
 const NAV = [
   { href: '/to-trinh', label: 'Tờ trình', icon: FileText },
+  { href: '/introduce', label: 'Giới thiệu', icon: BookOpen },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
