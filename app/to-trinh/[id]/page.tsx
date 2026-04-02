@@ -1,8 +1,11 @@
 'use client';
-import { use } from 'react';
+import { use, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Paperclip, CheckCircle2, XCircle, Clock, FileText } from 'lucide-react';
+import {
+  ArrowLeft, Paperclip, CheckCircle2, XCircle, Clock, FileText,
+  Pencil, Printer, X, AlertCircle, Upload,
+} from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useStore } from '@/store/useStore';
@@ -11,8 +14,15 @@ import { getUserById, formatCurrency, formatDate } from '@/lib/utils';
 export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const { toTrinhs, currentUser, thamDinh, pheDuyet, tuChoi, guiToTrinh } = useStore();
+  const { toTrinhs, currentUser, thamDinh, pheDuyet, tuChoi, guiToTrinh, updateToTrinh } = useStore();
   const tt = toTrinhs.find(t => t.id === id);
+
+  // Rejection modal state
+  const [showTuChoiModal, setShowTuChoiModal] = useState(false);
+  const [lyDoInput, setLyDoInput] = useState('');
+
+  // Signed contract upload (mock)
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!tt) {
     return (
@@ -30,19 +40,70 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
   const thamDinhUser = getUserById(tt.thamDinhId);
   const pheDuyetUser = getUserById(tt.pheDuyetId);
 
+  const isOwner = currentUser?.id === tt.nguoiTrinhId;
+  const canEdit = isOwner && tt.trangThai === 'nhap';
+  const canGui = isOwner && tt.trangThai === 'nhap';
   const canThamDinh = currentUser?.id === tt.thamDinhId && tt.trangThai === 'cho_duyet';
   const canPheDuyet = currentUser?.id === tt.pheDuyetId && tt.trangThai === 'tham_dinh';
-  const canGui = tt.nguoiTrinhId === currentUser?.id && tt.trangThai === 'nhap';
+  const isPheduyet = tt.trangThai === 'phe_duyet';
 
   const tongTien = tt.chiPhi?.reduce((s, c) => s + c.soTien, 0) ?? 0;
 
+  const handleTuChoi = () => {
+    if (!lyDoInput.trim()) return;
+    tuChoi(tt.id, lyDoInput.trim());
+    setShowTuChoiModal(false);
+    setLyDoInput('');
+  };
+
+  const handleSignedContractUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Mock: store filename as hopDongDaKy
+    updateToTrinh(tt.id, {
+      hopDongDaKy: { id: `hdk-${Date.now()}`, ten: file.name, url: '#' },
+    });
+    e.target.value = '';
+  };
+
   return (
     <AppLayout>
-      <div>
-        {/* Back */}
-        <Link href="/to-trinh" className="inline-flex items-center gap-2 text-sm mb-6 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>
-          <ArrowLeft size={16} /> Quay lại danh sách
-        </Link>
+      {/* Print styles */}
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          .print-full { max-width: 100% !important; }
+          body { background: white !important; }
+        }
+      `}</style>
+
+      <div className="print-full">
+        {/* Back + actions */}
+        <div className="flex items-center justify-between mb-6 no-print">
+          <Link href="/to-trinh" className="inline-flex items-center gap-2 text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>
+            <ArrowLeft size={16} /> Quay lại danh sách
+          </Link>
+          <div className="flex items-center gap-2">
+            {canEdit && (
+              <Link
+                href={`/to-trinh/${tt.id}/sua`}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
+                style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+              >
+                <Pencil size={14} /> Sửa tờ trình
+              </Link>
+            )}
+            {isPheduyet && (
+              <button
+                onClick={() => window.print()}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
+                style={{ background: 'var(--primary-muted)', border: '1px solid color-mix(in srgb, var(--primary) 30%, transparent)', color: 'var(--primary)' }}
+              >
+                <Printer size={14} /> In / Xuất PDF
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Title row */}
         <div className="flex items-start justify-between gap-4 mb-6">
@@ -56,6 +117,17 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
         </div>
 
         <div className="space-y-4">
+          {/* Rejection reason banner */}
+          {tt.trangThai === 'tu_choi' && tt.lyDoTuChoi && (
+            <div className="rounded-xl p-4 flex gap-3" style={{ background: 'var(--danger-muted)', border: '1px solid color-mix(in srgb, var(--danger) 30%, transparent)' }}>
+              <AlertCircle size={18} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--danger)' }} />
+              <div>
+                <p className="text-sm font-semibold mb-1" style={{ color: 'var(--danger)' }}>Lý do từ chối</p>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{tt.lyDoTuChoi}</p>
+              </div>
+            </div>
+          )}
+
           {/* Thông tin chung */}
           <div className="rounded-xl p-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Thông tin chung</h2>
@@ -70,9 +142,17 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
           {/* Nội dung */}
           <div className="rounded-xl p-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Nội dung đề xuất</h2>
-            <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-sm whitespace-pre-wrap leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>
               {tt.noiDung || <span style={{ color: 'var(--text-muted)' }}>(Không có nội dung)</span>}
             </p>
+            {/* Inline images */}
+            {tt.anhNoiDung && tt.anhNoiDung.length > 0 && (
+              <div className="flex flex-wrap gap-3 mt-3">
+                {tt.anhNoiDung.map((src, i) => (
+                  <img key={i} src={src} alt={`Ảnh ${i + 1}`} className="rounded-lg max-h-48 object-contain border" style={{ borderColor: 'var(--border)' }} />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Chi phí (MS) */}
@@ -80,7 +160,7 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
             <div className="rounded-xl p-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
               <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Chi phí</h2>
               <div className="space-y-2">
-                {tt.chiPhi.map((c, idx) => (
+                {tt.chiPhi.map(c => (
                   <div key={c.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--surface-2)' }}>
                     <div>
                       <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{c.maPhi} - {c.tenMaPhi}</p>
@@ -110,11 +190,33 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
             </div>
           )}
 
+          {/* Hợp đồng đã ký */}
+          <div className="rounded-xl p-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Hợp đồng đã ký kết</h2>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all no-print"
+                style={{ color: 'var(--primary)', background: 'var(--primary-muted)', border: '1px solid color-mix(in srgb, var(--primary) 20%, transparent)' }}
+              >
+                <Upload size={12} /> Tải lên
+              </button>
+              <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleSignedContractUpload} />
+            </div>
+            {tt.hopDongDaKy ? (
+              <a href={tt.hopDongDaKy.url} className="flex items-center gap-3 p-3 rounded-lg hover:opacity-80 transition-opacity" style={{ background: 'var(--success-muted)', border: '1px solid color-mix(in srgb, var(--success) 30%, transparent)' }}>
+                <Paperclip size={16} style={{ color: 'var(--success)' }} />
+                <span className="text-sm font-medium" style={{ color: 'var(--success)' }}>{tt.hopDongDaKy.ten}</span>
+              </a>
+            ) : (
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Chưa có hợp đồng đã ký. Tải lên sau khi ký kết.</p>
+            )}
+          </div>
+
           {/* Phê duyệt */}
           <div className="rounded-xl p-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <h2 className="text-sm font-semibold mb-5" style={{ color: 'var(--text-primary)' }}>Tiến trình phê duyệt</h2>
             <div className="relative pl-6">
-              {/* Vertical connector line */}
               <div className="absolute left-[11px] top-5 bottom-5 w-0.5" style={{ background: 'var(--border)' }} />
               <div className="space-y-5">
                 <ApprovalStep
@@ -135,10 +237,10 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
             </div>
           </div>
 
-          {/* File đính kèm */}
+          {/* File đính kèm (bản nháp) */}
           {tt.fileDinhKem.length > 0 && (
             <div className="rounded-xl p-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-              <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Tài liệu đính kèm</h2>
+              <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Tài liệu đính kèm (bản nháp)</h2>
               <div className="space-y-2">
                 {tt.fileDinhKem.map(f => (
                   <a key={f.id} href={f.url} className="flex items-center gap-3 p-3 rounded-lg hover:opacity-80 transition-opacity" style={{ background: 'var(--surface-2)' }}>
@@ -152,7 +254,7 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
 
           {/* Actions */}
           {(canGui || canThamDinh || canPheDuyet) && (
-            <div className="flex gap-3 pb-6">
+            <div className="flex gap-3 pb-6 no-print">
               {canGui && (
                 <button
                   onClick={() => { guiToTrinh(tt.id); router.refresh(); }}
@@ -165,7 +267,7 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
               {(canThamDinh || canPheDuyet) && (
                 <>
                   <button
-                    onClick={() => { tuChoi(tt.id); }}
+                    onClick={() => setShowTuChoiModal(true)}
                     className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
                     style={{ background: 'var(--danger-muted)', color: 'var(--danger)', border: '1px solid color-mix(in srgb, var(--danger) 30%, transparent)' }}
                   >
@@ -184,6 +286,49 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
           )}
         </div>
       </div>
+
+      {/* Rejection modal */}
+      {showTuChoiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="w-full max-w-md rounded-2xl p-6 shadow-xl" style={{ background: 'var(--surface)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>Xác nhận từ chối</h3>
+              <button onClick={() => setShowTuChoiModal(false)} className="p-1 rounded-lg hover:opacity-70" style={{ color: 'var(--text-muted)' }}>
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Vui lòng nhập lý do từ chối tờ trình này:</p>
+            <textarea
+              value={lyDoInput}
+              onChange={e => setLyDoInput(e.target.value)}
+              rows={4}
+              placeholder="Nhập lý do từ chối..."
+              style={{ resize: 'vertical' }}
+              autoFocus
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setShowTuChoiModal(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+              >
+                Huỷ
+              </button>
+              <button
+                onClick={handleTuChoi}
+                disabled={!lyDoInput.trim()}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+                style={{
+                  background: lyDoInput.trim() ? 'var(--danger)' : 'var(--border)',
+                  cursor: lyDoInput.trim() ? 'pointer' : 'not-allowed',
+                }}
+              >
+                Xác nhận từ chối
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }

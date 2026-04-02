@@ -55,7 +55,7 @@ const WORKFLOW_STEPS = [
   },
   {
     status: 'cho_duyet',
-    label: 'Chờ duyệt',
+    label: 'Chờ thẩm định',
     sublabel: 'Đã gửi lên',
     icon: Clock,
     color: 'var(--warning)',
