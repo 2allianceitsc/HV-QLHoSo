@@ -265,13 +265,15 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
                   label="Thẩm định"
                   name={thamDinhUser?.hoTen ?? '—'}
                   approved={!!tt.thamDinhLuc}
+                  rejected={tt.trangThai === 'tu_choi' && !tt.thamDinhLuc}
                   time={tt.thamDinhLuc}
                   pending={tt.trangThai === 'cho_duyet'}
                 />
                 <ApprovalStep
                   label="Phê duyệt"
                   name={pheDuyetUser?.hoTen ?? '—'}
-                  approved={!!tt.pheDuyetLuc}
+                  approved={tt.trangThai === 'phe_duyet'}
+                  rejected={tt.trangThai === 'tu_choi' && !!tt.thamDinhLuc}
                   time={tt.pheDuyetLuc}
                   pending={tt.trangThai === 'tham_dinh'}
                 />
@@ -417,12 +419,12 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ApprovalStep({ label, name, approved, time, pending }: {
-  label: string; name: string; approved: boolean; time?: string; pending: boolean;
+function ApprovalStep({ label, name, approved, rejected, time, pending }: {
+  label: string; name: string; approved: boolean; rejected?: boolean; time?: string; pending: boolean;
 }) {
-  const Icon = approved ? CheckCircle2 : pending ? Clock : XCircle;
-  const color = approved ? 'var(--success)' : pending ? 'var(--warning)' : 'var(--text-muted)';
-  const bgColor = approved ? 'var(--success-muted)' : pending ? 'var(--warning-muted)' : 'var(--surface-2)';
+  const Icon = approved ? CheckCircle2 : rejected ? XCircle : pending ? Clock : XCircle;
+  const color = approved ? 'var(--success)' : rejected ? 'var(--danger)' : pending ? 'var(--warning)' : 'var(--text-muted)';
+  const bgColor = approved ? 'var(--success-muted)' : rejected ? 'var(--danger-muted)' : pending ? 'var(--warning-muted)' : 'var(--surface-2)';
 
   return (
     <div className="flex items-start gap-3">
@@ -435,6 +437,9 @@ function ApprovalStep({ label, name, approved, time, pending }: {
           <span className="text-sm font-bold" style={{ color }}>{name}</span>
           {pending && !approved && (
             <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--warning-muted)', color: 'var(--warning)' }}>Đang chờ</span>
+          )}
+          {rejected && (
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--danger-muted)', color: 'var(--danger)' }}>Từ chối</span>
           )}
         </div>
         {time && <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{new Date(time).toLocaleString('vi-VN')}</p>}
