@@ -47,7 +47,7 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
   const canPheDuyet = currentUser?.id === tt.pheDuyetId && tt.trangThai === 'tham_dinh';
   const isPheduyet = tt.trangThai === 'phe_duyet';
 
-  const tongTien = tt.chiPhi?.reduce((s, c) => s + c.soTien, 0) ?? 0;
+  const tongTien = tt.chiPhi?.reduce((s, c) => s + c.soTienCoVAT, 0) ?? 0;
 
   const handleTuChoi = () => {
     if (!lyDoInput.trim()) return;
@@ -203,12 +203,24 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
               <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Chi phí</h2>
               <div className="space-y-2">
                 {tt.chiPhi.map(c => (
-                  <div key={c.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--surface-2)' }}>
-                    <div>
-                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{c.maPhi} - {c.tenMaPhi}</p>
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{c.nhaCungCap}</p>
+                  <div key={c.id} className="p-3 rounded-lg space-y-2" style={{ background: 'var(--surface-2)' }}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{c.maPhi} - {c.tenMaPhi}</p>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{c.nhaCungCap}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Chưa VAT: <span style={{ color: 'var(--text-secondary)' }}>{formatCurrency(c.soTienChuaVAT)}</span></p>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Có VAT: {formatCurrency(c.soTienCoVAT)}</p>
+                      </div>
                     </div>
-                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{formatCurrency(c.soTien)}</span>
+                    {(c.muaCho || c.mucDich || c.nguoiSuDung) && (
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 border-t" style={{ borderColor: 'var(--border)' }}>
+                        {c.muaCho && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Mua cho: <span style={{ color: 'var(--text-secondary)' }}>{c.muaCho}</span></span>}
+                        {c.mucDich && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Mục đích: <span style={{ color: 'var(--text-secondary)' }}>{c.mucDich}</span></span>}
+                        {c.nguoiSuDung && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Người dùng: <span style={{ color: 'var(--text-secondary)' }}>{c.nguoiSuDung}</span></span>}
+                      </div>
+                    )}
                   </div>
                 ))}
                 <div className="flex justify-between pt-2 px-3">
