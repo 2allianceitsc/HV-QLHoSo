@@ -116,7 +116,7 @@ export const useStore = create<AppState>()(
       },
 
       addNotification: (message, type = 'info') => {
-        const id = `notif-${Date.now()}`;
+        const id = `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
         set(state => ({ notifications: [...state.notifications, { id, message, type }] }));
       },
 
