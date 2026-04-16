@@ -71,13 +71,55 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
       {/* Print styles */}
       <style>{`
         @media print {
-          .no-print { display: none !important; }
-          .print-full { max-width: 100% !important; }
-          body { background: white !important; }
+          /* Ẩn chrome */
+          aside, header, nav, .no-print, button, a[href] { display: none !important; }
+
+          /* Page */
+          body { background: white !important; font-family: 'Times New Roman', serif !important; color: #000 !important; margin: 0; }
+          .print-full { max-width: 170mm !important; margin: 0 auto !important; padding: 10mm 5mm !important; }
+
+          /* Cards phẳng */
+          [style*="background: var(--surface)"], [style*="background:var(--surface)"] {
+            background: white !important;
+            border: 1px solid #ccc !important;
+            box-shadow: none !important;
+          }
+
+          /* Print-only elements */
+          .print-header { display: flex !important; }
+          .print-signature { display: table !important; }
+
+          /* Tables */
+          table { border-collapse: collapse !important; width: 100% !important; }
+          th, td { border: 1px solid #888 !important; padding: 5px 8px !important; font-size: 10pt !important; }
+          thead tr { background: #f0f0f0 !important; }
+
+          /* Typography */
+          h1 { font-size: 14pt !important; }
+          h2 { font-size: 11pt !important; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-bottom: 8px; }
+          p, span { font-size: 10pt !important; color: #000 !important; }
+
+          /* Images */
+          img { max-width: 100% !important; max-height: 80mm !important; object-fit: contain !important; }
+
+          /* Page break */
+          .print-signature { page-break-inside: avoid; }
         }
       `}</style>
 
       <div className="print-full">
+        {/* Print header - chỉ hiển thị khi in */}
+        <div className="print-header" style={{ display: 'none', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #000', paddingBottom: '8px', marginBottom: '16px' }}>
+          <div>
+            <div style={{ fontWeight: 'bold', fontSize: '14pt', letterSpacing: '0.5px' }}>HV SYSTEM</div>
+            <div style={{ fontSize: '9pt', color: '#555', marginTop: '2px' }}>Quy trình duyệt hồ sơ</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontWeight: 'bold', fontSize: '12pt' }}>PHIẾU ĐỀ XUẤT PHÊ DUYỆT</div>
+            <div style={{ fontSize: '9pt', color: '#555', marginTop: '2px' }}>Mã: {tt.ma} | Ngày: {formatDate(tt.ngayTrinh)}</div>
+          </div>
+        </div>
+
         {/* Back + actions */}
         <div className="flex items-center justify-between mb-6 no-print">
           <Link href="/to-trinh" className="inline-flex items-center gap-2 text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>
@@ -284,6 +326,39 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
               )}
             </div>
           )}
+
+          {/* Chữ ký - chỉ hiển thị khi in */}
+          <div className="print-signature" style={{ display: 'none', width: '100%', marginTop: '32px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  {['Người trình', 'Thẩm định', 'Phê duyệt'].map(h => (
+                    <th key={h} style={{ border: '1px solid #888', padding: '6px 10px', textAlign: 'center', fontSize: '10pt', background: '#f0f0f0', fontWeight: 'bold' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  {[0, 1, 2].map(i => (
+                    <td key={i} style={{ border: '1px solid #888', height: '60px', padding: '6px 10px' }} />
+                  ))}
+                </tr>
+                <tr>
+                  <td style={{ border: '1px solid #888', padding: '6px 10px', textAlign: 'center', fontSize: '10pt' }}>
+                    {nguoiTrinh?.hoTen ?? '—'}
+                  </td>
+                  <td style={{ border: '1px solid #888', padding: '6px 10px', textAlign: 'center', fontSize: '10pt' }}>
+                    <div>{thamDinhUser?.hoTen ?? '—'}</div>
+                    {tt.thamDinhLuc && <div style={{ fontSize: '9pt', color: '#555' }}>{new Date(tt.thamDinhLuc).toLocaleDateString('vi-VN')}</div>}
+                  </td>
+                  <td style={{ border: '1px solid #888', padding: '6px 10px', textAlign: 'center', fontSize: '10pt' }}>
+                    <div>{pheDuyetUser?.hoTen ?? '—'}</div>
+                    {tt.pheDuyetLuc && <div style={{ fontSize: '9pt', color: '#555' }}>{new Date(tt.pheDuyetLuc).toLocaleDateString('vi-VN')}</div>}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
