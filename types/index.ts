@@ -70,3 +70,9 @@ export interface PhanQuyenDuyet {
   thamDinhId: string;
   pheDuyetId: string;
 }
+
+export interface AppNotification {
+  id: string;
+  message: string;
+  type: 'success' | 'warning' | 'info';
+}
