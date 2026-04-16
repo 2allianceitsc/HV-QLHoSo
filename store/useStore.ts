@@ -18,7 +18,7 @@ interface AppState {
 
   thamDinh: (id: string) => void;
   pheDuyet: (id: string) => void;
-  tuChoi: (id: string) => void;
+  tuChoi: (id: string, lyDo?: string) => void;
   guiToTrinh: (id: string) => void;
 }
 
@@ -75,10 +75,10 @@ export const useStore = create<AppState>()(
         }));
       },
 
-      tuChoi: (id) => {
+      tuChoi: (id, lyDo) => {
         set(state => ({
           toTrinhs: state.toTrinhs.map(tt =>
-            tt.id === id ? { ...tt, trangThai: 'tu_choi' } : tt
+            tt.id === id ? { ...tt, trangThai: 'tu_choi', lyDoTuChoi: lyDo } : tt
           ),
         }));
       },

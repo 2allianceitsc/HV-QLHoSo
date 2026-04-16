@@ -35,8 +35,8 @@ export function genMaToTrinh(loai: 'MS' | 'NT', existing: ToTrinh[]): string {
 
 export const TRANG_THAI_LABEL: Record<TrangThaiToTrinh, string> = {
   nhap: 'Nháp',
-  cho_duyet: 'Chờ duyệt',
-  tham_dinh: 'Đã thẩm định',
+  cho_duyet: 'Chờ thẩm định',
+  tham_dinh: 'Chờ phê duyệt',
   phe_duyet: 'Đã phê duyệt',
   tu_choi: 'Từ chối',
 };

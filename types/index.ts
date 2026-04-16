@@ -49,8 +49,11 @@ export interface ToTrinh {
   pheDuyetId: string;
   thamDinhLuc?: string;
   pheDuyetLuc?: string;
+  lyDoTuChoi?: string;
   // Files
   fileDinhKem: FileDinhKem[];
+  hopDongDaKy?: FileDinhKem;
+  anhNoiDung?: string[];
   // Meta
   createdAt: string;
 }
