@@ -24,8 +24,19 @@ export interface ChiPhiDong {
   id: string;
   maPhi: string;
   tenMaPhi: string;
-  soTien: number;
+  soTienChuaVAT: number;
+  soTienCoVAT: number;
   nhaCungCap: string;
+  muaCho?: string;
+  mucDich?: string;
+  nguoiSuDung?: string;
+}
+
+export interface VatTuCoSan {
+  id: string;
+  tenVatTu: string;
+  soLuong: number;
+  donViTinh: string;
 }
 
 export interface ToTrinh {
@@ -40,6 +51,7 @@ export interface ToTrinh {
   trangThai: TrangThaiToTrinh;
   // MS fields
   chiPhi?: ChiPhiDong[];
+  vatTuCoSan?: VatTuCoSan[];
   // NT fields
   ngayBatDauHD?: string;
   ngayHetHanHD?: string;
