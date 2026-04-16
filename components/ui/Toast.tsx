@@ -1,6 +1,6 @@
 'use client';
 import { useEffect } from 'react';
-import { Mail, X, CheckCircle, AlertTriangle, Info } from 'lucide-react';
+import { Mail, X } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { AppNotification } from '@/types';
 
@@ -24,9 +24,9 @@ function ToastItem({ notification, onRemove }: { notification: AppNotification; 
   }, [notification.id, onRemove]);
 
   const config = {
-    success: { bg: 'var(--success-muted)', color: 'var(--success)', Icon: CheckCircle },
-    warning: { bg: 'var(--warning-muted)', color: 'var(--warning)', Icon: AlertTriangle },
-    info:    { bg: 'var(--primary-muted)', color: 'var(--primary)', Icon: Info },
+    success: { bg: 'var(--success-muted)', color: 'var(--success)' },
+    warning: { bg: 'var(--warning-muted)', color: 'var(--warning)' },
+    info:    { bg: 'var(--primary-muted)', color: 'var(--primary)' },
   }[notification.type];
 
   return (
