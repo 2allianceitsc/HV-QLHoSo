@@ -72,7 +72,7 @@ export default function ChiTietToTrinhPage({ params }: { params: Promise<{ id: s
       <style>{`
         @media print {
           /* Ẩn chrome */
-          aside, header, nav, .no-print, button, a[href] { display: none !important; }
+          aside, header, nav, .no-print, button { display: none !important; }
 
           /* Page */
           body { background: white !important; font-family: 'Times New Roman', serif !important; color: #000 !important; margin: 0; }
