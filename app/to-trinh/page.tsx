@@ -9,9 +9,13 @@ import AppLayout from '@/components/layout/AppLayout';
 import { StatusBadge, ApproverName } from '@/components/ui/StatusBadge';
 import { useStore } from '@/store/useStore';
 import { getUserById, formatCurrency, formatDate, TRANG_THAI_LABEL } from '@/lib/utils';
+import { MOCK_USERS } from '@/lib/mockData';
 import { LoaiToTrinh, TrangThaiToTrinh } from '@/types';
 
 const ALL_STATUSES: TrangThaiToTrinh[] = ['nhap', 'cho_duyet', 'tham_dinh', 'phe_duyet', 'tu_choi'];
+const BO_PHAN_LIST = ['IT', 'Kế toán', 'Marketing', 'Mua hàng', 'Hành chính'];
+const THAM_DINH_USERS = MOCK_USERS.filter(u => u.role === 'tham_dinh');
+const PHE_DUYET_USERS = MOCK_USERS.filter(u => u.role === 'phe_duyet');
 
 export default function ToTrinhPage() {
   const { toTrinhs, currentUser } = useStore();
@@ -19,17 +23,25 @@ export default function ToTrinhPage() {
 
   // Filter state
   const [search, setSearch] = useState('');
+  const [filterBoPhan, setFilterBoPhan] = useState('');
   const [filterStatus, setFilterStatus] = useState<TrangThaiToTrinh | ''>('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
+  const [filterThamDinhId, setFilterThamDinhId] = useState('');
+  const [filterPheDuyetId, setFilterPheDuyetId] = useState('');
+  const [filterNCC, setFilterNCC] = useState('');
   const [showFilter, setShowFilter] = useState(false);
 
-  const hasActiveFilter = filterStatus !== '' || filterDateFrom !== '' || filterDateTo !== '';
+  const hasActiveFilter = filterBoPhan !== '' || filterStatus !== '' || filterDateFrom !== '' || filterDateTo !== '' || filterThamDinhId !== '' || filterPheDuyetId !== '' || filterNCC !== '';
 
   const clearFilters = () => {
+    setFilterBoPhan('');
     setFilterStatus('');
     setFilterDateFrom('');
     setFilterDateTo('');
+    setFilterThamDinhId('');
+    setFilterPheDuyetId('');
+    setFilterNCC('');
     setSearch('');
   };
 
@@ -41,13 +53,23 @@ export default function ToTrinhPage() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
+    const ncc = filterNCC.toLowerCase().trim();
     return visibleToTrinhs
       .filter(tt => tt.loai === tab)
       .filter(tt => !q || tt.ma.toLowerCase().includes(q) || tt.veViec.toLowerCase().includes(q) || tt.noiDung.toLowerCase().includes(q) || (tt.nhaCungCap ?? '').toLowerCase().includes(q))
+      .filter(tt => filterBoPhan === '' || tt.boPhan === filterBoPhan)
       .filter(tt => filterStatus === '' || tt.trangThai === filterStatus)
       .filter(tt => filterDateFrom === '' || tt.ngayTrinh >= filterDateFrom)
-      .filter(tt => filterDateTo === '' || tt.ngayTrinh <= filterDateTo);
-  }, [visibleToTrinhs, tab, search, filterStatus, filterDateFrom, filterDateTo]);
+      .filter(tt => filterDateTo === '' || tt.ngayTrinh <= filterDateTo)
+      .filter(tt => filterThamDinhId === '' || tt.thamDinhId === filterThamDinhId)
+      .filter(tt => filterPheDuyetId === '' || tt.pheDuyetId === filterPheDuyetId)
+      .filter(tt => {
+        if (!ncc) return true;
+        const nccMS = tt.chiPhi?.some(c => c.nhaCungCap.toLowerCase().includes(ncc));
+        const nccNT = (tt.nhaCungCap ?? '').toLowerCase().includes(ncc);
+        return nccMS || nccNT;
+      });
+  }, [visibleToTrinhs, tab, search, filterBoPhan, filterStatus, filterDateFrom, filterDateTo, filterThamDinhId, filterPheDuyetId, filterNCC]);
 
   const stats = useMemo(() => ({
     total: visibleToTrinhs.filter(t => t.loai === tab).length,
@@ -149,53 +171,104 @@ export default function ToTrinhPage() {
 
             {/* Filter panel */}
             {showFilter && (
-              <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderTop: '1px solid var(--border)' }}>
-                <div className="flex flex-wrap gap-3 items-end">
-                  {/* Status filter */}
-                  <div className="flex-1 min-w-[160px]">
+              <div className="rounded-xl p-4" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderTop: '1px solid var(--border)' }}>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {/* Bộ phận */}
+                  <div>
+                    <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Bộ phận</label>
+                    <select
+                      value={filterBoPhan}
+                      onChange={e => setFilterBoPhan(e.target.value)}
+                      style={{ background: 'var(--surface)', borderColor: 'var(--border)', fontSize: '13px', padding: '7px 10px' }}
+                    >
+                      <option value="">Tất cả</option>
+                      {BO_PHAN_LIST.map(b => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Trạng thái */}
+                  <div>
                     <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Trạng thái</label>
                     <select
                       value={filterStatus}
                       onChange={e => setFilterStatus(e.target.value as TrangThaiToTrinh | '')}
                       style={{ background: 'var(--surface)', borderColor: 'var(--border)', fontSize: '13px', padding: '7px 10px' }}
                     >
-                      <option value="">Tất cả trạng thái</option>
+                      <option value="">Tất cả</option>
                       {ALL_STATUSES.map(s => <option key={s} value={s}>{TRANG_THAI_LABEL[s]}</option>)}
                     </select>
                   </div>
 
-                  {/* Date from */}
-                  <div className="flex-1 min-w-[140px]">
+                  {/* Nhà cung cấp */}
+                  <div>
+                    <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Nhà cung cấp</label>
+                    <input
+                      value={filterNCC}
+                      onChange={e => setFilterNCC(e.target.value)}
+                      placeholder="Tìm nhà cung cấp..."
+                      style={{ background: 'var(--surface)', borderColor: 'var(--border)', fontSize: '13px', padding: '7px 10px' }}
+                    />
+                  </div>
+
+                  {/* Người thẩm định */}
+                  <div>
+                    <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Người thẩm định</label>
+                    <select
+                      value={filterThamDinhId}
+                      onChange={e => setFilterThamDinhId(e.target.value)}
+                      style={{ background: 'var(--surface)', borderColor: 'var(--border)', fontSize: '13px', padding: '7px 10px' }}
+                    >
+                      <option value="">Tất cả</option>
+                      {THAM_DINH_USERS.map(u => <option key={u.id} value={u.id}>{u.hoTen}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Người phê duyệt */}
+                  <div>
+                    <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Người phê duyệt</label>
+                    <select
+                      value={filterPheDuyetId}
+                      onChange={e => setFilterPheDuyetId(e.target.value)}
+                      style={{ background: 'var(--surface)', borderColor: 'var(--border)', fontSize: '13px', padding: '7px 10px' }}
+                    >
+                      <option value="">Tất cả</option>
+                      {PHE_DUYET_USERS.map(u => <option key={u.id} value={u.id}>{u.hoTen}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Ngày trình range */}
+                  <div>
                     <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Từ ngày</label>
                     <input
                       type="date"
                       value={filterDateFrom}
                       onChange={e => setFilterDateFrom(e.target.value)}
-                      style={{ fontSize: '13px', padding: '7px 10px' }}
+                      style={{ background: 'var(--surface)', borderColor: 'var(--border)', fontSize: '13px', padding: '7px 10px' }}
                     />
                   </div>
 
-                  {/* Date to */}
-                  <div className="flex-1 min-w-[140px]">
+                  <div>
                     <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Đến ngày</label>
                     <input
                       type="date"
                       value={filterDateTo}
                       onChange={e => setFilterDateTo(e.target.value)}
-                      style={{ fontSize: '13px', padding: '7px 10px' }}
+                      style={{ background: 'var(--surface)', borderColor: 'var(--border)', fontSize: '13px', padding: '7px 10px' }}
                     />
                   </div>
+                </div>
 
-                  {hasActiveFilter && (
+                {hasActiveFilter && (
+                  <div className="mt-3 flex justify-end">
                     <button
                       onClick={clearFilters}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                       style={{ color: 'var(--danger)', background: 'var(--danger-muted)', border: '1px solid color-mix(in srgb, var(--danger) 20%, transparent)' }}
                     >
                       <X size={12} /> Xoá bộ lọc
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -229,7 +302,6 @@ export default function ToTrinhPage() {
                   const thamDinhUser = getUserById(tt.thamDinhId);
                   const pheDuyetUser = getUserById(tt.pheDuyetId);
                   const tongTien = tt.chiPhi?.reduce((s, c) => s + c.soTien, 0) ?? 0;
-                  // First supplier from chiPhi lines or NT nhaCungCap
                   const ncc = tab === 'MS'
                     ? (tt.chiPhi?.[0]?.nhaCungCap ?? '—')
                     : (tt.nhaCungCap ?? '—');
@@ -249,15 +321,12 @@ export default function ToTrinhPage() {
                       <td className="px-4 py-3.5 max-w-xs">
                         <p className="truncate text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{tt.veViec}</p>
                       </td>
-                      {/* Nhà cung cấp */}
                       <td className="px-4 py-3.5 max-w-[140px]">
                         <p className="truncate text-xs" style={{ color: 'var(--text-secondary)' }}>{ncc}</p>
                       </td>
-                      {/* Số tiền (MS) or Hết hạn HĐ (NT) */}
                       <td className="px-4 py-3.5 whitespace-nowrap text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
                         {tab === 'MS' ? formatCurrency(tongTien) : formatDate(tt.ngayHetHanHD ?? '')}
                       </td>
-                      {/* HĐ đã ký */}
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         {tt.hopDongDaKy ? (
                           <a href={tt.hopDongDaKy.url} className="inline-flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--success)' }}>
