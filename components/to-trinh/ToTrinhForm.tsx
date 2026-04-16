@@ -68,8 +68,12 @@ export default function ToTrinhForm({ title, initialValues, onSave, onCancel, su
       id: `cp-${Date.now()}`,
       maPhi: maPhi.ma,
       tenMaPhi: maPhi.ten,
-      soTien: 0,
+      soTienChuaVAT: 0,
+      soTienCoVAT: 0,
       nhaCungCap: '',
+      muaCho: '',
+      mucDich: '',
+      nguoiSuDung: '',
     }]);
   };
 
@@ -118,7 +122,7 @@ export default function ToTrinhForm({ title, initialValues, onSave, onCancel, su
 
   const removeAnh = (idx: number) => set('anhNoiDung', values.anhNoiDung.filter((_, i) => i !== idx));
 
-  const tongTien = values.chiPhi.reduce((s, c) => s + (Number(c.soTien) || 0), 0);
+  const tongTien = values.chiPhi.reduce((s, c) => s + (Number(c.soTienCoVAT) || 0), 0);
 
   const filteredMaPhi = MOCK_MA_PHI.filter(m => m.boPhan === values.boPhan);
 
@@ -272,22 +276,64 @@ export default function ToTrinhForm({ title, initialValues, onSave, onCancel, su
                         />
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1">
-                        <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Số tiền (VNĐ)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Giá chưa VAT (VNĐ)</label>
                         <input
                           type="number"
-                          value={c.soTien || ''}
-                          onChange={e => updateChiPhi(idx, 'soTien', Number(e.target.value))}
+                          value={c.soTienChuaVAT || ''}
+                          onChange={e => updateChiPhi(idx, 'soTienChuaVAT', Number(e.target.value))}
                           placeholder="0"
                           min={0}
                           style={{ fontSize: '12px', padding: '6px 8px' }}
                         />
                       </div>
+                      <div>
+                        <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Giá có VAT (VNĐ)</label>
+                        <input
+                          type="number"
+                          value={c.soTienCoVAT || ''}
+                          onChange={e => updateChiPhi(idx, 'soTienCoVAT', Number(e.target.value))}
+                          placeholder="0"
+                          min={0}
+                          style={{ fontSize: '12px', padding: '6px 8px' }}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Mua cho ai</label>
+                        <input
+                          value={c.muaCho ?? ''}
+                          onChange={e => updateChiPhi(idx, 'muaCho', e.target.value)}
+                          placeholder="VD: Phòng IT..."
+                          style={{ fontSize: '12px', padding: '6px 8px' }}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Mục đích</label>
+                        <input
+                          value={c.mucDich ?? ''}
+                          onChange={e => updateChiPhi(idx, 'mucDich', e.target.value)}
+                          placeholder="VD: Trang bị nhân sự mới..."
+                          style={{ fontSize: '12px', padding: '6px 8px' }}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Người sử dụng</label>
+                        <input
+                          value={c.nguoiSuDung ?? ''}
+                          onChange={e => updateChiPhi(idx, 'nguoiSuDung', e.target.value)}
+                          placeholder="VD: Nhân viên IT..."
+                          style={{ fontSize: '12px', padding: '6px 8px' }}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
                       <button
                         type="button"
                         onClick={() => removeChiPhi(idx)}
-                        className="mt-4 p-2 rounded-lg transition-all hover:opacity-80"
+                        className="p-2 rounded-lg transition-all hover:opacity-80"
                         style={{ color: 'var(--danger)', background: 'var(--danger-muted)' }}
                       >
                         <Trash2 size={14} />
