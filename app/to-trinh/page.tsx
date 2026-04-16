@@ -301,7 +301,7 @@ export default function ToTrinhPage() {
                 ) : filtered.map((tt, idx) => {
                   const thamDinhUser = getUserById(tt.thamDinhId);
                   const pheDuyetUser = getUserById(tt.pheDuyetId);
-                  const tongTien = tt.chiPhi?.reduce((s, c) => s + c.soTien, 0) ?? 0;
+                  const tongTien = tt.chiPhi?.reduce((s, c) => s + c.soTienCoVAT, 0) ?? 0;
                   const ncc = tab === 'MS'
                     ? (tt.chiPhi?.[0]?.nhaCungCap ?? '—')
                     : (tt.nhaCungCap ?? '—');
