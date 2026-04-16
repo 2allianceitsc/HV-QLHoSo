@@ -1,4 +1,28 @@
-import { User, MaPhi, ToTrinh, PhanQuyenDuyet } from '@/types';
+import { User, MaPhi, ToTrinh, PhanQuyenDuyet, VatTuCoSan } from '@/types';
+
+export interface MockVatTu {
+  id: string;
+  ten: string;
+  donViTinh: string;
+}
+
+export const MOCK_VAT_TU: MockVatTu[] = [
+  { id: 'vt01', ten: 'Giấy A4', donViTinh: 'Ram' },
+  { id: 'vt02', ten: 'Bút bi', donViTinh: 'Cái' },
+  { id: 'vt03', ten: 'Bút xoá', donViTinh: 'Cái' },
+  { id: 'vt04', ten: 'Mực in HP', donViTinh: 'Hộp' },
+  { id: 'vt05', ten: 'Băng keo', donViTinh: 'Cuộn' },
+  { id: 'vt06', ten: 'Kẹp giấy', donViTinh: 'Hộp' },
+  { id: 'vt07', ten: 'Phong bì', donViTinh: 'Cái' },
+  { id: 'vt08', ten: 'Hộp đựng tài liệu', donViTinh: 'Cái' },
+  { id: 'vt09', ten: 'Máy tính xách tay', donViTinh: 'Cái' },
+  { id: 'vt10', ten: 'Màn hình máy tính', donViTinh: 'Cái' },
+  { id: 'vt11', ten: 'Chuột máy tính', donViTinh: 'Cái' },
+  { id: 'vt12', ten: 'Bàn phím', donViTinh: 'Cái' },
+  { id: 'vt13', ten: 'USB', donViTinh: 'Cái' },
+  { id: 'vt14', ten: 'Ổ cứng ngoài', donViTinh: 'Cái' },
+  { id: 'vt15', ten: 'Máy in', donViTinh: 'Cái' },
+];
 
 export const MOCK_USERS: User[] = [
   { id: 'u1', username: 'quynhdt267', hoTen: 'Dương Thuý Quỳnh', boPhan: 'Mua hàng', chucVu: 'Trưởng phòng', email: 'quynh.dt@hv.com', role: 'tham_dinh', avatarColor: '#6366f1' },
@@ -45,7 +69,11 @@ export const MOCK_TO_TRINH: ToTrinh[] = [
     noiDung: 'KG BLĐ xin phê duyệt,\nKG chị My xin thẩm định,\nCăn cứ vào số lượng tồn của hệ thống và nhu cầu thực tế phát sinh cho nhân sự mới vào tháng 4.',
     trangThai: 'phe_duyet',
     chiPhi: [
-      { id: 'cp1', maPhi: 'IT0001', tenMaPhi: 'Tài sản cố định', soTien: 50000000, nhaCungCap: 'Công ty cổ phần ABC' },
+      { id: 'cp1', maPhi: 'IT0001', tenMaPhi: 'Tài sản cố định', soTienChuaVAT: 45454546, soTienCoVAT: 50000000, nhaCungCap: 'Công ty cổ phần ABC', muaCho: 'Nguyễn Thế Hùng', mucDich: 'Trang bị cho nhân sự mới', nguoiSuDung: 'Nhân viên IT' },
+    ],
+    vatTuCoSan: [
+      { id: 'vtcs1', tenVatTu: 'Chuột máy tính', soLuong: 3, donViTinh: 'Cái' },
+      { id: 'vtcs2', tenVatTu: 'Bàn phím', soLuong: 2, donViTinh: 'Cái' },
     ],
     thamDinhId: 'u2',
     pheDuyetId: 'u5',
@@ -65,7 +93,7 @@ export const MOCK_TO_TRINH: ToTrinh[] = [
     noiDung: 'KG BLĐ xin phê duyệt,\nCăn cứ vào nhu cầu thực tế, phòng kế toán cần bổ sung 1 máy đếm tiền.',
     trangThai: 'tham_dinh',
     chiPhi: [
-      { id: 'cp2', maPhi: 'KT0001', tenMaPhi: 'Tài sản cố định', soTien: 25000000, nhaCungCap: 'Nhà cung cấp vãng lai' },
+      { id: 'cp2', maPhi: 'KT0001', tenMaPhi: 'Tài sản cố định', soTienChuaVAT: 22727273, soTienCoVAT: 25000000, nhaCungCap: 'Nhà cung cấp vãng lai', muaCho: 'Phòng kế toán', mucDich: 'Đếm tiền mặt hàng ngày', nguoiSuDung: 'Kế toán viên' },
     ],
     thamDinhId: 'u3',
     pheDuyetId: 'u5',
@@ -84,8 +112,8 @@ export const MOCK_TO_TRINH: ToTrinh[] = [
     noiDung: 'KG BLĐ xin phê duyệt chương trình khuyến mãi tháng 04/2026 tại các quầy chợ bóng và đồng vàng.',
     trangThai: 'cho_duyet',
     chiPhi: [
-      { id: 'cp3', maPhi: 'CB0005', tenMaPhi: 'CP Marketing', soTien: 2000000, nhaCungCap: 'Nhà cung cấp vãng lai' },
-      { id: 'cp4', maPhi: 'DV0005', tenMaPhi: 'CP Dịch vụ MKT', soTien: 3000000, nhaCungCap: 'Nhà cung cấp vãng lai' },
+      { id: 'cp3', maPhi: 'CB0005', tenMaPhi: 'CP Marketing', soTienChuaVAT: 1818182, soTienCoVAT: 2000000, nhaCungCap: 'Nhà cung cấp vãng lai', muaCho: 'Chương trình KM tháng 4', mucDich: 'Chi phí tổ chức khuyến mãi', nguoiSuDung: 'Phòng Marketing' },
+      { id: 'cp4', maPhi: 'DV0005', tenMaPhi: 'CP Dịch vụ MKT', soTienChuaVAT: 2727273, soTienCoVAT: 3000000, nhaCungCap: 'Nhà cung cấp vãng lai', muaCho: 'Chương trình KM tháng 4', mucDich: 'Thuê dịch vụ marketing', nguoiSuDung: 'Phòng Marketing' },
     ],
     thamDinhId: 'u3',
     pheDuyetId: 'u4',
@@ -103,7 +131,7 @@ export const MOCK_TO_TRINH: ToTrinh[] = [
     noiDung: 'Xin phê duyệt điều chuyển thiết bị POS giữa các chi nhánh.',
     trangThai: 'nhap',
     chiPhi: [
-      { id: 'cp5', maPhi: 'CL0001', tenMaPhi: 'CP Vận chuyển', soTien: 1000000, nhaCungCap: 'Nhà cung cấp vãng lai' },
+      { id: 'cp5', maPhi: 'CL0001', tenMaPhi: 'CP Vận chuyển', soTienChuaVAT: 909091, soTienCoVAT: 1000000, nhaCungCap: 'Nhà cung cấp vãng lai', muaCho: 'Chi nhánh chợ lai', mucDich: 'Điều chuyển thiết bị POS', nguoiSuDung: 'Nhân viên quầy' },
     ],
     thamDinhId: 'u3',
     pheDuyetId: 'u5',
@@ -159,7 +187,7 @@ export const MOCK_TO_TRINH: ToTrinh[] = [
     noiDung: 'KG BLĐ xin phê duyệt,\nKG chị My xin thẩm định,\nCăn cứ nhu cầu thực tế phát sinh, phòng kế toán cần mua văn phòng phẩm cho quý 2/2026.',
     trangThai: 'tu_choi',
     chiPhi: [
-      { id: 'cp7', maPhi: 'KT0002', tenMaPhi: 'CP Văn phòng phẩm', soTien: 5000000, nhaCungCap: 'Nhà cung cấp vãng lai' },
+      { id: 'cp7', maPhi: 'KT0002', tenMaPhi: 'CP Văn phòng phẩm', soTienChuaVAT: 4545455, soTienCoVAT: 5000000, nhaCungCap: 'Nhà cung cấp vãng lai', muaCho: 'Phòng kế toán', mucDich: 'Văn phòng phẩm quý 2', nguoiSuDung: 'Toàn bộ phòng kế toán' },
     ],
     thamDinhId: 'u3',
     pheDuyetId: 'u5',
@@ -178,7 +206,7 @@ export const MOCK_TO_TRINH: ToTrinh[] = [
     noiDung: 'KG cô Vân xin phê duyệt,\nKG chị Quỳnh xin thẩm định,\nCăn cứ nhu cầu đóng gói sản phẩm trong tháng 4, kính đề xuất mua bao bì đóng gói.',
     trangThai: 'cho_duyet',
     chiPhi: [
-      { id: 'cp9', maPhi: 'MH0001', tenMaPhi: 'CP Hàng hoá', soTien: 15000000, nhaCungCap: 'Công ty bao bì Sao Việt' },
+      { id: 'cp9', maPhi: 'MH0001', tenMaPhi: 'CP Hàng hoá', soTienChuaVAT: 13636364, soTienCoVAT: 15000000, nhaCungCap: 'Công ty bao bì Sao Việt', muaCho: 'Bộ phận đóng gói', mucDich: 'Đóng gói sản phẩm tháng 4', nguoiSuDung: 'Công nhân đóng gói' },
     ],
     thamDinhId: 'u1',
     pheDuyetId: 'u6',
@@ -196,7 +224,7 @@ export const MOCK_TO_TRINH: ToTrinh[] = [
     noiDung: 'KG cô Vân xin phê duyệt,\nKG chị Quỳnh xin thẩm định,\nĐề xuất mua sắm dụng cụ lao động cho quý 2/2026.',
     trangThai: 'tham_dinh',
     chiPhi: [
-      { id: 'cp10', maPhi: 'MH0001', tenMaPhi: 'CP Hàng hoá', soTien: 8000000, nhaCungCap: 'Nhà cung cấp vãng lai' },
+      { id: 'cp10', maPhi: 'MH0001', tenMaPhi: 'CP Hàng hoá', soTienChuaVAT: 7272727, soTienCoVAT: 8000000, nhaCungCap: 'Nhà cung cấp vãng lai', muaCho: 'Toàn bộ nhân viên', mucDich: 'Dụng cụ lao động Q2/2026', nguoiSuDung: 'Nhân viên sản xuất' },
     ],
     thamDinhId: 'u1',
     pheDuyetId: 'u6',
