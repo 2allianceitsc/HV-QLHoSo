@@ -6,6 +6,7 @@ import { useStore } from '@/store/useStore';
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
 import { getInitials } from '@/lib/utils';
+import Toast from '@/components/ui/Toast';
 
 const NAV = [
   { href: '/to-trinh', label: 'Tờ trình', icon: FileText },
@@ -182,6 +183,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      <Toast />
     </div>
   );
 }
