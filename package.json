@@ -1,29 +1,24 @@
 {
-  "name": "app",
-  "version": "0.1.0",
+  "name": "hv-quytrinhduyethoso",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3016 -H 0.0.0.0 --webpack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "concurrently \"pnpm --filter api dev\" \"pnpm --filter web dev\"",
+    "build": "pnpm --filter web build && rm -rf apps/api/public && mkdir -p apps/api/public && cp -r apps/web/dist/. apps/api/public/ && pnpm --filter api build",
+    "start": "node apps/api/dist/main.js",
+    "start:prod": "pnpm build && pnpm --filter api exec prisma migrate deploy && node apps/api/dist/main.js",
+    "db:migrate": "pnpm --filter api exec prisma migrate dev",
+    "db:seed": "pnpm --filter api exec prisma db seed",
+    "db:studio": "pnpm --filter api exec prisma studio",
+    "check": "pnpm --filter api type-check",
+    "lint": "pnpm -r lint",
+    "prepare": "cd .. && (husky DEV/.husky || true)",
+    "lint-staged": "lint-staged"
   },
-  "dependencies": {
-    "lucide-react": "^1.7.0",
-    "next": "16.2.2",
-    "next-themes": "^0.4.6",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "zustand": "^5.0.12"
-  },
+
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.2",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "concurrently": "^8.2.2",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0"
   }
 }

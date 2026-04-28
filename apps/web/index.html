@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/api/public/branding/favicon" />
+    <link rel="apple-touch-icon" href="/api/public/branding/favicon" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HV — Quy Trình Duyệt Hồ Sơ</title>
+    <!-- Apply saved theme before first paint to prevent flash -->
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem('vibe365-theme');
+          if (t === 'dark') document.documentElement.classList.add('dark');
+          else if (t === 'vibe') document.documentElement.classList.add('vibe');
+        } catch(e) {}
+      })();
+    </script>
+    <script src="https://pm.vegasoft.vn/bug-reporter.v6.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if (window.BugReporter != null && window.BugReporter) {
+        window.BugReporter.init({
+          apiUrl: "https://pm-api.vegasoft.vn/v1/bot-agents/create-bug",
+          apiKey: "df8279924d5051f302771e8374b4d6351501e0b2413a4885f4aea597c83364e8",
+        });
+        window.BugReporter.on();
+      }
+    </script>
+  </body>
+</html>

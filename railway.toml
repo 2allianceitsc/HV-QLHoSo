@@ -1,0 +1,10 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "rm -rf apps/web/node_modules/.vite apps/web/dist && pnpm --filter web build && rm -rf apps/api/public && mkdir -p apps/api/public && cp -r apps/web/dist/. apps/api/public/ && pnpm --filter api build && echo '=== DIST CHECK ===' && ls -la apps/api/dist/"
+
+[deploy]
+# BASE strips any existing query string so we can append connection_limit=1 safely.
+# Inline env override applies only to the migrate command; node picks up the original DATABASE_URL.
+startCommand = "sleep 5 && BASE=${DATABASE_URL%%\\?*} && DATABASE_URL=\"${BASE}?connection_limit=1&socket_timeout=15\" pnpm --filter api exec prisma migrate deploy && node apps/api/dist/apps/api/src/main.js"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 1

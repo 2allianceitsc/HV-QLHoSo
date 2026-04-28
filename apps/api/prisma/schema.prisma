@@ -1,0 +1,1233 @@
+// This is your Prisma schema file
+// https://www.prisma.io/docs/concepts/components/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── UserLogin ───────────────────────────────────────────────────────────────
+model UserLogin {
+  id           String    @id
+  username     String    @map("Username")
+  email        String    @map("Email")
+  passwordHash String    @map("PasswordHash")
+  isFirstLogin Boolean   @default(true) @map("IsFirstLogin")
+  isActive       Boolean   @default(true) @map("IsActive")
+  lastLogin            DateTime? @map("LastLogin") @db.Timestamptz
+  allSessionsRevokedAt DateTime? @map("AllSessionsRevokedAt") @db.Timestamptz
+  auth2FAEnabled  Boolean   @default(false) @map("Auth2FAEnabled")
+  auth2FAMethod   String?   @map("Auth2FAMethod")   // 'TOTP' | 'EMAIL_OTP'
+  auth2FARequired Boolean   @default(false) @map("Auth2FARequired")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  staff         Staff?
+  auth2FASecret Auth2FASecret?
+  loginOtps     LoginOtp[]
+
+  @@index([username, isDeleted])   // login lookup by username
+  @@index([email, isDeleted])      // login lookup by email
+  @@map("UserLogin")
+}
+
+// ─── Company ─────────────────────────────────────────────────────────────────
+model Company {
+  id          String  @id
+  name        String  @map("Name")
+  code        String? @unique @map("Code")
+  address     String? @map("Address")
+  phone       String? @map("Phone")
+  logoUrl     String? @map("LogoUrl")
+  taxCode     String? @map("TaxCode")
+  website     String? @map("Website")
+  colorHex         String? @map("ColorHex")
+  iconId           String? @map("IconId")
+  defaultTimezone  String? @map("DefaultTimezone") // IANA e.g. "Asia/Ho_Chi_Minh"
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  contacts          CompanyContacts[]
+  departments       Department[]
+  offices           Office[]
+  positions         Position[]
+  teams             Team[]
+  staff             Staff[]
+  statusDefinitions StatusDefinition[]
+  dropdownDisplayConfigs DropdownDisplayConfig[]
+  managers          CompanyManager[]
+
+  @@map("Company")
+}
+
+// ─── DropdownDisplayConfig ───────────────────────────────────────────────────
+// Company-wide config for dropdown display format across the app.
+// See: docs/screens/settings/S09-dropdown-display-settings.md
+model DropdownDisplayConfig {
+  id              String   @id
+  companyId       String   @map("CompanyId")
+  entityType      String   @map("EntityType") // STAFF | CLIENT | DEPARTMENT | OFFICE | TEAM | STATUS
+  primaryField    String   @map("PrimaryField")
+  secondaryFields String[] @default([]) @map("SecondaryFields") // empty = hide secondary line
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@unique([companyId, entityType])
+  @@index([companyId])
+  @@map("DropdownDisplayConfig")
+}
+
+// ─── CompanyContacts ──────────────────────────────────────────────────────────
+model CompanyContacts {
+  id                  String  @id
+  companyId           String  @map("CompanyId")
+  firstName           String  @map("FirstName")
+  surname             String  @map("Surname")
+  emailAddress        String? @map("EmailAddress")
+  mobileCountryCode   String? @map("MobileCountryCode")
+  mobileNumber        String? @map("MobileNumber")
+  landlineCountryCode String? @map("LandlineCountryCode")
+  landlineAreaCode    String? @map("LandlineAreaCode")
+  landlineNumber      String? @map("LandlineNumber")
+  streetAddress       String? @map("StreetAddress")
+  suburb              String? @map("Suburb")
+  city                String? @map("City")
+  state               String? @map("State")
+  country             String? @map("Country")
+  postcode            String? @map("Postcode")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("CompanyContacts")
+}
+
+// ─── Department ──────────────────────────────────────────────────────────────
+model Department {
+  id        String  @id
+  companyId String  @map("CompanyId")
+  name      String  @map("Name")
+  code      String? @map("Code")
+  colorHex  String? @map("ColorHex")
+  iconId    String? @map("IconId")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  company  Company @relation(fields: [companyId], references: [id])
+  staff    Staff[]
+  managers DepartmentManager[]
+
+  @@map("Department")
+}
+
+// ─── Office ──────────────────────────────────────────────────────────────────
+model Office {
+  id        String  @id
+  companyId String  @map("CompanyId")
+  name      String  @map("Name")
+  code      String? @map("Code")
+  address   String? @map("Address")
+  timezone  String? @map("Timezone")
+  country   String? @map("Country")
+  city      String? @map("City")
+  colorHex  String? @map("ColorHex")
+  iconId    String? @map("IconId")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  company           Company            @relation(fields: [companyId], references: [id])
+  staff             Staff[]
+  statusDefinitions StatusDefinition[]
+  managers          OfficeManager[]
+
+  @@map("Office")
+}
+
+// ─── Position ─────────────────────────────────────────────────────────────────
+model Position {
+  id        String  @id
+  companyId String  @map("CompanyId")
+  name      String  @map("Name")
+  code      String? @map("Code")
+  level     Int?    @map("Level")
+  colorHex  String? @map("ColorHex")
+  iconId    String? @map("IconId")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  company Company @relation(fields: [companyId], references: [id])
+  staff   Staff[]
+
+  @@map("Position")
+}
+
+// ─── Team ─────────────────────────────────────────────────────────────────────
+model Team {
+  id        String  @id
+  companyId String  @map("CompanyId")
+  name      String  @map("Name")
+  code      String? @map("Code")
+  clientId  String? @map("ClientId")
+  colorHex  String? @map("ColorHex")
+  iconId    String? @map("IconId")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  company           Company             @relation(fields: [companyId], references: [id])
+  client            BusinessClient?     @relation(fields: [clientId], references: [id])
+  staff             Staff[]
+  statusDefinitions StatusDefinition[]
+  managers          TeamManager[]       @relation("TeamManagers")
+
+  @@map("Team")
+}
+
+// ─── CompanyManager ───────────────────────────────────────────────────────────
+model CompanyManager {
+  id        String @id
+  companyId String @map("CompanyId")
+  staffId   String @map("StaffId")
+
+  // Standard columns
+  note         String?  @map("Note")
+  isDeleted    Boolean  @default(false) @map("IsDeleted")
+  isDisabled   Boolean  @default(false) @map("IsDisabled")
+  orderNo      Int      @default(0) @map("OrderNo")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?  @map("Log_CreatedBy")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  company Company @relation(fields: [companyId], references: [id])
+  staff   Staff   @relation("CompanyManagers", fields: [staffId], references: [id])
+
+  @@unique([companyId, staffId])
+  @@index([companyId, isDeleted])
+  @@index([staffId, isDeleted])
+  @@map("CompanyManager")
+}
+
+// ─── DepartmentManager ────────────────────────────────────────────────────────
+model DepartmentManager {
+  id           String @id
+  departmentId String @map("DepartmentId")
+  staffId      String @map("StaffId")
+
+  note         String?  @map("Note")
+  isDeleted    Boolean  @default(false) @map("IsDeleted")
+  isDisabled   Boolean  @default(false) @map("IsDisabled")
+  orderNo      Int      @default(0) @map("OrderNo")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?  @map("Log_CreatedBy")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  department Department @relation(fields: [departmentId], references: [id])
+  staff      Staff      @relation("DepartmentManagers", fields: [staffId], references: [id])
+
+  @@unique([departmentId, staffId])
+  @@index([departmentId, isDeleted])
+  @@index([staffId, isDeleted])
+  @@map("DepartmentManager")
+}
+
+// ─── OfficeManager ────────────────────────────────────────────────────────────
+model OfficeManager {
+  id       String @id
+  officeId String @map("OfficeId")
+  staffId  String @map("StaffId")
+
+  note         String?  @map("Note")
+  isDeleted    Boolean  @default(false) @map("IsDeleted")
+  isDisabled   Boolean  @default(false) @map("IsDisabled")
+  orderNo      Int      @default(0) @map("OrderNo")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?  @map("Log_CreatedBy")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  office Office @relation(fields: [officeId], references: [id])
+  staff  Staff  @relation("OfficeManagers", fields: [staffId], references: [id])
+
+  @@unique([officeId, staffId])
+  @@index([officeId, isDeleted])
+  @@index([staffId, isDeleted])
+  @@map("OfficeManager")
+}
+
+// ─── TeamManager ──────────────────────────────────────────────────────────────
+model TeamManager {
+  id      String @id
+  teamId  String @map("TeamId")
+  staffId String @map("StaffId")
+
+  note         String?  @map("Note")
+  isDeleted    Boolean  @default(false) @map("IsDeleted")
+  isDisabled   Boolean  @default(false) @map("IsDisabled")
+  orderNo      Int      @default(0) @map("OrderNo")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?  @map("Log_CreatedBy")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  team  Team  @relation("TeamManagers", fields: [teamId], references: [id])
+  staff Staff @relation("TeamManagers", fields: [staffId], references: [id])
+
+  @@unique([teamId, staffId])
+  @@index([teamId, isDeleted])
+  @@index([staffId, isDeleted])
+  @@map("TeamManager")
+}
+
+// ─── Staff ────────────────────────────────────────────────────────────────────
+model Staff {
+  id                   String    @id
+  userLoginId          String?   @unique @map("UserLoginId")
+  employeeId           String    @unique @map("EmployeeId")
+  companyId            String    @map("CompanyId")
+  companyIdForReporting String?  @map("CompanyIdForReporting")
+  departmentId         String?   @map("DepartmentId")
+  officeId             String?   @map("OfficeId")
+  positionId           String?   @map("PositionId")
+  teamId               String?   @map("TeamId")
+  clientId             String?   @map("ClientId")
+
+  firstName            String    @map("FirstName")
+  middleName           String?   @map("MiddleName")
+  surname              String    @map("Surname")
+  companyEmailAddress  String?   @unique @map("CompanyEmailAddress")
+  mobileNumber         String?   @map("MobileNumber")
+  dateOfBirth          DateTime? @map("DateOfBirth") @db.Date
+  gender               Int?      @map("Gender")
+  taxIdNumber          String?   @map("TaxIdNumber")
+  // Extended personal fields
+  englishSurname       String?   @map("EnglishSurname")
+  homePhoneAreaCode    String?   @map("HomePhoneAreaCode")
+  homePhoneNumber      String?   @map("HomePhoneNumber")
+  favoriteCake         String?   @map("FavoriteCake")
+  // Government IDs (Philippines)
+  sssNumber            String?   @map("SSSNumber")
+  philHealthIdNumber   String?   @map("PhilHealthIdNumber")
+  hdmfNumber           String?   @map("HDMFNumber")
+  // Banking (HR only)
+  nominatedBankName           String?   @map("NominatedBankName")
+  nominatedBankAccountName    String?   @map("NominatedBankAccountName")
+  nominatedBankAccountNumber  String?   @map("NominatedBankAccountNumber")
+  photoBusiness        String?   @map("PhotoBusiness")
+  photoBirthday        String?   @map("PhotoBirthday")
+  presentAddress       String?   @map("PresentAddress")
+  permanentAddress     String?   @map("PermanentAddress")
+  personalEmailAddress String?   @map("PersonalEmailAddress")
+  cityOfBirth          String?   @map("CityOfBirth")
+  countryOfBirth       String?   @map("CountryOfBirth")
+  maritalStatus        Int?      @map("MaritalStatus")
+  firstNameOfSpouse    String?   @map("FirstNameOfSpouse")
+  middleNameOfSpouse   String?   @map("MiddleNameOfSpouse")
+  surnameOfSpouse      String?   @map("SurnameOfSpouse")
+  numberOfChildren     Int?      @map("NumberOfChildren")
+  emergencyContactFullName String? @map("EmergencyContactFullName")
+  relationshipToYou    String?   @map("RelationshipToYou")
+  emergencyContactAreaCode String? @map("EmergencyContactAreaCode")
+  emergencyContactNumber   String? @map("EmergencyContactNumber")
+  isPm                 Boolean   @default(false) @map("IsPm")
+  is2FANeedEnable      Boolean   @default(false) @map("Is2FANeedEnable")  // Admin-set: force this user to do 2FA
+  is2FAEnabled         Boolean   @default(false) @map("Is2FAEnabled")     // Set true after completing S43 setup
+  showFloatingWidget      Boolean   @default(true)  @map("ShowFloatingWidget")
+  floatingWidgetPosition  Json?     @default("{\"side\":\"right\",\"yOffset\":120}") @map("FloatingWidgetPosition")
+
+  shiftStartTime       String?   @map("ShiftStartTime")
+  shiftEndTime         String?   @map("ShiftEndTime")
+  latestStartTime      String?   @map("LatestStartTime")
+  latestEndShiftTime   String?   @map("LatestEndShiftTime")
+  shiftEndDayOffset    Int       @default(0) @map("ShiftEndDayOffset")
+  timezone             String?   @map("Timezone")  // IANA e.g. "Asia/Manila"
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  userLogin    UserLogin?    @relation(fields: [userLoginId], references: [id])
+  company      Company       @relation(fields: [companyId], references: [id])
+  department   Department?   @relation(fields: [departmentId], references: [id])
+  office       Office?       @relation(fields: [officeId], references: [id])
+  position     Position?     @relation(fields: [positionId], references: [id])
+  team         Team?         @relation(fields: [teamId], references: [id])
+  client       BusinessClient? @relation(fields: [clientId], references: [id])
+
+  staffRoles    StaffRole[]
+  timeTrackings TimeTracking[]
+  moodLogs      MoodLog[]
+  clientStaff        ClientStaff[]
+  clientProjectStaff ClientProjectStaff[]
+  notifications Notification[]
+  staffAuthenticators StaffAuthenticator[]
+  companyManagerRoles    CompanyManager[]    @relation("CompanyManagers")
+  departmentManagerRoles DepartmentManager[] @relation("DepartmentManagers")
+  officeManagerRoles     OfficeManager[]     @relation("OfficeManagers")
+  teamManagerRoles       TeamManager[]       @relation("TeamManagers")
+
+  @@index([companyId, isDeleted])  // employee list filtered by company
+  @@index([isDeleted, isDisabled]) // general list with active filter
+  @@map("Staff")
+}
+
+// ─── Notification ─────────────────────────────────────────────────────────────
+model Notification {
+  id      String  @id
+  staffId String  @map("StaffId")
+  title   String  @map("Title")
+  body    String  @map("Body")
+  type    String  @map("Type")
+  isRead  Boolean @default(false) @map("IsRead")
+  readAt  DateTime? @map("ReadAt") @db.Timestamptz
+  link    String?   @map("Link")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  staff Staff @relation(fields: [staffId], references: [id])
+
+  @@index([staffId, isDeleted, isRead]) // notification list + unread count
+  @@map("Notification")
+}
+
+// ─── Role ─────────────────────────────────────────────────────────────────────
+model Role {
+  id          String  @id
+  name        String  @unique @map("Name")
+  displayName String? @map("DisplayName")
+  description String? @map("Description")
+  colorHex    String? @map("ColorHex")
+  iconId      String? @map("IconId")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  staffRoles      StaffRole[]
+  rolePermissions RolePermission[]
+
+  @@map("Role")
+}
+
+// ─── StaffRole ────────────────────────────────────────────────────────────────
+model StaffRole {
+  id      String @id
+  staffId String @map("StaffId")
+  roleId  String @map("RoleId")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  staff Staff @relation(fields: [staffId], references: [id])
+  role  Role  @relation(fields: [roleId], references: [id])
+
+  @@unique([staffId, roleId])
+  @@index([staffId, isDeleted])    // role lookups per staff on login + employee view
+  @@map("StaffRole")
+}
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+// Catalog of UI screens. Stable `code` (e.g. "E04", "SY18") is the external
+// identifier referenced by @RequiresScreen decorators and the FE manifest.
+// See: docs/architecture/permission-model.md
+model Screen {
+  id             String  @id
+  code           String  @unique @map("Code")         // "S13", "E04", "SY01"
+  name           String  @map("Name")
+  route          String  @map("Route")                // "/employees/:id"
+  area           String  @map("Area")                 // "employee" | "system" | ...
+  parentScreenId String? @map("ParentScreenId")
+  description    String? @map("Description")
+
+  // Standard columns
+  note         String?  @map("Note")
+  isDeleted    Boolean  @default(false) @map("IsDeleted")
+  isDisabled   Boolean  @default(false) @map("IsDisabled")
+  orderNo      Int      @default(0) @map("OrderNo")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?  @map("Log_CreatedBy")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  parent      Screen?          @relation("ScreenHierarchy", fields: [parentScreenId], references: [id])
+  children    Screen[]         @relation("ScreenHierarchy")
+  tabs        ScreenTab[]
+  permissions RolePermission[]
+
+  @@index([area, orderNo])
+  @@index([parentScreenId])
+  @@index([isDeleted, isDisabled])
+  @@map("Screen")
+}
+
+// ─── ScreenTab ────────────────────────────────────────────────────────────────
+// Sub-region within a Screen that can be independently gated.
+// A screen without rows here is "whole-screen only".
+model ScreenTab {
+  id          String  @id
+  screenId    String  @map("ScreenId")
+  code        String  @map("Code")                    // "personal", "roles", "hr-only"
+  name        String  @map("Name")
+  description String? @map("Description")
+
+  // Standard columns
+  note         String?  @map("Note")
+  isDeleted    Boolean  @default(false) @map("IsDeleted")
+  isDisabled   Boolean  @default(false) @map("IsDisabled")
+  orderNo      Int      @default(0) @map("OrderNo")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?  @map("Log_CreatedBy")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  screen      Screen           @relation(fields: [screenId], references: [id])
+  permissions RolePermission[]
+
+  @@unique([screenId, code])
+  @@index([screenId, orderNo])
+  @@index([isDeleted, isDisabled])
+  @@map("ScreenTab")
+}
+
+// ─── Permission ───────────────────────────────────────────────────────────────
+// Action catalog. Seeded and rarely mutated. Phase 1 enforces only VIEW;
+// other codes are stored but not evaluated by the guard until Phase 4.
+model Permission {
+  code        String  @id @map("Code")                // "VIEW", "UPDATE", ...
+  name        String  @map("Name")
+  description String? @map("Description")
+
+  orderNo      Int      @default(0) @map("OrderNo")
+  isDisabled   Boolean  @default(false) @map("IsDisabled")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+
+  rolePermissions RolePermission[]
+
+  @@map("Permission")
+}
+
+// ─── RolePermission ───────────────────────────────────────────────────────────
+// The permission matrix. Each row says: role R is {allow|deny} for
+// permission P on screen S, optionally scoped to tab T.
+// tabId = NULL → whole-screen rule. tab-level rule overrides screen-level rule.
+// Deny-override: any applicable isAllowed=false yields DENY.
+// See: docs/architecture/permission-model.md § Resolution Rules
+model RolePermission {
+  id             String  @id
+  roleId         String  @map("RoleId")
+  screenId       String  @map("ScreenId")
+  tabId          String? @map("TabId")                // NULL = whole screen
+  permissionCode String  @map("PermissionCode")
+  isAllowed      Boolean @map("IsAllowed")            // true = ALLOW, false = explicit DENY
+
+  // Standard columns
+  note         String?  @map("Note")
+  isDeleted    Boolean  @default(false) @map("IsDeleted")
+  isDisabled   Boolean  @default(false) @map("IsDisabled")
+  orderNo      Int      @default(0) @map("OrderNo")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?  @map("Log_CreatedBy")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  screen     Screen     @relation(fields: [screenId], references: [id])
+  tab        ScreenTab? @relation(fields: [tabId], references: [id])
+  permission Permission @relation(fields: [permissionCode], references: [code])
+
+  // Prisma-level compound unique. Does NOT handle NULL tabId duplicates —
+  // a partial unique index (COALESCE(tabId, zero-uuid)) is created in
+  // migration SQL to fully enforce uniqueness. See migration file.
+  @@unique([roleId, screenId, tabId, permissionCode])
+  @@index([roleId, isDeleted])
+  @@index([screenId, tabId])
+  @@index([permissionCode])
+  @@map("RolePermission")
+}
+
+// ─── BusinessClient ───────────────────────────────────────────────────────────
+model BusinessClient {
+  id               String  @id
+  name             String  @map("Name")
+  code             String? @unique @map("Code")
+  address          String? @map("Address")
+  phone            String? @map("Phone")
+  email            String? @map("Email")
+  website          String? @map("Website")
+  logoUrl          String? @map("LogoUrl")
+  industry         String? @map("Industry")
+  colorHex         String? @map("ColorHex")
+  iconId           String? @map("IconId")
+  timezone         String? @map("Timezone")
+  country          String? @map("Country")
+  defaultStartTime String? @map("DefaultStartTime")
+  defaultEndTime   String? @map("DefaultEndTime")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  contacts          ClientContacts[]
+  departments       ClientDepartment[]
+  projects          ClientProject[]
+  clientStaff       ClientStaff[]
+  statusDefinitions StatusDefinition[]
+  staff             Staff[]
+  teams             Team[]
+
+  @@map("BusinessClient")
+}
+
+// ─── ClientContacts ───────────────────────────────────────────────────────────
+model ClientContacts {
+  id                  String  @id
+  clientId            String  @map("ClientId")
+  firstName           String  @map("FirstName")
+  surname             String  @map("Surname")
+  emailAddress        String? @map("EmailAddress")
+  mobileCountryCode   String? @map("MobileCountryCode")
+  mobileNumber        String? @map("MobileNumber")
+  landlineCountryCode String? @map("LandlineCountryCode")
+  landlineAreaCode    String? @map("LandlineAreaCode")
+  landlineNumber      String? @map("LandlineNumber")
+  streetAddress       String? @map("StreetAddress")
+  suburb              String? @map("Suburb")
+  city                String? @map("City")
+  state               String? @map("State")
+  country             String? @map("Country")
+  postcodeZipcode     String? @map("PostcodeZipcode")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  client BusinessClient @relation(fields: [clientId], references: [id])
+
+  @@map("ClientContacts")
+}
+
+// ─── ClientDepartment ─────────────────────────────────────────────────────────
+model ClientDepartment {
+  id       String  @id
+  clientId String  @map("ClientId")
+  name     String  @map("Name")
+  code     String? @map("Code")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  client   BusinessClient @relation(fields: [clientId], references: [id])
+  projects ClientProject[]
+  staff    ClientStaff[]
+
+  @@map("ClientDepartment")
+}
+
+// ─── ClientProject ────────────────────────────────────────────────────────────
+model ClientProject {
+  id           String    @id
+  clientId     String    @map("ClientId")
+  departmentId String?   @map("DepartmentId")
+  name         String    @map("Name")
+  code         String?   @map("Code")
+  description  String?   @map("Description")
+  startDate    DateTime? @map("StartDate") @db.Date
+  endDate      DateTime? @map("EndDate") @db.Date
+  status       String?   @map("Status")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  client     BusinessClient    @relation(fields: [clientId], references: [id])
+  department ClientDepartment? @relation(fields: [departmentId], references: [id])
+  staffs     ClientProjectStaff[]
+
+  @@map("ClientProject")
+}
+
+// ─── ClientProjectStaff ───────────────────────────────────────────────────────
+model ClientProjectStaff {
+  id              String  @id
+  clientProjectId String  @map("ClientProjectId")
+  staffId         String  @map("StaffId")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  clientProject ClientProject @relation(fields: [clientProjectId], references: [id])
+  staff         Staff         @relation(fields: [staffId], references: [id])
+
+  @@unique([clientProjectId, staffId])
+  @@index([clientProjectId, isDeleted])
+  @@index([staffId, isDeleted])
+  @@map("ClientProjectStaff")
+}
+
+// ─── ClientStaff ──────────────────────────────────────────────────────────────
+model ClientStaff {
+  id                 String    @id
+  staffId            String    @map("StaffId")
+  clientId           String    @map("ClientId")
+  clientDepartmentId String?   @map("ClientDepartmentId")
+  startDate          DateTime? @map("StartDate") @db.Date
+  endDate            DateTime? @map("EndDate") @db.Date
+  isPrimary          Boolean   @default(false) @map("IsPrimary")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  staff            Staff             @relation(fields: [staffId], references: [id])
+  client           BusinessClient    @relation(fields: [clientId], references: [id])
+  clientDepartment ClientDepartment? @relation(fields: [clientDepartmentId], references: [id])
+
+  @@unique([staffId, clientId])
+  @@index([staffId, isDeleted])    // lookup a staff's assigned clients
+  @@index([clientId, isDeleted])   // lookup a client's assigned staff
+  @@map("ClientStaff")
+}
+
+// ─── StatusDefinition ─────────────────────────────────────────────────────────
+model StatusDefinition {
+  id          String  @id
+  name        String  @map("Name")
+  displayName String? @map("DisplayName")
+  colorHex    String? @map("ColorHex")
+  iconId      String? @map("IconId")
+
+  // Scope (optional — null = system-wide)
+  companyId String? @map("CompanyId")
+  officeId  String? @map("OfficeId")
+  clientId  String? @map("ClientId")
+  teamId    String? @map("TeamId")
+  scopeType String? @map("ScopeType") // "Client" | "System"
+
+  // Status flags
+  isLoginStatus      Boolean @default(false) @map("IsLoginStatus")
+  isLogoutStatus     Boolean @default(false) @map("IsLogoutStatus")
+  isWorkingInStatus  Boolean @default(false) @map("IsWorkingInStatus")
+  isWorkingOutStatus Boolean @default(false) @map("IsWorkingOutStatus")
+  isBreak            Boolean @default(false) @map("IsBreak")
+  isAbsent           Boolean @default(false) @map("IsAbsent")
+  isIdleStatus       Boolean @default(false) @map("IsIdleStatus")
+  isNormalDayOff     Boolean @default(false) @map("IsNormalDayOff")
+  isHalfDayOff       Boolean @default(false) @map("IsHalfDayOff")
+  isPaid             Boolean @default(false) @map("IsPaid")
+  maxDurationSeconds Int?    @map("MaxDurationSeconds")
+  description        String? @map("Description")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  company       Company?        @relation(fields: [companyId], references: [id])
+  office        Office?         @relation(fields: [officeId], references: [id])
+  client        BusinessClient? @relation(fields: [clientId], references: [id])
+  team          Team?           @relation(fields: [teamId], references: [id])
+  timeTrackings TimeTracking[]
+
+  @@map("StatusDefinition")
+}
+
+// ─── TimeTracking ─────────────────────────────────────────────────────────────
+model TimeTracking {
+  id               String    @id
+  staffId          String    @map("StaffId")
+  statusId         String    @map("StatusId")
+  startTime        DateTime  @map("StartTime") @db.Timestamptz
+  endTime          DateTime? @map("EndTime") @db.Timestamptz
+  durationSeconds  Int?      @map("DurationSeconds")
+  shiftStartTime   String?   @map("ShiftStartTime")
+  shiftEndTime     String?   @map("ShiftEndTime")
+  maxBreakSeconds  Int?      @map("MaxBreakSeconds")
+  timezone         String?   @map("Timezone")
+  ipAddress        String?   @map("IpAddress")
+  userAgent        String?   @map("UserAgent")
+  notes            String?   @map("Notes")
+  debugInfo        String?   @map("DebugInfo")
+  isLoginStatus    Boolean   @default(false) @map("IsLoginStatus")
+  isSuperseded     Boolean   @default(false) @map("IsSuperseded")
+  clientStartTime  DateTime? @map("ClientStartTime") @db.Timestamptz
+  clientEndTime    DateTime? @map("ClientEndTime") @db.Timestamptz
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  staff  Staff            @relation(fields: [staffId], references: [id])
+  status StatusDefinition @relation(fields: [statusId], references: [id])
+
+  // Performance indexes
+  @@index([staffId, endTime, isDeleted])              // closeOpenRecord / changeStatus / createLoginTimeTracking: find open row per staff
+  @@index([staffId, startTime])                       // getTodayAttendance + getHistory ordering
+  @@index([endTime, isDeleted])                       // autoLogout cron: find all open records
+  @@index([staffId, isLoginStatus, endTime, isDeleted]) // hasLogin check (late-arrival cron): did staff log in today?
+  @@map("TimeTracking")
+}
+
+// ─── VIBEIconSet ─────────────────────────────────────────────────────────────
+model VIBEIconSet {
+  id          String  @id @map("VIBEIconSetID")
+  setName     String  @map("SetName")
+  description String? @map("Description")
+  isActive    Boolean @default(false) @map("IsActive")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  icons VIBEIcons[]
+
+  @@map("VIBEIconSet")
+}
+
+// ─── VIBEIcons ────────────────────────────────────────────────────────────────
+model VIBEIcons {
+  id             String  @id
+  vibeIconSetId  String? @map("VIBEIconSetID")
+  name           String  @map("Name")
+  hoverText      String? @map("HoverText")
+  iconText       String? @map("IconText")
+  category       String? @map("Category")
+  iconUrl        String? @map("IconUrl")
+  emojiCode      String? @map("EmojiCode")
+  description    String? @map("Description")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  vibeIconSet VIBEIconSet? @relation(fields: [vibeIconSetId], references: [id])
+  moodLogs    MoodLog[]
+
+  @@index([vibeIconSetId, isDeleted, isDisabled])
+  @@map("VIBEIcons")
+}
+
+// ─── MoodLog ──────────────────────────────────────────────────────────────────
+model MoodLog {
+  id           String    @id
+  staffId      String    @map("StaffId")
+  vibeIconId   String    @map("VibeIconId")
+  vibeIconText String?   @map("VIBEIconText")  // snapshot of iconText ?? name at log time
+  vibeIconEmoji String?  @map("VIBEIconEmoji") // snapshot of emojiCode at log time
+  vibeIconUrl  String?   @map("VIBEIconUrl")   // snapshot of iconUrl at log time
+  loggedAt     DateTime  @default(now()) @map("LoggedAt") @db.Timestamptz
+  moodScore    Int?      @map("MoodScore")
+  comment      String?   @map("Comment")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  staff    Staff     @relation(fields: [staffId], references: [id])
+  vibeIcon VIBEIcons @relation(fields: [vibeIconId], references: [id])
+
+  @@index([staffId, loggedAt(sort: Desc)]) // mood history per staff
+  @@map("MoodLog")
+}
+
+// ─── SystemSetting ────────────────────────────────────────────────────────────
+model SystemSetting {
+  key          String   @id @map("Key")
+  value        String   @map("Value")
+  description  String?  @map("Description")
+  category     String?  @map("Category")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  @@map("SystemSetting")
+}
+
+// ─── EmailProviderConfig ──────────────────────────────────────────────────────
+model EmailProviderConfig {
+  id          String   @id @map("Id")
+  name        String   @map("Name")         // User-defined label e.g. "Gmail Corp"
+  provider    String   @map("Provider")     // smtp | sendgrid | mailgun | resend
+  config      String   @map("Config")       // JSON: provider-specific credentials
+  fromName    String   @default("VIBE365") @map("FromName")
+  fromEmail   String   @map("FromEmail")
+  isActive    Boolean  @default(false) @map("IsActive")
+
+  // Standard columns
+  note         String?  @map("Note")
+  isDeleted    Boolean  @default(false) @map("IsDeleted")
+  isDisabled   Boolean  @default(false) @map("IsDisabled")
+  orderNo      Int      @default(0) @map("OrderNo")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?  @map("Log_CreatedBy")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  @@map("EmailProviderConfig")
+}
+
+// ─── AuditLog ─────────────────────────────────────────────────────────────────
+model AuditLog {
+  id        String   @id
+  action    String   @map("Action")
+  entity    String   @map("Entity")
+  entityId  String   @map("EntityId")
+  actorId   String?  @map("ActorId")
+  actorName String?  @map("ActorName")
+  changes   String?  @map("Changes")
+  ipAddress String?  @map("IpAddress")
+  createdAt DateTime @default(now()) @map("CreatedAt") @db.Timestamptz
+
+  @@index([createdAt(sort: Desc)])               // default sort for log listing
+  @@index([actorId, createdAt(sort: Desc)])       // filter by actor
+  @@index([entity, action, createdAt(sort: Desc)]) // filter by entity/action
+  @@map("AuditLog")
+}
+
+// ─── PasswordResetOtp ─────────────────────────────────────────────────────────
+model PasswordResetOtp {
+  id        String   @id
+  email     String   @map("Email")
+  otp       String   @map("Otp")
+  expiresAt DateTime @map("ExpiresAt") @db.Timestamptz
+  isUsed    Boolean  @default(false) @map("IsUsed")
+  createdAt DateTime @default(now()) @map("CreatedAt") @db.Timestamptz
+
+  @@map("PasswordResetOtp")
+}
+
+// ─── RefreshTokenBlacklist ────────────────────────────────────────────────────
+model RefreshTokenBlacklist {
+  jti       String   @id @map("Jti")
+  expiresAt DateTime @map("ExpiresAt") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("CreatedAt") @db.Timestamptz
+
+  @@map("RefreshTokenBlacklist")
+}
+
+// ─── ErrorLog ─────────────────────────────────────────────────────────────────
+model ErrorLog {
+  id         String   @id
+  source     String   @map("Source")      // 'BACKEND' | 'FRONTEND'
+  statusCode Int?     @map("StatusCode")
+  method     String?  @map("Method")
+  url        String?  @map("Url")
+  message    String   @map("Message")
+  stack      String?  @map("Stack")
+  userId      String?  @map("UserId")
+  userAgent   String?  @map("UserAgent")
+  ipAddress   String?  @map("IpAddress")
+  requestBody String?  @map("RequestBody")
+  createdAt   DateTime @default(now()) @map("CreatedAt") @db.Timestamptz
+
+  @@map("ErrorLog")
+}
+
+// ─── ApiRequestLog ────────────────────────────────────────────────────────────
+model ApiRequestLog {
+  id           String   @id
+  method       String   @map("Method")
+  url          String   @map("Url")
+  statusCode   Int      @map("StatusCode")
+  durationMs   Int      @map("DurationMs")
+  userId       String?  @map("UserId")
+  userName     String?  @map("UserName")
+  ipAddress    String?  @map("IpAddress")
+  userAgent    String?  @map("UserAgent")
+  requestBody  String?  @map("RequestBody")   // JSON string, sanitized, max 10KB
+  queryParams  String?  @map("QueryParams")   // JSON string, sanitized
+  clientInfo   String?  @map("ClientInfo")    // JSON string from X-Client-Info header (browser fingerprint)
+  createdAt    DateTime @default(now()) @map("CreatedAt") @db.Timestamptz
+
+  @@index([createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([url, method])
+  @@map("ApiRequestLog")
+}
+
+// ─── MaritalStatusConfig ──────────────────────────────────────────────────────
+model MaritalStatusConfig {
+  id          String  @id
+  name        String  @map("Name")
+  displayName String? @map("DisplayName")
+  code        String? @unique @map("Code")
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  @@map("MaritalStatusConfig")
+}
+
+// ─── EmailQueue ───────────────────────────────────────────────────────────────
+model EmailQueue {
+  id          String    @id
+  to          String    @map("To")
+  subject     String    @map("Subject")
+  bodyHtml    String    @map("BodyHtml")
+  type        String    @map("Type")             // 'otp' | 'welcome' | 'auto-logout'
+  status      String    @default("pending") @map("Status") // pending | sending | sent | failed
+  retryCount  Int       @default(0) @map("RetryCount")
+  lastError   String?   @map("LastError")
+  sentAt      DateTime? @map("SentAt") @db.Timestamptz
+  scheduledAt DateTime  @default(now()) @map("ScheduledAt") @db.Timestamptz
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  @@index([status, isDeleted, scheduledAt])
+  @@map("EmailQueue")
+}
+
+// ─── OtpRateLimit ─────────────────────────────────────────────────────────────
+model OtpRateLimit {
+  id            String   @id
+  email         String   @unique @map("Email")
+  dailyCount    Int      @default(0) @map("DailyCount")
+  dailyDate     DateTime @map("DailyDate") @db.Date         // UTC date
+  lastRequestAt DateTime @map("LastRequestAt") @db.Timestamptz
+
+  // Standard columns
+  note         String?   @map("Note")
+  isDeleted    Boolean   @default(false) @map("IsDeleted")
+  isDisabled   Boolean   @default(false) @map("IsDisabled")
+  orderNo      Int       @default(0) @map("OrderNo")
+  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?   @map("Log_CreatedBy")
+  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?   @map("Log_UpdatedBy")
+
+  @@map("OtpRateLimit")
+}
+
+// ─── Auth2FASecret ────────────────────────────────────────────────────────────
+model Auth2FASecret {
+  id          String   @id
+  userId      String   @unique @map("UserId")
+  secret      String   @map("Secret")       // Base32 TOTP secret
+  backupCodes String   @map("BackupCodes")  // JSON array of one-time recovery codes
+  createdAt   DateTime @default(now()) @map("CreatedAt") @db.Timestamptz
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+
+  userLogin UserLogin @relation(fields: [userId], references: [id])
+
+  @@map("Auth2FASecret")
+}
+
+// ─── StaffAuthenticator ───────────────────────────────────────────────────────
+model StaffAuthenticator {
+  id        String  @id
+  staffId   String  @map("StaffId")
+  code      String  @map("Code")       // "Google" | "Email"
+  name      String  @map("Name")       // "Google OTP" | "Email OTP"
+  isEnable  Boolean @default(false) @map("IsEnable")
+  recipient String? @map("Recipient")  // email address for OTP delivery
+
+  // Standard columns
+  note         String?  @map("Note")
+  isDeleted    Boolean  @default(false) @map("IsDeleted")
+  isDisabled   Boolean  @default(false) @map("IsDisabled")
+  orderNo      Int      @default(0) @map("OrderNo")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?  @map("Log_CreatedBy")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  staff Staff @relation(fields: [staffId], references: [id])
+
+  @@unique([staffId, code])
+  @@index([staffId, isDeleted])
+  @@map("StaffAuthenticator")
+}
+
+// ─── LoginOtp ─────────────────────────────────────────────────────────────────
+model LoginOtp {
+  id        String   @id
+  userId    String   @map("UserId")
+  otp       String   @map("Otp")
+  expiresAt DateTime @map("ExpiresAt") @db.Timestamptz
+  isUsed    Boolean  @default(false) @map("IsUsed")
+  createdAt DateTime @default(now()) @map("CreatedAt") @db.Timestamptz
+
+  userLogin UserLogin @relation(fields: [userId], references: [id])
+
+  @@index([userId, isUsed])
+  @@map("LoginOtp")
+}
