@@ -7,20 +7,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Dependencies
-**/node_modules/
-
-# Build artifacts (any workspace)
-**/dist/
-**/.next/
-**/dist-ssr/
+node_modules
+dist
+dist-ssr
 *.local
-
-# DEV monorepo build outputs — Railway always builds from source
-DEV/apps/api/public/
-DEV/apps/web/dist/
-DEV/apps/api/uploads/
-DEV/apps/api/tsconfig.tsbuildinfo
 
 # Editor
 .vscode/*
@@ -41,6 +31,10 @@ storybook-static
 .env.*
 !.env.example
 
+# Build artifacts — Railway always builds from source
+apps/api/public/
+apps/web/dist/
+
 # Test artifacts
 verification_screenshots/
 verification_results_real_api.json
@@ -52,10 +46,10 @@ fixtures/.auth-state.json
 .claude/settings.local.json
 .claude/settings.json
 .agents/
-**/repomix-output.xml
-**/test.js
+apps/api/tsconfig.tsbuildinfo
+repomix-output.xml
+test.js
 .code-review-graph/
 
-# Excel temp files
-~$*.xlsx
-~$*.xls
+# Uploads (local file uploads in dev)
+apps/api/uploads/
