@@ -11,22 +11,26 @@ Source code lives in `./DEV/`. The framework was bootstrapped from Vibe365 (HR s
 ## Layout
 
 ```
-HV-QuyTrinhDuyetHoSo/
-├── From Clients/                    # Client deliverables (UI specs)
-│   └── Giao diện web tờ trình.xlsx  # UI specification — read before planning UI work
-├── DEV/                             # Monorepo source (pnpm workspace)
+HV-QuyTrinhDuyetHoSo/                # git root (branch: dev → HV-QLHoSo.git)
+├── BA/                              # Business analysis docs (open-questions, requirements, techstack)
+├── DEV/                             # ★ NEW REAL CODE — pnpm monorepo
 │   ├── apps/api/                    # NestJS 10 backend (port 3028)
 │   ├── apps/web/                    # React 18 + Vite frontend (port 5418)
 │   ├── packages/shared/             # Shared types/Zod schemas
 │   ├── principles/                  # Coding/api/security/git/testing/ui-ux/bugs guidelines
-│   ├── prisma schema, railway.toml, etc.
+│   ├── prisma schema, railway.toml, .env, etc.
 │   ├── CLAUDE.md                    # DEV-specific guidance
 │   ├── Readme.md                    # Setup & dev guide
 │   └── BUSINESS_MODULES.md          # What's HR-specific vs framework
-├── docs/                            # Project docs (PDR, architecture, deployment)
-├── mockup/                          # Existing Next.js mockup (separate, ignore for code)
+├── docs/                            # Project docs (PDR, architecture, deployment, ba-review)
+├── From Clients/                    # Client deliverables
+│   └── Giao diện web tờ trình.xlsx  # UI specification — read before planning UI work
+├── mockup/                          # Next.js prototype — REFERENCE ONLY for UI work done
+│                                    # by another collaborator. Do NOT edit. Do NOT use as base.
 └── CLAUDE.md                        # This file
 ```
+
+**Real code lives in `DEV/`.** `mockup/` is kept as a UI reference (a colleague's earlier Next.js prototype) — read it for screen/flow inspiration, but new implementation goes into `DEV/apps/web/` using the React + Vite stack.
 
 ## Tech Stack
 
