@@ -5,13 +5,13 @@ import { AuditLogPage } from './AuditLogPage';
 import { ApiLogPage } from './ApiLogPage';
 import { ErrorLogPage } from './ErrorLogPage';
 import { DebugLogPage } from './DebugLogPage';
+import { TeamHistoryPage } from '@/pages/attendance/TeamHistoryPage';
 
 const BASE_TABS = ['audit', 'api'] as const;
-const ALL_TABS = ['audit', 'api', 'exception', 'debug'] as const;
+const ALL_TABS = ['audit', 'api', 'exception', 'debug', 'login-log'] as const;
 type LogTab = (typeof ALL_TABS)[number];
 
-function isValidTab(t: string | null, isSuperAdmin: boolean): t is LogTab {
-  const allowed: readonly string[] = isSuperAdmin ? ALL_TABS : BASE_TABS;
+function isValidTab(t: string | null, allowed: readonly string[]): t is LogTab {
   return allowed.includes(t ?? '');
 }
 
@@ -19,9 +19,16 @@ export function LogsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuthStore();
   const isSuperAdmin = user?.roles?.includes('SUPER_ADMIN') ?? false;
+  const canSeeLoginLog = user?.roles?.some(r => ['MANAGER', 'HR_ADMIN', 'SUPER_ADMIN'].includes(r)) ?? false;
+
+  const allowedTabs: string[] = [
+    ...BASE_TABS,
+    ...(isSuperAdmin ? ['exception', 'debug'] : []),
+    ...(canSeeLoginLog ? ['login-log'] : []),
+  ];
 
   const rawTab = searchParams.get('tab');
-  const activeTab: LogTab = isValidTab(rawTab, isSuperAdmin) ? rawTab : 'audit';
+  const activeTab: LogTab = isValidTab(rawTab, allowedTabs) ? rawTab : 'audit';
 
   function handleTabChange(value: string) {
     setSearchParams({ tab: value }, { replace: true });
@@ -40,6 +47,7 @@ export function LogsPage() {
           <TabsTrigger value="api">API Log</TabsTrigger>
           {isSuperAdmin && <TabsTrigger value="exception">Exception Log</TabsTrigger>}
           {isSuperAdmin && <TabsTrigger value="debug">Debug</TabsTrigger>}
+          {canSeeLoginLog && <TabsTrigger value="login-log">Login Log</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="audit" className="pt-4">
@@ -56,6 +64,11 @@ export function LogsPage() {
         {isSuperAdmin && (
           <TabsContent value="debug" className="pt-4">
             <DebugLogPage />
+          </TabsContent>
+        )}
+        {canSeeLoginLog && (
+          <TabsContent value="login-log" className="pt-4">
+            <TeamHistoryPage />
           </TabsContent>
         )}
       </Tabs>

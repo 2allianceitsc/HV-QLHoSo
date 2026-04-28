@@ -61,11 +61,6 @@ export function TeamHistoryPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Team Attendance</h1>
-        <p className="text-sm text-muted-foreground">View your team's attendance records</p>
-      </div>
-
       {/* Filters */}
       <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-end gap-3 rounded-xl border bg-card p-4 shadow-sm">
         <StaffPickerButton
