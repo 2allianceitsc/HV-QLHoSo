@@ -5,7 +5,7 @@ import { UpdateSettingDto } from './dto/setting.dto';
 const DEFAULT_SETTINGS = [
   {
     key: 'company_name',
-    value: 'VIBE365',
+    value: 'HVFlow',
     description: 'Company display name',
     category: 'general',
   },
@@ -52,12 +52,18 @@ const DEFAULT_SETTINGS = [
     category: 'security',
   },
   {
+    key: 'throttle_auth_limit',
+    value: '20',
+    description: 'Max login/auth attempts per minute per IP',
+    category: 'security',
+  },
+  {
     key: 'storage.r2',
     value: JSON.stringify({
       accountId: '',
       accessKeyId: '',
       secretAccessKey: '',
-      bucket: 'vibe365',
+      bucket: 'hvflow',
       publicUrl: '',
     }),
     description: 'Cloudflare R2 storage config (JSON): accountId, accessKeyId, secretAccessKey, bucket, publicUrl',

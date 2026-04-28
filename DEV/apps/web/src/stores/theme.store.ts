@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 export type Theme = 'light' | 'dark' | 'vibe';
 
-const STORAGE_KEY = 'vibe365-theme';
+const STORAGE_KEY = 'hvflow-theme';
 
 // Cycle order: light → dark → vibe → light
 const CYCLE: Theme[] = ['light', 'dark', 'vibe'];

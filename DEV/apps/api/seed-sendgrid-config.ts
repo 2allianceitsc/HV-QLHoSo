@@ -15,7 +15,7 @@ const TEST_TO = 'khanhtl@allianceitsc.com';
 const CONFIG = {
   name:      'SendGrid (Alliance ITSC)',
   provider:  'sendgrid',
-  fromName:  'VIBE365',
+  fromName:  'HVFlow',
   fromEmail: 'admin@allianceitsc.com',
   config: JSON.stringify({ apiKey: SG_API_KEY }),
 };
@@ -58,11 +58,11 @@ async function main() {
   await sgMail.send({
     from:    { name: CONFIG.fromName, email: CONFIG.fromEmail },
     to:      TEST_TO,
-    subject: '[VIBE365] Test email — SendGrid',
+    subject: '[HVFlow] Test email — SendGrid',
     html: `
       <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px">
         <h2 style="color:#111">✅ SendGrid test successful</h2>
-        <p style="color:#444">This is a test email from <strong>VIBE365</strong> via SendGrid.</p>
+        <p style="color:#444">This is a test email from <strong>HVFlow</strong> via SendGrid.</p>
         <hr style="border:none;border-top:1px solid #eee;margin:16px 0"/>
         <table style="font-size:13px;color:#666;width:100%">
           <tr><td style="padding:4px 0"><b>Config</b></td><td>${CONFIG.name}</td></tr>

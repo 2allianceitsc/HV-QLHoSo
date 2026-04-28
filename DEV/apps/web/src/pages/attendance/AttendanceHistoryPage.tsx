@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { formatDateTime } from '@/lib/dateFormat';
-import { useAttendanceHistory, useStatuses } from '@/hooks/useAttendance';
+import { useAttendanceHistory } from '@/hooks/useAttendance';
 import { Button } from '@/components/ui/button';
 import { DateRangePresetPicker, useFilterState } from '@/components/filters';
-import { StatusSelect } from '@/components/status/StatusSelect';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { OverbreakBadge, calcOverbreakSeconds } from '@/components/attendance/OverbreakBadge';
 import { getSingleStaffAttendanceEndDisplay } from '@/lib/attendanceEndStatus';
@@ -20,26 +19,24 @@ function formatDuration(seconds: number | null | undefined): string {
   return `${s}s`;
 }
 
-type AttendanceHistoryFilter = { startDate: string; endDate: string; statusId: string } & Record<string, unknown>;
-const DEFAULT_FILTER: AttendanceHistoryFilter = { startDate: '', endDate: '', statusId: '' };
+type AttendanceHistoryFilter = { startDate: string; endDate: string } & Record<string, unknown>;
+const DEFAULT_FILTER: AttendanceHistoryFilter = { startDate: '', endDate: '' };
 
 export function AttendanceHistoryPage() {
   const { user } = useAuthStore();
   const isSuperAdmin = user?.roles?.includes('SUPER_ADMIN') ?? false;
   const [page, setPage] = useState(1);
   const [filter, setFilter, resetFilter] = useFilterState<AttendanceHistoryFilter>({
-    key: 'vibe365.attendance-history.filter',
+    key: 'hvflow.attendance-history.filter',
     defaultValue: DEFAULT_FILTER,
     mode: 'localStorage',
   });
 
-  const { data: statusesData = [] } = useStatuses();
   const { data, isLoading } = useAttendanceHistory({
     page,
     limit: 20,
     startDate: filter.startDate || undefined,
     endDate: filter.endDate || undefined,
-    statusId: filter.statusId || undefined,
     clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
 
@@ -71,17 +68,6 @@ export function AttendanceHistoryPage() {
             updateFilter({ startDate: nextStartDate ?? '', endDate: nextEndDate ?? '' })
           }
           className="w-full sm:w-[20rem]"
-        />
-        <StatusSelect
-          label="Status"
-          value={filter.statusId}
-          options={statusesData}
-          placeholder="Choose a status to filter"
-          emptyLabel="All statuses"
-          onValueChange={(nextValue) => updateFilter({ statusId: nextValue })}
-          className="w-full sm:w-[18rem]"
-          triggerClassName="w-full"
-          testId="attendance-history-status-filter"
         />
         <Button variant="outline" onClick={handleReset} className="h-10">Reset</Button>
       </div>

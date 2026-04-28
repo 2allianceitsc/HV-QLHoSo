@@ -14,7 +14,6 @@ import { LogoutAttendanceDto } from './dto/logout-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { uuidv7 } from 'uuidv7';
 import { NotificationsService } from '../notifications/notifications.service';
-import { StatusService } from '../status/status.service';
 import { EmailJobService } from '../email/email-job.service';
 import { DEFAULT_AUTO_LOGOUT_TEMPLATE } from '../email/email-default-templates';
 import { toUtcDateRange } from '../common/utils/date-range';
@@ -42,7 +41,6 @@ export class AttendanceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
-    private readonly statusService: StatusService,
     private readonly emailJobService: EmailJobService,
     private readonly debugService: DebugService,
   ) {}
@@ -94,27 +92,9 @@ export class AttendanceService {
     };
   }
 
-  private async resolveLogoutStatusId(staffId: string, companyId: string): Promise<string | null> {
-    // 1. Scoped override (team/office/client/company) if any.
-    const scopedStatuses = await this.statusService.getStatusesForUser(staffId);
-    const scopedLogoutStatus = scopedStatuses.find((status) => status.isLogoutStatus);
-    if (scopedLogoutStatus) return scopedLogoutStatus.id;
-
-    // 2. Company-scoped OR global (CompanyId IS NULL). Prefer company-scoped.
-    //    See docs/flows/F04-global-login-logout.md — post-migration only the
-    //    global row exists, but the OR keeps future per-company overrides usable.
-    const logoutStatus = await this.prisma.statusDefinition.findFirst({
-      where: {
-        isLogoutStatus: true,
-        isDeleted: false,
-        isDisabled: false,
-        OR: [{ companyId }, { companyId: null }],
-      },
-      orderBy: [{ companyId: 'desc' }, { orderNo: 'asc' }],
-      select: { id: true },
-    });
-
-    return logoutStatus?.id ?? null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async resolveLogoutStatusId(_staffId: string, _companyId: string): Promise<string | null> {
+    return null;
   }
 
   private async queueAutoLogoutEmail(
@@ -135,7 +115,7 @@ export class AttendanceService {
       data: {
         id: uuidv7(),
         to: email,
-        subject: 'VIBE365 - You have been automatically logged out',
+        subject: 'HVFlow - You have been automatically logged out',
         bodyHtml: html,
         type: 'auto-logout',
         logCreatedBy: 'system',
@@ -179,16 +159,6 @@ export class AttendanceService {
   ) {
     const t0 = Date.now();
     const now = new Date();
-
-    // Step 0: Validate statusId is in employee's allowed scope (E201)
-    const availableStatuses = await this.statusService.getStatusesForUser(staffId);
-    const isAllowed = availableStatuses.some((s) => s.id === dto.statusId);
-    if (!isAllowed) {
-      throw new ForbiddenException({
-        code: 'E201',
-        message: 'This status is not available for your current assignment',
-      });
-    }
 
     // Step 0.5: Manual status-change cooldown (E205)
     // minStatusChangeGraceMs absorbs clock-skew so a click that arrives slightly early

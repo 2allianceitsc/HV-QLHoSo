@@ -98,7 +98,7 @@ function toApiFilter(f: ApiLogDraft, page: number): IApiLogFilter {
 export function ApiLogPage() {
   const [page, setPage] = useState(1);
   const { draft, setDraft, committed, commit, reset } = useCommittedFilter<ApiLogDraft>({
-    key: 'vibe365.api-log.filter',
+    key: 'hvflow.api-log.filter',
     defaultValue: DEFAULT_INPUTS,
     mode: 'localStorage',
   });

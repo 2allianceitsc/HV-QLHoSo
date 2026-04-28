@@ -504,7 +504,7 @@ export function AttendanceReportPage() {
   const [page, setPage] = useState(1);
   const [filterValue, setFilterValue] = useState<ReportFilterValue>(defaultReportFilter);
 
-  const [sharedFilter, setSharedFilter] = usePersistentState<AttendanceSharedFilter>('vibe365.attendance.subfilter', getDefaultSharedFilter());
+  const [sharedFilter, setSharedFilter] = usePersistentState<AttendanceSharedFilter>('hvflow.attendance.subfilter', getDefaultSharedFilter());
 
   const summaryParams = toAttendanceParams(filterValue);
   const { data, isLoading } = useAttendanceReport({ ...summaryParams, page, limit: 20 });

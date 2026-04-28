@@ -28,7 +28,7 @@ const R2_FIELDS: { key: keyof R2Config; label: string; placeholder: string; secr
   { key: 'accountId',        label: 'Account ID',        placeholder: 'a0d87bc2...' },
   { key: 'accessKeyId',      label: 'Access Key ID',     placeholder: '69a97850...' },
   { key: 'secretAccessKey',  label: 'Secret Access Key', placeholder: '••••••••', secret: true },
-  { key: 'bucket',           label: 'Bucket Name',       placeholder: 'vibe365' },
+  { key: 'bucket',           label: 'Bucket Name',       placeholder: 'hvflow' },
   { key: 'publicUrl',        label: 'Public URL',        placeholder: 'https://pub-xxx.r2.dev' },
 ];
 
@@ -314,8 +314,8 @@ function SettingsInnerPage({ allowedCategories, hideCategoriesSidebar }: { allow
   const queryClient = useQueryClient();
 
   const [localValues, setLocalValues] = useState<Record<string, string>>({});
-  const [selectedCategory, setSelectedCategory] = usePersistentState<string>('vibe365.system-settings.category', '');
-  const [searchTerm, setSearchTerm] = usePersistentState<string>('vibe365.system-settings.search', '');
+  const [selectedCategory, setSelectedCategory] = usePersistentState<string>('hvflow.system-settings.category', '');
+  const [searchTerm, setSearchTerm] = usePersistentState<string>('hvflow.system-settings.search', '');
 
   const categoryEntries = useMemo(() => {
     if (!grouped) return [] as Array<[string, ISystemSetting[]]>;

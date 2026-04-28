@@ -59,15 +59,15 @@ describe('useCommittedFilter', () => {
 
   it('draft boots from localStorage-restored committed value', () => {
     const savedFilter = { search: 'admin', action: 'CREATE' };
-    localStorage.setItem('vibe365-test-ls', JSON.stringify(savedFilter));
+    localStorage.setItem('hvflow-test-ls', JSON.stringify(savedFilter));
     const { result } = renderHook(
-      () => useCommittedFilter({ key: 'vibe365-test-ls', defaultValue: DEFAULT, mode: 'localStorage' }),
+      () => useCommittedFilter({ key: 'hvflow-test-ls', defaultValue: DEFAULT, mode: 'localStorage' }),
       { wrapper },
     );
     // draft and committed should both reflect the persisted value
     expect(result.current.draft).toEqual(savedFilter);
     expect(result.current.committed).toEqual(savedFilter);
-    localStorage.removeItem('vibe365-test-ls');
+    localStorage.removeItem('hvflow-test-ls');
   });
 
   it('reset restores both draft and committed to default', () => {

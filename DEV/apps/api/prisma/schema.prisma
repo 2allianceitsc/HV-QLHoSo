@@ -73,7 +73,6 @@ model Company {
   positions         Position[]
   teams             Team[]
   staff             Staff[]
-  statusDefinitions StatusDefinition[]
   dropdownDisplayConfigs DropdownDisplayConfig[]
   managers          CompanyManager[]
 
@@ -192,7 +191,6 @@ model Office {
 
   company           Company            @relation(fields: [companyId], references: [id])
   staff             Staff[]
-  statusDefinitions StatusDefinition[]
   managers          OfficeManager[]
 
   @@map("Office")
@@ -230,7 +228,6 @@ model Team {
   companyId String  @map("CompanyId")
   name      String  @map("Name")
   code      String? @map("Code")
-  clientId  String? @map("ClientId")
   colorHex  String? @map("ColorHex")
   iconId    String? @map("IconId")
 
@@ -245,9 +242,7 @@ model Team {
   logUpdatedBy String?   @map("Log_UpdatedBy")
 
   company           Company             @relation(fields: [companyId], references: [id])
-  client            BusinessClient?     @relation(fields: [clientId], references: [id])
   staff             Staff[]
-  statusDefinitions StatusDefinition[]
   managers          TeamManager[]       @relation("TeamManagers")
 
   @@map("Team")
@@ -361,7 +356,6 @@ model Staff {
   officeId             String?   @map("OfficeId")
   positionId           String?   @map("PositionId")
   teamId               String?   @map("TeamId")
-  clientId             String?   @map("ClientId")
 
   firstName            String    @map("FirstName")
   middleName           String?   @map("MiddleName")
@@ -429,13 +423,10 @@ model Staff {
   office       Office?       @relation(fields: [officeId], references: [id])
   position     Position?     @relation(fields: [positionId], references: [id])
   team         Team?         @relation(fields: [teamId], references: [id])
-  client       BusinessClient? @relation(fields: [clientId], references: [id])
 
   staffRoles    StaffRole[]
   timeTrackings TimeTracking[]
   moodLogs      MoodLog[]
-  clientStaff        ClientStaff[]
-  clientProjectStaff ClientProjectStaff[]
   notifications Notification[]
   staffAuthenticators StaffAuthenticator[]
   companyManagerRoles    CompanyManager[]    @relation("CompanyManagers")
@@ -644,235 +635,6 @@ model RolePermission {
   @@map("RolePermission")
 }
 
-// ─── BusinessClient ───────────────────────────────────────────────────────────
-model BusinessClient {
-  id               String  @id
-  name             String  @map("Name")
-  code             String? @unique @map("Code")
-  address          String? @map("Address")
-  phone            String? @map("Phone")
-  email            String? @map("Email")
-  website          String? @map("Website")
-  logoUrl          String? @map("LogoUrl")
-  industry         String? @map("Industry")
-  colorHex         String? @map("ColorHex")
-  iconId           String? @map("IconId")
-  timezone         String? @map("Timezone")
-  country          String? @map("Country")
-  defaultStartTime String? @map("DefaultStartTime")
-  defaultEndTime   String? @map("DefaultEndTime")
-
-  // Standard columns
-  note         String?   @map("Note")
-  isDeleted    Boolean   @default(false) @map("IsDeleted")
-  isDisabled   Boolean   @default(false) @map("IsDisabled")
-  orderNo      Int       @default(0) @map("OrderNo")
-  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
-  logCreatedBy String?   @map("Log_CreatedBy")
-  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
-  logUpdatedBy String?   @map("Log_UpdatedBy")
-
-  contacts          ClientContacts[]
-  departments       ClientDepartment[]
-  projects          ClientProject[]
-  clientStaff       ClientStaff[]
-  statusDefinitions StatusDefinition[]
-  staff             Staff[]
-  teams             Team[]
-
-  @@map("BusinessClient")
-}
-
-// ─── ClientContacts ───────────────────────────────────────────────────────────
-model ClientContacts {
-  id                  String  @id
-  clientId            String  @map("ClientId")
-  firstName           String  @map("FirstName")
-  surname             String  @map("Surname")
-  emailAddress        String? @map("EmailAddress")
-  mobileCountryCode   String? @map("MobileCountryCode")
-  mobileNumber        String? @map("MobileNumber")
-  landlineCountryCode String? @map("LandlineCountryCode")
-  landlineAreaCode    String? @map("LandlineAreaCode")
-  landlineNumber      String? @map("LandlineNumber")
-  streetAddress       String? @map("StreetAddress")
-  suburb              String? @map("Suburb")
-  city                String? @map("City")
-  state               String? @map("State")
-  country             String? @map("Country")
-  postcodeZipcode     String? @map("PostcodeZipcode")
-
-  // Standard columns
-  note         String?   @map("Note")
-  isDeleted    Boolean   @default(false) @map("IsDeleted")
-  isDisabled   Boolean   @default(false) @map("IsDisabled")
-  orderNo      Int       @default(0) @map("OrderNo")
-  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
-  logCreatedBy String?   @map("Log_CreatedBy")
-  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
-  logUpdatedBy String?   @map("Log_UpdatedBy")
-
-  client BusinessClient @relation(fields: [clientId], references: [id])
-
-  @@map("ClientContacts")
-}
-
-// ─── ClientDepartment ─────────────────────────────────────────────────────────
-model ClientDepartment {
-  id       String  @id
-  clientId String  @map("ClientId")
-  name     String  @map("Name")
-  code     String? @map("Code")
-
-  // Standard columns
-  note         String?   @map("Note")
-  isDeleted    Boolean   @default(false) @map("IsDeleted")
-  isDisabled   Boolean   @default(false) @map("IsDisabled")
-  orderNo      Int       @default(0) @map("OrderNo")
-  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
-  logCreatedBy String?   @map("Log_CreatedBy")
-  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
-  logUpdatedBy String?   @map("Log_UpdatedBy")
-
-  client   BusinessClient @relation(fields: [clientId], references: [id])
-  projects ClientProject[]
-  staff    ClientStaff[]
-
-  @@map("ClientDepartment")
-}
-
-// ─── ClientProject ────────────────────────────────────────────────────────────
-model ClientProject {
-  id           String    @id
-  clientId     String    @map("ClientId")
-  departmentId String?   @map("DepartmentId")
-  name         String    @map("Name")
-  code         String?   @map("Code")
-  description  String?   @map("Description")
-  startDate    DateTime? @map("StartDate") @db.Date
-  endDate      DateTime? @map("EndDate") @db.Date
-  status       String?   @map("Status")
-
-  // Standard columns
-  note         String?   @map("Note")
-  isDeleted    Boolean   @default(false) @map("IsDeleted")
-  isDisabled   Boolean   @default(false) @map("IsDisabled")
-  orderNo      Int       @default(0) @map("OrderNo")
-  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
-  logCreatedBy String?   @map("Log_CreatedBy")
-  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
-  logUpdatedBy String?   @map("Log_UpdatedBy")
-
-  client     BusinessClient    @relation(fields: [clientId], references: [id])
-  department ClientDepartment? @relation(fields: [departmentId], references: [id])
-  staffs     ClientProjectStaff[]
-
-  @@map("ClientProject")
-}
-
-// ─── ClientProjectStaff ───────────────────────────────────────────────────────
-model ClientProjectStaff {
-  id              String  @id
-  clientProjectId String  @map("ClientProjectId")
-  staffId         String  @map("StaffId")
-
-  // Standard columns
-  note         String?   @map("Note")
-  isDeleted    Boolean   @default(false) @map("IsDeleted")
-  isDisabled   Boolean   @default(false) @map("IsDisabled")
-  orderNo      Int       @default(0) @map("OrderNo")
-  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
-  logCreatedBy String?   @map("Log_CreatedBy")
-  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
-  logUpdatedBy String?   @map("Log_UpdatedBy")
-
-  clientProject ClientProject @relation(fields: [clientProjectId], references: [id])
-  staff         Staff         @relation(fields: [staffId], references: [id])
-
-  @@unique([clientProjectId, staffId])
-  @@index([clientProjectId, isDeleted])
-  @@index([staffId, isDeleted])
-  @@map("ClientProjectStaff")
-}
-
-// ─── ClientStaff ──────────────────────────────────────────────────────────────
-model ClientStaff {
-  id                 String    @id
-  staffId            String    @map("StaffId")
-  clientId           String    @map("ClientId")
-  clientDepartmentId String?   @map("ClientDepartmentId")
-  startDate          DateTime? @map("StartDate") @db.Date
-  endDate            DateTime? @map("EndDate") @db.Date
-  isPrimary          Boolean   @default(false) @map("IsPrimary")
-
-  // Standard columns
-  note         String?   @map("Note")
-  isDeleted    Boolean   @default(false) @map("IsDeleted")
-  isDisabled   Boolean   @default(false) @map("IsDisabled")
-  orderNo      Int       @default(0) @map("OrderNo")
-  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
-  logCreatedBy String?   @map("Log_CreatedBy")
-  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
-  logUpdatedBy String?   @map("Log_UpdatedBy")
-
-  staff            Staff             @relation(fields: [staffId], references: [id])
-  client           BusinessClient    @relation(fields: [clientId], references: [id])
-  clientDepartment ClientDepartment? @relation(fields: [clientDepartmentId], references: [id])
-
-  @@unique([staffId, clientId])
-  @@index([staffId, isDeleted])    // lookup a staff's assigned clients
-  @@index([clientId, isDeleted])   // lookup a client's assigned staff
-  @@map("ClientStaff")
-}
-
-// ─── StatusDefinition ─────────────────────────────────────────────────────────
-model StatusDefinition {
-  id          String  @id
-  name        String  @map("Name")
-  displayName String? @map("DisplayName")
-  colorHex    String? @map("ColorHex")
-  iconId      String? @map("IconId")
-
-  // Scope (optional — null = system-wide)
-  companyId String? @map("CompanyId")
-  officeId  String? @map("OfficeId")
-  clientId  String? @map("ClientId")
-  teamId    String? @map("TeamId")
-  scopeType String? @map("ScopeType") // "Client" | "System"
-
-  // Status flags
-  isLoginStatus      Boolean @default(false) @map("IsLoginStatus")
-  isLogoutStatus     Boolean @default(false) @map("IsLogoutStatus")
-  isWorkingInStatus  Boolean @default(false) @map("IsWorkingInStatus")
-  isWorkingOutStatus Boolean @default(false) @map("IsWorkingOutStatus")
-  isBreak            Boolean @default(false) @map("IsBreak")
-  isAbsent           Boolean @default(false) @map("IsAbsent")
-  isIdleStatus       Boolean @default(false) @map("IsIdleStatus")
-  isNormalDayOff     Boolean @default(false) @map("IsNormalDayOff")
-  isHalfDayOff       Boolean @default(false) @map("IsHalfDayOff")
-  isPaid             Boolean @default(false) @map("IsPaid")
-  maxDurationSeconds Int?    @map("MaxDurationSeconds")
-  description        String? @map("Description")
-
-  // Standard columns
-  note         String?   @map("Note")
-  isDeleted    Boolean   @default(false) @map("IsDeleted")
-  isDisabled   Boolean   @default(false) @map("IsDisabled")
-  orderNo      Int       @default(0) @map("OrderNo")
-  logCreatedAt DateTime  @default(now()) @map("Log_CreatedAt") @db.Timestamptz
-  logCreatedBy String?   @map("Log_CreatedBy")
-  logUpdatedAt DateTime  @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
-  logUpdatedBy String?   @map("Log_UpdatedBy")
-
-  company       Company?        @relation(fields: [companyId], references: [id])
-  office        Office?         @relation(fields: [officeId], references: [id])
-  client        BusinessClient? @relation(fields: [clientId], references: [id])
-  team          Team?           @relation(fields: [teamId], references: [id])
-  timeTrackings TimeTracking[]
-
-  @@map("StatusDefinition")
-}
-
 // ─── TimeTracking ─────────────────────────────────────────────────────────────
 model TimeTracking {
   id               String    @id
@@ -891,8 +653,6 @@ model TimeTracking {
   debugInfo        String?   @map("DebugInfo")
   isLoginStatus    Boolean   @default(false) @map("IsLoginStatus")
   isSuperseded     Boolean   @default(false) @map("IsSuperseded")
-  clientStartTime  DateTime? @map("ClientStartTime") @db.Timestamptz
-  clientEndTime    DateTime? @map("ClientEndTime") @db.Timestamptz
 
   // Standard columns
   note         String?   @map("Note")
@@ -905,7 +665,6 @@ model TimeTracking {
   logUpdatedBy String?   @map("Log_UpdatedBy")
 
   staff  Staff            @relation(fields: [staffId], references: [id])
-  status StatusDefinition @relation(fields: [statusId], references: [id])
 
   // Performance indexes
   @@index([staffId, endTime, isDeleted])              // closeOpenRecord / changeStatus / createLoginTimeTracking: find open row per staff
@@ -1013,7 +772,7 @@ model EmailProviderConfig {
   name        String   @map("Name")         // User-defined label e.g. "Gmail Corp"
   provider    String   @map("Provider")     // smtp | sendgrid | mailgun | resend
   config      String   @map("Config")       // JSON: provider-specific credentials
-  fromName    String   @default("VIBE365") @map("FromName")
+  fromName    String   @default("HVFlow") @map("FromName")
   fromEmail   String   @map("FromEmail")
   isActive    Boolean  @default(false) @map("IsActive")
 

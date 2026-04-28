@@ -39,7 +39,7 @@ export class EmailService {
       data: {
         id: uuidv7(),
         to,
-        subject: 'VIBE365 - Your Verification Code',
+        subject: 'HVFlow - Your Verification Code',
         bodyHtml: html,
         type: 'otp',
         logCreatedBy: 'system',
@@ -54,7 +54,7 @@ export class EmailService {
   async queue2FAOtpEmail(to: string, otp: string): Promise<void> {
     const html = `<!DOCTYPE html><html lang="en"><body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0;">
 <div style="max-width:600px;margin:40px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-  <div style="background:#1a1a2e;padding:24px 32px;"><h1 style="color:#fff;margin:0;font-size:24px;">VIBE365</h1></div>
+  <div style="background:#1a1a2e;padding:24px 32px;"><h1 style="color:#fff;margin:0;font-size:24px;">HVFlow</h1></div>
   <div style="padding:32px;">
     <h2 style="color:#1a1a2e;margin:0 0 16px;">Two-Factor Authentication Code</h2>
     <p style="color:#555;">Use the code below to complete your login. It expires in <strong>10 minutes</strong>.</p>
@@ -69,7 +69,7 @@ export class EmailService {
       data: {
         id: uuidv7(),
         to,
-        subject: 'VIBE365 - Your Login Verification Code',
+        subject: 'HVFlow - Your Login Verification Code',
         bodyHtml: html,
         type: 'otp',
         logCreatedBy: 'system',
@@ -91,7 +91,7 @@ export class EmailService {
       data: {
         id: uuidv7(),
         to,
-        subject: 'Welcome to VIBE365 — Your account is ready',
+        subject: 'Welcome to HVFlow — Your account is ready',
         bodyHtml: html,
         type: 'welcome',
         logCreatedBy: 'system',
@@ -109,9 +109,9 @@ export class EmailService {
     try {
       const transporter = this.createTransporter();
       await transporter.sendMail({
-        from: `"VIBE365" <${this.configService.get<string>('SMTP_USER')}>`,
+        from: `"HVFlow" <${this.configService.get<string>('SMTP_USER')}>`,
         to,
-        subject: 'VIBE365 - You have been automatically logged out',
+        subject: 'HVFlow - You have been automatically logged out',
         html,
       });
       this.logger.log(`Auto-logout alert sent to ${to}`);

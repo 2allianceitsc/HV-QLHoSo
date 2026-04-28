@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 const CONFIG = {
   name:      'Gmail (Alliance ITSC)',
   provider:  'smtp',
-  fromName:  'VIBE365',
+  fromName:  'HVFlow',
   fromEmail: 'admin@allianceitsc.com',
   config: JSON.stringify({
     host: 'smtp.gmail.com',
@@ -76,18 +76,18 @@ async function main() {
   });
 
   await transporter.sendMail({
-    from: `"VIBE365" <admin@allianceitsc.com>`,
+    from: `"HVFlow" <admin@allianceitsc.com>`,
     to: TEST_TO,
-    subject: '[VIBE365] Test email — Gmail (Alliance ITSC)',
+    subject: '[HVFlow] Test email — Gmail (Alliance ITSC)',
     html: `
       <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px">
         <h2 style="color:#111">✅ Test email successful</h2>
-        <p style="color:#444">This is a test email from <strong>VIBE365</strong>.</p>
+        <p style="color:#444">This is a test email from <strong>HVFlow</strong>.</p>
         <hr style="border:none;border-top:1px solid #eee;margin:16px 0"/>
         <table style="font-size:13px;color:#666;width:100%">
           <tr><td style="padding:4px 0"><b>Config</b></td><td>${CONFIG.name}</td></tr>
           <tr><td style="padding:4px 0"><b>Provider</b></td><td>SMTP / Gmail</td></tr>
-          <tr><td style="padding:4px 0"><b>From</b></td><td>VIBE365 &lt;admin@allianceitsc.com&gt;</td></tr>
+          <tr><td style="padding:4px 0"><b>From</b></td><td>HVFlow &lt;admin@allianceitsc.com&gt;</td></tr>
           <tr><td style="padding:4px 0"><b>Config ID</b></td><td style="font-size:11px">${configId}</td></tr>
           <tr><td style="padding:4px 0"><b>Sent at</b></td><td>${new Date().toISOString()}</td></tr>
         </table>

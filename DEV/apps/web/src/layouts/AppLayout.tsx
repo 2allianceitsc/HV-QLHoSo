@@ -26,7 +26,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { useLogoutFlow } from '@/hooks/useLogoutFlow';
 import { FloatingWidget } from '@/components/floating-widget/FloatingWidget';
 import { ClockSkewWarningBanner } from '@/components/ClockSkewWarningBanner';
-import { NAV_GROUPS, CLIENT_NAV_GROUPS, type INavGroupConfig } from '@/config/nav.config';
+import { NAV_GROUPS, type INavGroupConfig } from '@/config/nav.config';
 import { useBrandingUrl, usePublicConfig } from '@/hooks/useSystem';
 
 interface INavItem {
@@ -66,9 +66,7 @@ function buildNavGroups(
   roles: string[],
   permissions: IUserPermissionPayload | null,
 ): INavGroup[] {
-  const source: INavGroupConfig[] = roles.includes('CLIENT') ? CLIENT_NAV_GROUPS : NAV_GROUPS;
-
-  return source
+  return NAV_GROUPS
     .filter((group) => !group.roles || group.roles.some((r) => roles.includes(r)))
     .map((group) => ({
       label: group.label,
@@ -82,7 +80,6 @@ const ROLE_PRIORITY: Record<string, number> = {
   HR_ADMIN: 3,
   MANAGER: 2,
   EMPLOYEE: 1,
-  CLIENT: 0,
 };
 
 function getHighestRole(roles: string[]): string {
@@ -105,8 +102,8 @@ function HeaderClock() {
   );
 }
 
-const COLLAPSED_GROUPS_KEY = 'vibe365-sidebar-collapsed';
-const SIDEBAR_OPEN_KEY = 'vibe365-sidebar-open';
+const COLLAPSED_GROUPS_KEY = 'hvflow-sidebar-collapsed';
+const SIDEBAR_OPEN_KEY = 'hvflow-sidebar-open';
 
 function readCollapsedGroups(): Set<number> {
   try {
@@ -229,10 +226,10 @@ export function AppLayout() {
             isSidebarOpen ? 'px-5 gap-3' : 'px-4 justify-center',
           )}
         >
-          <img src={logoUrl} alt="VIBE365" className="h-8 w-8 rounded-lg flex-shrink-0 object-contain bg-white/20" />
+          <img src={logoUrl} alt="HVFlow" className="h-8 w-8 rounded-lg flex-shrink-0 object-contain bg-white/20" />
           {isSidebarOpen && (
             <span className="font-extrabold text-[15px] text-white tracking-tight animate-fade-in">
-              VIBE365
+              HVFlow
             </span>
           )}
         </button>

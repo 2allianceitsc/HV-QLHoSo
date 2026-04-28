@@ -11,12 +11,12 @@ export const DEFAULT_OTP_TEMPLATE = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VIBE365 - Verification Code</title>
+  <title>HVFlow - Verification Code</title>
 </head>
 <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
   <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
     <div style="background-color: #1a1a2e; padding: 24px 32px;">
-      <h1 style="color: #ffffff; margin: 0; font-size: 24px;">VIBE365</h1>
+      <h1 style="color: #ffffff; margin: 0; font-size: 24px;">HVFlow</h1>
       <p style="color: #a0a0b0; margin: 4px 0 0; font-size: 14px;">HR Management System</p>
     </div>
     <div style="padding: 32px;">
@@ -37,7 +37,7 @@ export const DEFAULT_OTP_TEMPLATE = `<!DOCTYPE html>
       </p>
     </div>
     <div style="background-color: #f9f9f9; padding: 16px 32px; text-align: center; border-top: 1px solid #eee;">
-      <p style="color: #aaa; font-size: 12px; margin: 0;">&copy; 2026 VIBE365. All rights reserved.</p>
+      <p style="color: #aaa; font-size: 12px; margin: 0;">&copy; 2026 HVFlow. All rights reserved.</p>
     </div>
   </div>
 </body>
@@ -48,7 +48,7 @@ export const DEFAULT_WELCOME_TEMPLATE = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to VIBE365</title>
+  <title>Welcome to HVFlow</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f0f2f5;font-family:'Segoe UI',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f2f5;padding:40px 16px;">
@@ -90,7 +90,7 @@ export const DEFAULT_WELCOME_TEMPLATE = `<!DOCTYPE html>
           <!-- What you can do -->
           <tr>
             <td style="padding:36px 40px 0;">
-              <p style="margin:0 0 20px;font-size:17px;font-weight:700;color:#111827;">What you can do on VIBE365</p>
+              <p style="margin:0 0 20px;font-size:17px;font-weight:700;color:#111827;">What you can do on HVFlow</p>
               <table cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td style="padding-bottom:16px;vertical-align:top;width:40px;">
@@ -137,7 +137,7 @@ export const DEFAULT_WELCOME_TEMPLATE = `<!DOCTYPE html>
                 <tr>
                   <td style="padding:16px 20px;">
                     <p style="margin:0;font-size:13px;font-weight:600;color:#92400e;">&#128272; Security tip</p>
-                    <p style="margin:6px 0 0;font-size:13px;color:#78350f;line-height:1.5;">Never share your password with anyone. VIBE365 staff will never ask for it.</p>
+                    <p style="margin:6px 0 0;font-size:13px;color:#78350f;line-height:1.5;">Never share your password with anyone. HVFlow staff will never ask for it.</p>
                   </td>
                 </tr>
               </table>
@@ -147,8 +147,8 @@ export const DEFAULT_WELCOME_TEMPLATE = `<!DOCTYPE html>
           <!-- Footer -->
           <tr>
             <td style="background-color:#f9fafb;border-top:1px solid #f3f4f6;padding:20px 40px;text-align:center;">
-              <p style="margin:0;font-size:12px;color:#9ca3af;">&copy; 2026 VIBE365. All rights reserved.</p>
-              <p style="margin:6px 0 0;font-size:11px;color:#d1d5db;">You received this email because an account was created for you in the VIBE365 HR system.</p>
+              <p style="margin:0;font-size:12px;color:#9ca3af;">&copy; 2026 HVFlow. All rights reserved.</p>
+              <p style="margin:6px 0 0;font-size:11px;color:#d1d5db;">You received this email because an account was created for you in the HVFlow HR system.</p>
             </td>
           </tr>
 
@@ -164,12 +164,12 @@ export const DEFAULT_AUTO_LOGOUT_TEMPLATE = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VIBE365 - Auto Logout Alert</title>
+  <title>HVFlow - Auto Logout Alert</title>
 </head>
 <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
   <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
     <div style="background-color: #1a1a2e; padding: 24px 32px;">
-      <h1 style="color: #ffffff; margin: 0; font-size: 24px;">VIBE365</h1>
+      <h1 style="color: #ffffff; margin: 0; font-size: 24px;">HVFlow</h1>
       <p style="color: #a0a0b0; margin: 4px 0 0; font-size: 14px;">HR Management System</p>
     </div>
     <div style="padding: 32px;">
@@ -182,7 +182,7 @@ export const DEFAULT_AUTO_LOGOUT_TEMPLATE = `<!DOCTYPE html>
       </p>
     </div>
     <div style="background-color: #f9f9f9; padding: 16px 32px; text-align: center; border-top: 1px solid #eee;">
-      <p style="color: #aaa; font-size: 12px; margin: 0;">&copy; 2026 VIBE365. All rights reserved.</p>
+      <p style="color: #aaa; font-size: 12px; margin: 0;">&copy; 2026 HVFlow. All rights reserved.</p>
     </div>
   </div>
 </body>

@@ -104,7 +104,7 @@ export function EmployeeListPage() {
   const { toast } = useToast();
 
   const [filter, setFilter, resetFilter] = useFilterState<EmployeeUrlFilter>({
-    key: 'vibe365.employees.filter',
+    key: 'hvflow.employees.filter',
     defaultValue: DEFAULT_FILTER,
     mode: 'localStorage',
   });

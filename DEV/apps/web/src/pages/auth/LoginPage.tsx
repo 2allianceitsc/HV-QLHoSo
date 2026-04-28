@@ -77,7 +77,7 @@ export function LoginPage() {
 
   return (
     <div>
-      {/* Dual logos: ESC (left) + VIBE365 (right) */}
+      {/* Dual logos: ESC (left) + HVFlow (right) */}
       <div className="flex items-center justify-between mb-6">
         <img
           src={escLogoUrl}
@@ -87,7 +87,7 @@ export function LoginPage() {
         />
         <img
           src={logoUrl}
-          alt="VIBE365"
+          alt="HVFlow"
           className="h-14 max-w-[120px] object-contain"
         />
       </div>

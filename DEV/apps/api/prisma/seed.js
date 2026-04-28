@@ -40,12 +40,12 @@ const prisma = new client_1.PrismaClient();
 async function main() {
     console.log('Seeding database...');
     const company = await prisma.company.upsert({
-        where: { code: 'ESC' },
+        where: { code: 'NTHV' },
         update: {},
         create: {
             id: (0, uuidv7_1.uuidv7)(),
-            name: 'Ezy Service Centre Corporation',
-            code: 'ESC',
+            name: 'Nhà Thuốc Hồng Vân',
+            code: 'NTHV',
             logCreatedBy: 'seed',
         },
     });
@@ -185,7 +185,7 @@ async function main() {
         create: {
             id: (0, uuidv7_1.uuidv7)(),
             username: 'superadmin',
-            email: 'admin@vibe365.com',
+            email: 'admin@hvflow.com',
             passwordHash,
             isFirstLogin: false,
             isActive: true,
@@ -206,7 +206,7 @@ async function main() {
                 companyId: company.id,
                 firstName: 'Super',
                 surname: 'Admin',
-                companyEmailAddress: 'admin@vibe365.com',
+                companyEmailAddress: 'admin@hvflow.com',
                 logCreatedBy: 'seed',
             },
         });

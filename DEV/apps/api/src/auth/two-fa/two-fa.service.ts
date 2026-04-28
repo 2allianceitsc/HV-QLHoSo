@@ -149,7 +149,7 @@ export class TwoFAService {
     if (!userLogin) throw new UnauthorizedException();
 
     const secret = totpGenerateSecret();
-    const otpUri = totpBuildUri(secret, userLogin.email, 'VIBE365');
+    const otpUri = totpBuildUri(secret, userLogin.email, 'HVFlow');
     const qrDataUri = await qrcode.toDataURL(otpUri);
 
     // Store secret temporarily in session (we'll persist only after confirmation)
@@ -373,7 +373,7 @@ export class TwoFAService {
       using2FA: m['twofa.using_2fa'] === 'true',
       forceToEnable: m['twofa.force_to_enable'] === 'true',
       ggSecretKey: m['twofa.gg_secret_key'] ?? '',
-      ggAppId: m['twofa.gg_app_id'] ?? 'VIBE365',
+      ggAppId: m['twofa.gg_app_id'] ?? 'HVFlow',
       digits: parseInt(m['twofa.digits'] ?? '6', 10),
       pinExpiryMinutes: parseInt(m['twofa.pin_expiry_minutes'] ?? '5', 10),
       authenticators: (m['twofa.authenticators'] ?? 'Google') as 'Google' | 'Email',
@@ -406,7 +406,7 @@ export class TwoFAService {
               typeof entry === 'object' && entry !== null,
           )
           .map((entry) => ({
-            AppName: String(entry.AppName ?? 'VIBE365'),
+            AppName: String(entry.AppName ?? 'HVFlow'),
             Usernames: String(entry.Usernames ?? ''),
           }))
           .filter((entry) => entry.Usernames.trim().length > 0);
@@ -414,7 +414,7 @@ export class TwoFAService {
       if (typeof parsed === 'object' && parsed !== null) {
         const asObj = parsed as { AppName?: unknown; Usernames?: unknown };
         return [{
-          AppName: String(asObj.AppName ?? 'VIBE365'),
+          AppName: String(asObj.AppName ?? 'HVFlow'),
           Usernames: String(asObj.Usernames ?? ''),
         }].filter((entry) => entry.Usernames.trim().length > 0);
       }
@@ -424,7 +424,7 @@ export class TwoFAService {
       );
     }
 
-    return [{ AppName: 'VIBE365', Usernames: trimmed }];
+    return [{ AppName: 'HVFlow', Usernames: trimmed }];
   }
 
   private async staffNeeds2FA(staffId: string): Promise<boolean> {
@@ -435,13 +435,11 @@ export class TwoFAService {
   private async hasLoggedInToday(staffId: string): Promise<boolean> {
     const staff = await this.prisma.staff.findUnique({ where: { id: staffId }, select: { timezone: true } });
     const tz = staff?.timezone ?? 'UTC';
-    // Use DB-level timezone conversion
     const result = await this.prisma.$queryRaw<{ count: bigint }[]>`
       SELECT COUNT(*) as count
       FROM "TimeTracking" t
-      JOIN "StatusDefinition" s ON t."StatusId" = s."id"
       WHERE t."StaffId" = ${staffId}
-        AND s."IsLoginStatus" = true
+        AND t."IsLoginStatus" = true
         AND t."IsDeleted" = false
         AND (t."StartTime" AT TIME ZONE ${tz})::date = (NOW() AT TIME ZONE ${tz})::date
     `;

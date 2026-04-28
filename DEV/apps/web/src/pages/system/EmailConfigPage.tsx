@@ -115,7 +115,7 @@ function ConfigModal({ editId, onClose }: ModalProps) {
 
   const [name, setName]           = useState('');
   const [provider, setProvider]   = useState('smtp');
-  const [fromName, setFromName]   = useState('VIBE365');
+  const [fromName, setFromName]   = useState('HVFlow');
   const [fromEmail, setFromEmail] = useState('');
   const [note, setNote]           = useState('');
   const [smtpRaw, setSmtpRaw]     = useState<SmtpRaw>(emptySmtp());
@@ -208,7 +208,7 @@ function ConfigModal({ editId, onClose }: ModalProps) {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label>From Display Name <span className="text-destructive">*</span></Label>
-              <Input placeholder="VIBE365" value={fromName} onChange={(e) => setFromName(e.target.value)} required />
+              <Input placeholder="HVFlow" value={fromName} onChange={(e) => setFromName(e.target.value)} required />
             </div>
             <div className="space-y-1">
               <Label>

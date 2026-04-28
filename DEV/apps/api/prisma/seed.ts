@@ -26,12 +26,12 @@ async function main() {
 
   // 1. Default Company
   const company = await prisma.company.upsert({
-    where: { code: 'ESC' },
-    update: {},
+    where: { code: 'NTHV' },
+    update: { name: 'Nhà Thuốc Hồng Vân' },
     create: {
       id: uuidv7(),
-      name: 'Ezy Service Centre Corporation',
-      code: 'ESC',
+      name: 'Nhà Thuốc Hồng Vân',
+      code: 'NTHV',
       logCreatedBy: 'seed',
     },
   });
@@ -43,7 +43,6 @@ async function main() {
     { name: 'MANAGER', displayName: 'Manager', order: 2 },
     { name: 'HR_ADMIN', displayName: 'HR Admin', order: 3 },
     { name: 'SUPER_ADMIN', displayName: 'Super Admin', order: 4 },
-    { name: 'CLIENT', displayName: 'Client', order: 5 },
   ];
 
   const roles: Array<{ id: string; name: string }> = [];
@@ -242,7 +241,7 @@ async function main() {
       data: {
         id: uuidv7(),
         username: 'superadmin',
-        email: 'admin@vibe365.com',
+        email: 'admin@hvflow.com',
         passwordHash,
         isFirstLogin: false,
         isActive: true,
@@ -275,7 +274,7 @@ async function main() {
         companyId: company.id,
         firstName: 'Super',
         surname: 'Admin',
-        companyEmailAddress: 'admin@vibe365.com',
+        companyEmailAddress: 'admin@hvflow.com',
         is2FAEnabled: true,
         logCreatedBy: 'seed',
       },
@@ -331,14 +330,14 @@ async function main() {
           code: auth.code,
           name: auth.name,
           isEnable: auth.isEnable,
-          recipient: 'admin@vibe365.com',
+          recipient: 'admin@hvflow.com',
           logCreatedBy: 'seed',
         },
       });
     } else {
       await prisma.staffAuthenticator.update({
         where: { id: existing.id },
-        data: { isEnable: auth.isEnable, recipient: 'admin@vibe365.com', logUpdatedBy: 'seed' },
+        data: { isEnable: auth.isEnable, recipient: 'admin@hvflow.com', logUpdatedBy: 'seed' },
       });
     }
   }
@@ -568,7 +567,6 @@ async function main() {
           surname: s.surname,
           companyEmailAddress: s.email,
           photoBusiness: s.portrait,
-          isManager: (s as { isManager?: boolean }).isManager ?? false,
           logCreatedBy: 'seed',
         },
       });
@@ -619,7 +617,7 @@ async function main() {
   }> = [
     {
       username: 'bruno-totp',
-      email: 'bruno-totp@test.vibe365.dev',
+      email: 'bruno-totp@test.hvflow.dev',
       firstName: 'Bruno',
       surname: 'TOTP',
       employeeId: 'TEST001',
@@ -629,7 +627,7 @@ async function main() {
     },
     {
       username: 'bruno-email-2fa',
-      email: 'bruno-email-2fa@test.vibe365.dev',
+      email: 'bruno-email-2fa@test.hvflow.dev',
       firstName: 'Bruno',
       surname: 'Email2FA',
       employeeId: 'TEST002',
@@ -638,7 +636,7 @@ async function main() {
     },
     {
       username: 'pw-totp',
-      email: 'pw-totp@test.vibe365.dev',
+      email: 'pw-totp@test.hvflow.dev',
       firstName: 'Playwright',
       surname: 'TOTP',
       employeeId: 'TEST003',
@@ -648,7 +646,7 @@ async function main() {
     },
     {
       username: 'pw-email-2fa',
-      email: 'pw-email-2fa@test.vibe365.dev',
+      email: 'pw-email-2fa@test.hvflow.dev',
       firstName: 'Playwright',
       surname: 'Email2FA',
       employeeId: 'TEST004',
@@ -657,7 +655,7 @@ async function main() {
     },
     {
       username: 'emp-no-2fa',
-      email: 'emp-no-2fa@test.vibe365.dev',
+      email: 'emp-no-2fa@test.hvflow.dev',
       firstName: 'Employee',
       surname: 'NoAuth2FA',
       employeeId: 'TEST005',
@@ -666,7 +664,7 @@ async function main() {
     },
     {
       username: 'manager-no-2fa',
-      email: 'manager-no-2fa@test.vibe365.dev',
+      email: 'manager-no-2fa@test.hvflow.dev',
       firstName: 'Manager',
       surname: 'NoAuth2FA',
       employeeId: 'TEST006',
@@ -720,7 +718,6 @@ async function main() {
             firstName: u.firstName,
             surname: u.surname,
             companyEmailAddress: u.email,
-            isManager: false,
             is2FAEnabled: u.auth2FAEnabled,
             logCreatedBy: 'seed',
           },
@@ -835,11 +832,11 @@ async function main() {
     { key: 'twofa.using_2fa',         value: 'false',    description: 'Enable 2FA system-wide. false = 2FA completely off.' },
     { key: 'twofa.force_to_enable',   value: 'false',    description: 'Force ALL users to setup 2FA (except WhiteList).' },
     { key: 'twofa.gg_secret_key',     value: ggSecretKey, description: 'System-level Base32 key. Per-user TOTP: HMAC-SHA1(key, Staff.Id).' },
-    { key: 'twofa.gg_app_id',         value: 'VIBE365',  description: 'Issuer name shown in Authenticator app.' },
+    { key: 'twofa.gg_app_id',         value: 'HVFlow',  description: 'Issuer name shown in Authenticator app.' },
     { key: 'twofa.digits',            value: '6',        description: 'OTP digits (always 6 per TOTP standard).' },
     { key: 'twofa.pin_expiry_minutes',value: '5',        description: 'Email OTP expiry in minutes.' },
     { key: 'twofa.authenticators',    value: 'Google',   description: 'Default method for new 2FA setup: Google | Email.' },
-    { key: 'twofa.whitelist',         value: JSON.stringify([{ AppName: 'VIBE365', Usernames: 'superadmin' }]), description: 'JSON array: [{"AppName":"VIBE365","Usernames":"user1;user2"}] — superadmin always whitelisted.' },
+    { key: 'twofa.whitelist',         value: JSON.stringify([{ AppName: 'HVFlow', Usernames: 'superadmin' }]), description: 'JSON array: [{"AppName":"HVFlow","Usernames":"user1;user2"}] — superadmin always whitelisted.' },
   ];
 
   for (const s of twoFaSettings) {
@@ -889,7 +886,7 @@ async function main() {
         name: sendgridConfigName,
         provider: 'sendgrid',
         config: JSON.stringify({ apiKey: '' }),   // enter real key via UI: System → Email Configs
-        fromName: 'VIBE365',
+        fromName: 'HVFlow',
         fromEmail: 'noreply@ezysc.com',
         isActive: false,                          // stays inactive until key is entered and verified
         logCreatedBy: 'seed',

@@ -85,7 +85,7 @@ const DEFAULT_FILTER: IErrorLogFilter = { page: 1, limit: 50, source: '', search
 
 export function ErrorLogPage() {
   const [filter, setFilter, resetFilter] = useFilterState<IErrorLogFilter>({
-    key: 'vibe365.error-log.filter',
+    key: 'hvflow.error-log.filter',
     defaultValue: DEFAULT_FILTER,
     mode: 'localStorage',
   });

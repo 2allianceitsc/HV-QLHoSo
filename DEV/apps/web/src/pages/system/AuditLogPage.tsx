@@ -64,7 +64,7 @@ function toApiFilter(f: AuditLogDraft, page: number): IAuditLogFilter {
 export function AuditLogPage() {
   const [page, setPage] = useState(1);
   const { draft, setDraft, committed, commit, reset } = useCommittedFilter<AuditLogDraft>({
-    key: 'vibe365.audit-log.filter',
+    key: 'hvflow.audit-log.filter',
     defaultValue: DEFAULT_INPUTS,
     mode: 'localStorage',
   });

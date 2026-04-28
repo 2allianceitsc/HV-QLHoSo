@@ -23,10 +23,10 @@ function isIsUsedFilter(value: unknown): value is 'all' | 'false' | 'true' {
 }
 
 export function LoginOtpPage() {
-  const [filter, setFilter] = usePersistentState<ILoginOtpFilter>('vibe365.login-otp.filter', DEFAULT_LOGIN_OTP_FILTER);
-  const [emailInput, setEmailInput] = usePersistentState<string>('vibe365.login-otp.email', '');
+  const [filter, setFilter] = usePersistentState<ILoginOtpFilter>('hvflow.login-otp.filter', DEFAULT_LOGIN_OTP_FILTER);
+  const [emailInput, setEmailInput] = usePersistentState<string>('hvflow.login-otp.email', '');
   const [isUsedFilter, setIsUsedFilter] = usePersistentState<'all' | 'false' | 'true'>(
-    'vibe365.login-otp.is-used',
+    'hvflow.login-otp.is-used',
     'all',
     isIsUsedFilter,
   );

@@ -334,11 +334,11 @@ export class EmailJobService {
 
     await this.dispatchEmail(config, {
       to,
-      subject: `[VIBE365] Test email — ${row.name}`,
+      subject: `[HVFlow] Test email — ${row.name}`,
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px">
           <h2 style="color:#111">✅ Test email successful</h2>
-          <p style="color:#444">This is a test email from <strong>VIBE365</strong>.</p>
+          <p style="color:#444">This is a test email from <strong>HVFlow</strong>.</p>
           <hr style="border:none;border-top:1px solid #eee;margin:16px 0"/>
           <table style="font-size:13px;color:#666;width:100%">
             <tr><td style="padding:4px 0"><b>Config name</b></td><td>${row.name}</td></tr>

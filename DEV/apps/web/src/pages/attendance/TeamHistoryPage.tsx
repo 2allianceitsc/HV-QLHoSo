@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { formatDateTime } from '@/lib/dateFormat';
-import { useStatuses, useTeamHistory } from '@/hooks/useAttendance';
+import { useTeamHistory } from '@/hooks/useAttendance';
 import { Button } from '@/components/ui/button';
 import { DateRangePresetPicker, useFilterState } from '@/components/filters';
-import { StatusSelect } from '@/components/status/StatusSelect';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { OverbreakBadge, calcOverbreakSeconds } from '@/components/attendance/OverbreakBadge';
 import { getMultiStaffAttendanceEndDisplay } from '@/lib/attendanceEndStatus';
@@ -24,29 +23,26 @@ function formatDuration(seconds: number | null | undefined): string {
 type TeamHistoryFilter = {
   startDate: string;
   endDate: string;
-  statusId: string;
   selectedStaff: SelectedStaff | null;
 } & Record<string, unknown>;
-const DEFAULT_FILTER: TeamHistoryFilter = { startDate: '', endDate: '', statusId: '', selectedStaff: null };
+const DEFAULT_FILTER: TeamHistoryFilter = { startDate: '', endDate: '', selectedStaff: null };
 
 export function TeamHistoryPage() {
   const { user } = useAuthStore();
   const isSuperAdmin = user?.roles?.includes('SUPER_ADMIN') ?? false;
   const [page, setPage] = useState(1);
   const [filter, setFilter, resetFilter] = useFilterState<TeamHistoryFilter>({
-    key: 'vibe365.team-history.filter',
+    key: 'hvflow.team-history.filter',
     defaultValue: DEFAULT_FILTER,
     mode: 'localStorage',
   });
 
-  const { data: statusesData = [] } = useStatuses();
   const { data, isLoading } = useTeamHistory({
     page,
     limit: 20,
     staffId: filter.selectedStaff?.id || undefined,
     startDate: filter.startDate || undefined,
     endDate: filter.endDate || undefined,
-    statusId: filter.statusId || undefined,
     clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
 
@@ -84,17 +80,6 @@ export function TeamHistoryPage() {
             updateFilter({ startDate: nextStartDate ?? '', endDate: nextEndDate ?? '' })
           }
           className="w-full sm:w-[20rem]"
-        />
-        <StatusSelect
-          label="Status"
-          value={filter.statusId}
-          options={statusesData}
-          placeholder="Choose a status to filter"
-          emptyLabel="All statuses"
-          onValueChange={(nextValue) => updateFilter({ statusId: nextValue })}
-          className="w-full sm:w-[18rem]"
-          triggerClassName="w-full"
-          testId="team-history-status-filter"
         />
         <div className="flex flex-col gap-1">
           <span className="text-xs invisible select-none" aria-hidden="true">Reset</span>

@@ -213,7 +213,7 @@ export class EmployeeService {
 
     void this.notificationsService.create(
       staffId,
-      'Welcome to VIBE365',
+      'Welcome to HVFlow',
       `Welcome, ${dto.firstName}! Your account has been created. Username: ${username}. Please log in to get started.`,
       'info',
     );
