@@ -26,7 +26,6 @@ import {
   Sliders,
   Bell,
   FlaskConical,
-  Mail,
   Layers,
 } from 'lucide-react';
 
@@ -82,7 +81,6 @@ export const NAV_GROUPS: INavGroupConfig[] = [
     label: 'Hệ thống',
     roles: ['SUPER_ADMIN'],
     items: [
-      { label: 'Email template', path: '/system/email-templates', icon: <Mail size={16} /> },
       { label: 'Nhật ký',        path: '/system/logs',            icon: <ScrollText size={16} />, screen: 'SY04' },
       { label: 'Cài đặt',        path: '/system/settings',        icon: <Sliders size={16} />,    screen: 'SY02' },
       { label: 'Kiểm tra đồng bộ giờ', path: '/system/test', icon: <FlaskConical size={16} /> },

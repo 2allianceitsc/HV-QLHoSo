@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { uuidv7 } from 'uuidv7';
@@ -256,12 +257,12 @@ export class SubmissionService {
         },
       });
 
+      if (isSubmit) {
+        await this.queueNotification(created.reviewerId, 'E001', created.id, {}, tx);
+      }
+
       return created;
     });
-
-    if (isSubmit) {
-      await this.queueNotification(submission.reviewerId, 'E001', submission.id);
-    }
 
     return submission;
   }
@@ -357,18 +358,20 @@ export class SubmissionService {
       if (lineCount === 0) throw new BadRequestException('Mua sắm submission requires at least one expense line');
     }
 
-    const updated = await this.prisma.submission.update({
-      where: { id },
-      data: { status: 'pending_review', logUpdatedBy: user.staffId },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.submission.update({
+        where: { id },
+        data: { status: 'pending_review', logUpdatedBy: user.staffId },
+      });
 
-    await this.prisma.submissionLog.create({
-      data: { id: uuidv7(), submissionId: id, userId: user.staffId, action: 'submit',
-        fromStatus: submission.status, toStatus: 'pending_review' },
-    });
+      await tx.submissionLog.create({
+        data: { id: uuidv7(), submissionId: id, userId: user.staffId, action: 'submit',
+          fromStatus: submission.status, toStatus: 'pending_review' },
+      });
 
-    await this.queueNotification(submission.reviewerId, 'E001', id);
-    return updated;
+      await this.queueNotification(submission.reviewerId, 'E001', id, {}, tx);
+      return updated;
+    });
   }
 
   async review(user: IJwtPayload, id: string) {
@@ -378,18 +381,20 @@ export class SubmissionService {
       throw new ForbiddenException('You are not the reviewer for this submission');
     }
 
-    const updated = await this.prisma.submission.update({
-      where: { id },
-      data: { status: 'in_review', reviewedAt: new Date(), logUpdatedBy: user.staffId },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.submission.update({
+        where: { id },
+        data: { status: 'in_review', reviewedAt: new Date(), logUpdatedBy: user.staffId },
+      });
 
-    await this.prisma.submissionLog.create({
-      data: { id: uuidv7(), submissionId: id, userId: user.staffId, action: 'review',
-        fromStatus: 'pending_review', toStatus: 'in_review' },
-    });
+      await tx.submissionLog.create({
+        data: { id: uuidv7(), submissionId: id, userId: user.staffId, action: 'review',
+          fromStatus: 'pending_review', toStatus: 'in_review' },
+      });
 
-    await this.queueNotification(submission.approverId, 'E002', id);
-    return updated;
+      await this.queueNotification(submission.approverId, 'E002', id, {}, tx);
+      return updated;
+    });
   }
 
   async approve(user: IJwtPayload, id: string) {
@@ -399,18 +404,20 @@ export class SubmissionService {
       throw new ForbiddenException('You are not the approver for this submission');
     }
 
-    const updated = await this.prisma.submission.update({
-      where: { id },
-      data: { status: 'approved', approvedAt: new Date(), logUpdatedBy: user.staffId },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.submission.update({
+        where: { id },
+        data: { status: 'approved', approvedAt: new Date(), logUpdatedBy: user.staffId },
+      });
 
-    await this.prisma.submissionLog.create({
-      data: { id: uuidv7(), submissionId: id, userId: user.staffId, action: 'approve',
-        fromStatus: 'in_review', toStatus: 'approved' },
-    });
+      await tx.submissionLog.create({
+        data: { id: uuidv7(), submissionId: id, userId: user.staffId, action: 'approve',
+          fromStatus: 'in_review', toStatus: 'approved' },
+      });
 
-    await this.queueNotification(submission.submitterId, 'E003', id);
-    return updated;
+      await this.queueNotification(submission.submitterId, 'E003', id, {}, tx);
+      return updated;
+    });
   }
 
   async reject(user: IJwtPayload, id: string, dto: RejectSubmissionDto) {
@@ -431,18 +438,20 @@ export class SubmissionService {
     }
 
     const fromStatus = submission.status;
-    const updated = await this.prisma.submission.update({
-      where: { id },
-      data: { status: 'rejected', rejectionReason: dto.reason, logUpdatedBy: user.staffId },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.submission.update({
+        where: { id },
+        data: { status: 'rejected', rejectionReason: dto.reason, logUpdatedBy: user.staffId },
+      });
 
-    await this.prisma.submissionLog.create({
-      data: { id: uuidv7(), submissionId: id, userId: user.staffId, action: 'reject',
-        fromStatus, toStatus: 'rejected', note: dto.reason },
-    });
+      await tx.submissionLog.create({
+        data: { id: uuidv7(), submissionId: id, userId: user.staffId, action: 'reject',
+          fromStatus, toStatus: 'rejected', note: dto.reason },
+      });
 
-    await this.queueNotification(submission.submitterId, 'E004', id, { reason: dto.reason });
-    return updated;
+      await this.queueNotification(submission.submitterId, 'E004', id, { reason: dto.reason }, tx);
+      return updated;
+    });
   }
 
   async getUploadUrl(mimeType: string, ext: string) {
@@ -501,13 +510,14 @@ export class SubmissionService {
     eventId: 'E001' | 'E002' | 'E003' | 'E004',
     submissionId: string,
     extra: Record<string, string> = {},
+    db: Prisma.TransactionClient = this.prisma as unknown as Prisma.TransactionClient,
   ) {
     const staffName = (s: { firstName: string | null; middleName?: string | null; surname: string | null } | null) =>
       [s?.firstName, s?.middleName, s?.surname].filter(Boolean).join(' ') || '';
 
     const [toStaff, submission, subjectRow, bodyRow] = await Promise.all([
-      this.prisma.staff.findUnique({ where: { id: toStaffId }, select: { companyEmailAddress: true } }),
-      this.prisma.submission.findUnique({
+      db.staff.findUnique({ where: { id: toStaffId }, select: { companyEmailAddress: true } }),
+      db.submission.findUnique({
         where: { id: submissionId },
         select: {
           code: true, title: true, submittedDate: true,
@@ -517,8 +527,8 @@ export class SubmissionService {
           department: { select: { name: true } },
         },
       }),
-      this.prisma.systemSetting.findUnique({ where: { key: `hv.email.${eventId}.subject` } }),
-      this.prisma.systemSetting.findUnique({ where: { key: `hv.email.${eventId}.body` } }),
+      db.systemSetting.findUnique({ where: { key: `hv.email.${eventId}.subject` } }),
+      db.systemSetting.findUnique({ where: { key: `hv.email.${eventId}.body` } }),
     ]);
 
     if (!toStaff?.companyEmailAddress || !submission) return;
@@ -544,7 +554,7 @@ export class SubmissionService {
     const subject  = fill(subjectRow?.value?.trim() || defaults.subject);
     const bodyHtml = fill(bodyRow?.value?.trim()    || defaults.body);
 
-    await this.prisma.emailQueue.create({
+    await db.emailQueue.create({
       data: {
         id: uuidv7(),
         to: toStaff.companyEmailAddress,

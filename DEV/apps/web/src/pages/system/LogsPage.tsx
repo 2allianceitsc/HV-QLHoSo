@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthStore } from '@/stores/auth.store';
@@ -7,6 +8,32 @@ import { ErrorLogPage } from './ErrorLogPage';
 import { DebugLogPage } from './DebugLogPage';
 import { TeamHistoryPage } from '@/pages/attendance/TeamHistoryPage';
 import { EmailLogTab } from './EmailLogTab';
+import { EmailQueuePage } from './EmailQueuePage';
+import { EmailJobPage } from './EmailJobPage';
+
+type EmailLogSubTab = 'log' | 'queue' | 'job';
+
+function EmailLogsSection() {
+  const [sub, setSub] = useState<EmailLogSubTab>('log');
+  return (
+    <Tabs value={sub} onValueChange={(v) => setSub(v as EmailLogSubTab)}>
+      <TabsList>
+        <TabsTrigger value="log">Email Log</TabsTrigger>
+        <TabsTrigger value="queue">Queue</TabsTrigger>
+        <TabsTrigger value="job">Job</TabsTrigger>
+      </TabsList>
+      <TabsContent value="log" className="pt-4">
+        <EmailLogTab />
+      </TabsContent>
+      <TabsContent value="queue" className="pt-4">
+        <EmailQueuePage />
+      </TabsContent>
+      <TabsContent value="job" className="pt-4">
+        <EmailJobPage />
+      </TabsContent>
+    </Tabs>
+  );
+}
 
 const BASE_TABS = ['email', 'audit', 'api'] as const;
 const ALL_TABS = ['email', 'audit', 'api', 'exception', 'debug', 'login-log'] as const;
@@ -53,7 +80,7 @@ export function LogsPage() {
         </TabsList>
 
         <TabsContent value="email" className="pt-4">
-          <EmailLogTab />
+          <EmailLogsSection />
         </TabsContent>
         <TabsContent value="audit" className="pt-4">
           <AuditLogPage />

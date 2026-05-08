@@ -48,12 +48,10 @@ import {
   SystemSettingsPage,
   TeamsPage,
   SystemWarningsPage,
-  EmailPage,
   LogsPage,
   NotificationsInboxPage,
   SystemTestPage,
 } from '@/pages/system/SystemPages';
-import { HvEmailTemplatePage } from '@/pages/system/HvEmailTemplatePage';
 
 // Misc
 import { ProfilePage, NotFoundPage } from '@/pages/MiscPages';
@@ -122,7 +120,6 @@ const router = createBrowserRouter(
         <Route path="/notifications" element={<NotificationsInboxPage />} />
 
         {/* System — SUPER_ADMIN only (kept) */}
-        <Route path="/system/email" element={<RequirePermission screen="SY14" redirect="/submissions"><EmailPage /></RequirePermission>} />
         <Route path="/system/logs" element={<RequirePermission screen="SY04" redirect="/submissions"><LogsPage /></RequirePermission>} />
         <Route path="/system/roles" element={<RequirePermission screen="SY01" redirect="/submissions"><RolesPage /></RequirePermission>} />
         <Route path="/system/role-permissions" element={<RequirePermission screen="SY18" redirect="/submissions"><RolePermissionsPage /></RequirePermission>} />
@@ -131,13 +128,12 @@ const router = createBrowserRouter(
         <Route path="/system/teams" element={<RequirePermission screen="SY10" redirect="/submissions"><TeamsPage /></RequirePermission>} />
         <Route path="/system/test" element={<RequirePermission screen="SY02" redirect="/submissions"><SystemTestPage /></RequirePermission>} />
 
-        {/* S16 — HV Email Templates */}
-        <Route path="/system/email-templates" element={<HvEmailTemplatePage />} />
-
         {/* Old-route redirects */}
-        <Route path="/system/email-configs" element={<Navigate to="/system/email?tab=providers" replace />} />
-        <Route path="/system/email-queue" element={<Navigate to="/system/email?tab=queue" replace />} />
-        <Route path="/system/email-job" element={<Navigate to="/system/email?tab=job" replace />} />
+        <Route path="/system/email" element={<Navigate to="/system/settings?tab=email" replace />} />
+        <Route path="/system/email-templates" element={<Navigate to="/system/settings?tab=email" replace />} />
+        <Route path="/system/email-configs" element={<Navigate to="/system/settings?tab=email" replace />} />
+        <Route path="/system/email-queue" element={<Navigate to="/system/logs?tab=email" replace />} />
+        <Route path="/system/email-job" element={<Navigate to="/system/logs?tab=email" replace />} />
         <Route path="/system/api-logs" element={<Navigate to="/system/logs?tab=api" replace />} />
         <Route path="/system/error-logs" element={<Navigate to="/system/logs?tab=exception" replace />} />
         <Route path="/system/notification-settings" element={<Navigate to="/system/settings?tab=notifications" replace />} />

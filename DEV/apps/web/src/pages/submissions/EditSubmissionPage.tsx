@@ -23,8 +23,8 @@ export function EditSubmissionPage() {
 
   const handleSave = async (data: ICreateSubmissionInput, files: File[], signedContract: File | null) => {
     try {
-      await update(data);
       await uploadFiles(files, signedContract);
+      await update(data);
       toast({ title: 'Đã lưu thông tin' });
       navigate(`/submissions/${id}`);
     } catch {
@@ -34,8 +34,8 @@ export function EditSubmissionPage() {
 
   const handleSubmit = async (data: ICreateSubmissionInput, files: File[], signedContract: File | null) => {
     try {
-      await update(data);
       await uploadFiles(files, signedContract);
+      await update(data);
       await submit(id ?? '');
       toast({ title: 'Đã gửi tờ trình để thẩm định' });
       navigate(`/submissions/${id}`);
