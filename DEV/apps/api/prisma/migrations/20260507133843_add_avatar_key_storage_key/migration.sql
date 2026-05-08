@@ -1,5 +1,2 @@
 -- AlterTable
 ALTER TABLE "ExpenseLine" ALTER COLUMN "VatRate" SET DATA TYPE INTEGER;
-
--- AlterTable
-ALTER TABLE "Staff" ALTER COLUMN "AvatarKey" SET DATA TYPE TEXT;
