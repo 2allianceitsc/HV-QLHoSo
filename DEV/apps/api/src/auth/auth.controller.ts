@@ -21,6 +21,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService, ICurrentUser } from './auth.service';
 import { DebugService } from '../common/debug/debug.service';
 import { LoginDto } from './dto/login.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -163,6 +164,30 @@ export class AuthController {
     res.cookie('refresh_token', refreshToken, REFRESH_COOKIE_OPTIONS);
 
     return { success: true, message: 'Token refreshed' };
+  }
+
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ auth: { ttl: 60000, limit: 10 } })
+  @ApiOperation({ summary: 'Login with Google (Firebase ID Token)' })
+  async googleLogin(
+    @Body() dto: GoogleLoginDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: Request,
+  ) {
+    const result = await this.authService.googleLogin(dto.idToken);
+    const { accessToken, refreshToken, ...rest } = result.data as {
+      accessToken: string;
+      refreshToken: string;
+      user: ICurrentUser;
+    };
+
+    res.cookie('access_token', accessToken, ACCESS_COOKIE_OPTIONS);
+    res.cookie('refresh_token', refreshToken, REFRESH_COOKIE_OPTIONS);
+
+    void this.auditService.log('LOGIN_GOOGLE', 'UserLogin', rest.user.id, rest.user.id, rest.user.username, undefined, extractIp(req));
+
+    return { success: true, data: rest };
   }
 
   @Post('forgot-password')

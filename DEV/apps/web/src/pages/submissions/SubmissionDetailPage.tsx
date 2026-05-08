@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { ArrowLeft, Pencil, Copy, FileText } from 'lucide-react';
+import { ArrowLeft, Pencil, Copy, FileText, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SubmissionStatusBadge } from '@/components/submission/SubmissionStatusBadge';
 import { WorkflowTimeline } from '@/components/submission/WorkflowTimeline';
 import { RejectDialog } from '@/components/submission/RejectDialog';
-import { useSubmission, useSubmitSubmission, useReviewSubmission, useApproveSubmission, useRejectSubmission } from '@/hooks/useSubmission';
+import { useSubmission, useSubmitSubmission, useReviewSubmission, useApproveSubmission, useRejectSubmission, useDeleteSubmission } from '@/hooks/useSubmission';
 import { useAuthStore } from '@/stores/auth.store';
 import { useToast } from '@/hooks/use-toast';
 import type { HvRole } from '@/api/submission.api';
@@ -31,6 +31,7 @@ export function SubmissionDetailPage() {
   const { mutateAsync: review, isPending: reviewing } = useReviewSubmission();
   const { mutateAsync: approve, isPending: approving } = useApproveSubmission();
   const { mutateAsync: reject, isPending: rejecting } = useRejectSubmission();
+  const { mutateAsync: del, isPending: deleting } = useDeleteSubmission();
 
   const [rejectOpen, setRejectOpen] = useState(false);
 
@@ -40,6 +41,7 @@ export function SubmissionDetailPage() {
   const isOwner = currentUser?.staffId === submission.submitter.id;
   const canEdit = isOwner && ['draft', 'rejected'].includes(submission.status);
   const canSubmit = isOwner && ['draft', 'rejected'].includes(submission.status);
+  const canDelete = isOwner && submission.status === 'draft';
   const canReview = (hvRole === 'reviewer' || hvRole === 'admin') && submission.status === 'pending_review';
   const canApprove = (hvRole === 'approver' || hvRole === 'admin') && submission.status === 'in_review';
   const canReject = (canReview || canApprove);
@@ -81,6 +83,17 @@ export function SubmissionDetailPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm('Xóa tờ trình này? Hành động không thể hoàn tác.')) return;
+    try {
+      await del(submission.id);
+      toast({ title: 'Đã xóa tờ trình' });
+      navigate('/submissions');
+    } catch {
+      toast({ title: 'Không thể xóa tờ trình', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="flex items-center gap-3">
@@ -100,6 +113,11 @@ export function SubmissionDetailPage() {
         {canEdit && (
           <Button variant="outline" size="sm" onClick={() => navigate(`/submissions/${submission.id}/edit`)}>
             <Pencil size={14} className="mr-1" /> Sửa
+          </Button>
+        )}
+        {canDelete && (
+          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={handleDelete} disabled={deleting}>
+            <Trash2 size={14} className="mr-1" /> Xóa
           </Button>
         )}
       </div>

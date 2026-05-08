@@ -4,9 +4,13 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
+  ForbiddenException,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import * as admin from 'firebase-admin';
+import * as fs from 'fs';
+import * as path from 'path';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
@@ -47,7 +51,30 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly twoFAService: TwoFAService,
     private readonly debugService: DebugService,
-  ) {}
+  ) {
+    // Initialize Firebase Admin SDK once (for Google token verification)
+    if (!admin.apps.length) {
+      try {
+        // Try inline JSON from env first (production/Railway), then local file (dev)
+        const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+        const localFilePath = path.join(process.cwd(), 'firebase-service-account.json');
+
+        if (serviceAccountJson) {
+          const sa = JSON.parse(serviceAccountJson) as admin.ServiceAccount;
+          admin.initializeApp({ credential: admin.credential.cert(sa) });
+          this.logger.log('Firebase Admin initialized via FIREBASE_SERVICE_ACCOUNT env');
+        } else if (fs.existsSync(localFilePath)) {
+          const sa = JSON.parse(fs.readFileSync(localFilePath, 'utf8')) as admin.ServiceAccount;
+          admin.initializeApp({ credential: admin.credential.cert(sa) });
+          this.logger.log('Firebase Admin initialized via firebase-service-account.json');
+        } else {
+          this.logger.error(`Firebase Admin: no credentials. Add firebase-service-account.json to ${process.cwd()} or set FIREBASE_SERVICE_ACCOUNT env`);
+        }
+      } catch (err) {
+        this.logger.error('Firebase Admin initializeApp failed', err);
+      }
+    }
+  }
 
   // ── Login ─────────────────────────────────────────────────────────────────
   async login(username: string, password: string) {
@@ -166,6 +193,60 @@ export class AuthService {
       success: true,
       data: {
         mustChangePassword: false,
+        user: this.buildUserInfo(userLogin, roles),
+        ...tokens,
+      },
+    };
+  }
+
+  // ── Google Login ──────────────────────────────────────────────────────────
+  async googleLogin(idToken: string) {
+    let googleEmail: string;
+    try {
+      const decoded = await admin.auth().verifyIdToken(idToken);
+      googleEmail = (decoded.email ?? '').toLowerCase().trim();
+    } catch (err) {
+      this.logger.error('Firebase verifyIdToken failed', err);
+      throw new UnauthorizedException(`Invalid or expired Google token: ${(err as Error).message}`);
+    }
+
+    if (!googleEmail) {
+      throw new UnauthorizedException('Google account has no email');
+    }
+
+    const userLogin = await this.prisma.userLogin.findFirst({
+      where: { email: { equals: googleEmail, mode: 'insensitive' }, isDeleted: false },
+      include: {
+        staff: {
+          include: {
+            staffRoles: { where: { isDeleted: false }, include: { role: true } },
+          },
+        },
+      },
+    });
+
+    // E015: email not registered
+    if (!userLogin) {
+      throw new NotFoundException('Email này chưa được đăng ký trong hệ thống.');
+    }
+
+    // E002: account disabled
+    if (!userLogin.isActive || userLogin.isDisabled) {
+      throw new ForbiddenException('Tài khoản đã bị khóa. Liên hệ quản trị viên.');
+    }
+
+    await this.prisma.userLogin.update({
+      where: { id: userLogin.id },
+      data: { lastLogin: new Date() },
+    });
+
+    // Skip isFirstLogin check — Google login bypasses first-time password change
+    const roles = this.extractRoles(userLogin.staff?.staffRoles ?? []);
+    const tokens = await this.generateTokens(userLogin.id, userLogin.staff?.id ?? '', roles);
+
+    return {
+      success: true,
+      data: {
         user: this.buildUserInfo(userLogin, roles),
         ...tokens,
       },

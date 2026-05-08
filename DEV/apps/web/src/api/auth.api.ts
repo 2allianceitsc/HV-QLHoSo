@@ -63,6 +63,11 @@ export async function getMeApi(): Promise<ICurrentUser> {
   return res.data.data;
 }
 
+export async function loginWithGoogleApi(idToken: string): Promise<{ user: ICurrentUser }> {
+  const res = await apiClient.post<{ success: boolean; data: { user: ICurrentUser } }>('/auth/google', { idToken });
+  return res.data.data;
+}
+
 // ── 2FA ──────────────────────────────────────────────────────────────────────
 
 export async function get2FAStatusApi(): Promise<{ enabled: boolean; method: string | null }> {

@@ -1,7 +1,7 @@
 # HV-QLHoSo — Yêu Cầu Hệ Thống
 
-> **Cập nhật:** 2026-05-07
-> **Phiên bản:** 2.2.0
+> **Cập nhật:** 2026-05-08
+> **Phiên bản:** 2.2.1
 > **Ngôn ngữ:** Tiếng Việt (field/link dùng tiếng Anh)
 > **Phạm vi:** Tài liệu đầy đủ để xây dựng hệ thống frontend + backend thực tế từ bản mockup
 
@@ -28,8 +28,8 @@
 
 | ID  | Tên Màn Hình       | Route              | Auth          | Mô Tả                                                           |
 |-----|--------------------|--------------------|---------------|-----------------------------------------------------------------|
-| S01 | Đăng nhập          | `/login`           | Public        | Form nhập username + password; nhận JWT access token           |
-| S02 | Đổi mật khẩu lần đầu | `/change-password` | Bắt buộc sau login đầu | Hiện nếu `isFirstLogin = true`; bắt buộc đổi trước khi vào hệ thống |
+| S01 | Đăng nhập          | `/login`           | Public        | Form nhập username + password; nút đăng nhập bằng Google; nhận JWT access token |
+| S02 | Đổi mật khẩu lần đầu | `/change-password` | Bắt buộc sau login đầu | Hiện nếu `isFirstLogin = true` **và đăng nhập bằng username/password**; bỏ qua nếu đăng nhập bằng Google |
 | S03 | Quên mật khẩu      | `/forgot-password` | Public        | Nhập email → nhận link reset qua email                         |
 | S04 | Reset mật khẩu     | `/reset-password?token=...` | Public | Nhập mật khẩu mới sau khi click link email                    |
 
@@ -99,7 +99,8 @@
 
 | Chức năng                   | staff | reviewer | approver | admin |
 |-----------------------------|-------|----------|----------|-------|
-| Đăng nhập                   | ✅    | ✅       | ✅       | ✅    |
+| Đăng nhập (username/password) | ✅  | ✅       | ✅       | ✅    |
+| Đăng nhập bằng Google       | ✅    | ✅       | ✅       | ✅    |
 | Đổi mật khẩu của mình       | ✅    | ✅       | ✅       | ✅    |
 | Reset mật khẩu người khác   | ❌    | ❌       | ❌       | ✅    |
 | Quên mật khẩu (qua email)   | ✅    | ✅       | ✅       | ✅    |
@@ -182,6 +183,8 @@ Cấu hình mặc định:
 
 ### 4.1 Luồng Đăng Nhập
 
+#### 4.1.1 Đăng nhập bằng Username / Password
+
 ```
 [S01 Đăng nhập]
     │
@@ -204,6 +207,37 @@ Cấu hình mặc định:
 ```
 
 > ⚠️ **KHÔNG THỂ BỎ QUA:** Nếu `isFirstLogin = true` → server từ chối mọi API call khác (trừ `/api/auth/change-password`) cho đến khi hoàn thành đổi mật khẩu.
+
+#### 4.1.2 Đăng nhập bằng Google (Firebase)
+
+```
+[S01 Đăng nhập — Bấm "Đăng nhập bằng Google"]
+    │
+    ├─ Frontend: Gọi Firebase Google Sign-In popup
+    │   └─ Nhận Google ID Token (JWT) từ Firebase
+    │
+    ├─ Frontend: POST /api/auth/google  { idToken }
+    │
+    ├─ Server: Verify ID Token với Firebase Admin SDK
+    │   ├─ Nếu token không hợp lệ / hết hạn → E001
+    │   └─ Trích xuất email từ token đã verify
+    │
+    ├─ Server: READ User WHERE email = googleEmail AND isDeleted = false
+    │   ├─ Nếu không tìm thấy → E015 ("Email chưa được đăng ký trong hệ thống")
+    │   └─ Nếu isActive = false → E002
+    │
+    ├─ Đăng nhập thành công (KHÔNG kiểm tra isFirstLogin)
+    │   ├─ WRITE: User.lastLoginAt = now()
+    │   ├─ Generate: accessToken (JWT, 15 phút), refreshToken (opaque, 7 ngày)
+    │   ├─ WRITE: INSERT RefreshToken
+    │   └─ Response: { accessToken, user }
+    │       + Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict
+    │
+    └─ Redirect → /submissions
+```
+
+> **Quy tắc:** Chỉ tài khoản **đã tồn tại** và **đang hoạt động** (`isActive = true`) mới được phép đăng nhập bằng Google. Hệ thống không tự tạo tài khoản mới từ Google.
+> `isFirstLogin = true` **không** block người dùng đăng nhập bằng Google — bỏ qua bước đổi mật khẩu lần đầu.
 
 ### 4.2 Luồng Refresh Token / Silent Auth
 
@@ -554,7 +588,7 @@ Cấu hình mặc định:
 | `avatarColor`   | VARCHAR(7)    | ✅       | HEX `#RRGGBB`, Default: `#6366f1`                                   | Màu avatar (dùng khi chưa có ảnh)    |
 | `avatarKey`     | VARCHAR(500)  | ❌       | R2 object key, vd: `dev/user/{id}/profile-picture/{uuid}.jpg`       | Ảnh đại diện (null = dùng avatarColor) |
 | `isActive`      | BOOLEAN       | ✅       | Default: true                                                       | Tài khoản còn hoạt động              |
-| `isFirstLogin`  | BOOLEAN       | ✅       | Default: true                                                       | Bắt buộc đổi mật khẩu lần đầu       |
+| `isFirstLogin`  | BOOLEAN       | ✅       | Default: true                                                       | Bắt buộc đổi mật khẩu lần đầu (chỉ áp dụng với login username/password) |
 | `lastLoginAt`   | TIMESTAMPTZ   | ❌       |                                                                     | Lần đăng nhập gần nhất               |
 | `createdAt`     | TIMESTAMPTZ   | ✅       | Auto, UTC                                                           | Thời điểm tạo tài khoản              |
 | `updatedAt`     | TIMESTAMPTZ   | ✅       | Auto-update, UTC                                                    | Lần cập nhật gần nhất                |
@@ -800,6 +834,19 @@ POST /api/auth/change-password
     ├─ Validate newPassword (≥ 8 ký tự, có chữ hoa, số, ký tự đặc biệt)
     ├─ WRITE: User.passwordHash = bcrypt(newPassword), isFirstLogin = false
     └─ Revoke tất cả refreshToken của user này (buộc login lại ở device khác)
+
+POST /api/auth/google
+    Body: { idToken }  (Google ID Token từ Firebase client-side sign-in)
+    ├─ Verify idToken với Firebase Admin SDK (GOOGLE_CLIENT_ID trong .env)
+    ├─ Trích xuất email từ token đã verify
+    ├─ READ: User WHERE email = ? AND isDeleted = false
+    ├─ Nếu không tìm thấy → E015
+    ├─ Nếu isActive = false → E002
+    ├─ WRITE: User.lastLoginAt = now()
+    ├─ Generate: accessToken (JWT, 15 phút), refreshToken (opaque, 7 ngày)
+    ├─ WRITE: INSERT RefreshToken (tokenHash, userId, expiresAt)
+    └─ Response: { accessToken, user: { id, username, fullName, departmentId, role, ... } }
+       + Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/auth/refresh
 
 POST /api/auth/forgot-password
     Body: { email }
@@ -1070,6 +1117,10 @@ GET /api/system/logs/emails
 │                                  │
 │  [         Đăng nhập           ] │
 │  Quên mật khẩu?                  │
+│                                  │
+│  ─────────── hoặc ───────────    │
+│                                  │
+│  [ G  Đăng nhập bằng Google   ] │
 └──────────────────────────────────┘
 ```
 
@@ -1360,6 +1411,7 @@ Khi `status = rejected`, hiển thị thêm section ngay dưới "Thông tin chu
 
 | ID   | Tên Tính Năng                          | Mức Độ   | Trạng Thái  | Ghi Chú                                                        |
 |------|----------------------------------------|----------|-------------|----------------------------------------------------------------|
+| F020 | Đăng nhập bằng Google (Firebase)      | High     | Planned     | Chỉ tài khoản đã tồn tại + `isActive=true`; bỏ qua isFirstLogin; dùng Firebase ID Token verify phía server |
 | F001 | Xác thực JWT + Refresh Token           | Critical | Planned     | Thay thế "chọn user" mock; bắt buộc cho production            |
 | F002 | Đổi mật khẩu lần đầu (isFirstLogin)   | Critical | Planned     | Chặn truy cập đến khi hoàn thành                              |
 | F003 | Quên mật khẩu qua email               | High     | Planned     | Reset link TTL 15 phút, 1 lần dùng                            |
@@ -1414,7 +1466,8 @@ Khi `status = rejected`, hiển thị thêm section ngay dưới "Thông tin chu
 | E011   | 415  | File upload sai định dạng                           | "Định dạng file không được hỗ trợ."                   |
 | E012   | 422  | Lý do từ chối bị bỏ trống                          | "Vui lòng nhập lý do từ chối."                        |
 | E013   | 422  | Tờ trình MS không có dòng chi phí nào              | "Phải có ít nhất một dòng chi phí."                   |
-| E014   | 403  | isFirstLogin = true, truy cập API khác              | "Bạn cần đổi mật khẩu trước khi tiếp tục."           |
+| E014   | 403  | isFirstLogin = true, truy cập API khác (chỉ login username/password) | "Bạn cần đổi mật khẩu trước khi tiếp tục." |
+| E015   | 404  | Email Google chưa được đăng ký trong hệ thống       | "Email này chưa được đăng ký trong hệ thống."         |
 | E500   | 500  | Lỗi server không xác định                           | "Đã xảy ra lỗi. Vui lòng thử lại sau."               |
 
 ### Quy tắc bảo mật error handling

@@ -1,3 +1,6 @@
+# Firebase service account — never commit
+apps/api/firebase-service-account.json
+
 # Logs
 logs
 *.log

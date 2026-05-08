@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Plus, Search, FileCheck2, Copy, Filter } from 'lucide-react';
+import { Plus, Search, FileCheck2, Copy, Filter, Trash2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { SubmissionStatusBadge } from '@/components/submission/SubmissionStatusBadge';
-import { useSubmissions, useSubmissionDepartments } from '@/hooks/useSubmission';
+import { useSubmissions, useSubmissionDepartments, useDeleteSubmission } from '@/hooks/useSubmission';
 import { submissionApi } from '@/api/submission.api';
 import type { SubmissionType, SubmissionStatus, IStatusCatalogItem } from '@/api/submission.api';
 import { useAuthStore } from '@/stores/auth.store';
@@ -79,6 +79,13 @@ function SubmissionTable({ type, status, q, approvedColor, department, supplier,
   const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.user);
   const [page, setPage] = useState(1);
+  const { mutateAsync: del } = useDeleteSubmission();
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm('Xóa tờ trình này? Hành động không thể hoàn tác.')) return;
+    await del(id).catch(() => {});
+  };
 
   useEffect(() => { setPage(1); }, [q, status, department, supplier, reviewerId, approverId, submittedDateFrom, submittedDateTo]);
 
@@ -217,13 +224,24 @@ function SubmissionTable({ type, status, q, approvedColor, department, supplier,
                     </TableCell>
 
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <button
-                        title="Tạo lại tờ trình"
-                        className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                        onClick={() => navigate('/submissions/new', { state: { cloneFrom: s } })}
-                      >
-                        <Copy size={14} />
-                      </button>
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          title="Tạo lại tờ trình"
+                          className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() => navigate('/submissions/new', { state: { cloneFrom: s } })}
+                        >
+                          <Copy size={14} />
+                        </button>
+                        {currentUser?.staffId === s.submitter.id && s.status === 'draft' && (
+                          <button
+                            title="Xóa tờ trình"
+                            className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
+                            onClick={(e) => handleDelete(s.id, e)}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
