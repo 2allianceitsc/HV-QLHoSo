@@ -7,8 +7,10 @@ export interface ICurrentUser {
   username: string;
   email: string;
   roles: string[];
+  hvRole: string;
   fullName: string;
   photoBusiness: string | null;
+  departmentId: string | null;
 }
 
 interface IAuthStore {

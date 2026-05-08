@@ -49,7 +49,6 @@ export class TeamService {
         orderBy: { logCreatedAt: 'desc' },
         include: {
           company: { select: { id: true, name: true } },
-          client:  { select: { id: true, name: true } },
           _count:  { select: { managers: true, staff: true } },
         },
       }),
@@ -78,7 +77,6 @@ export class TeamService {
         name: dto.teamName,
         code: dto.teamCode,
         companyId: dto.companyId,
-        clientId: dto.clientId,
         colorHex: dto.colorHex,
         iconId: dto.iconId,
         orderNo: dto.orderNo ?? 0,
@@ -96,7 +94,6 @@ export class TeamService {
         ...(dto.teamName !== undefined && { name: dto.teamName }),
         ...(dto.teamCode !== undefined && { code: dto.teamCode }),
         ...(dto.companyId !== undefined && { companyId: dto.companyId }),
-        ...(dto.clientId !== undefined && { clientId: dto.clientId }),
         ...(dto.colorHex !== undefined && { colorHex: dto.colorHex }),
         ...(dto.iconId !== undefined && { iconId: dto.iconId }),
         ...(dto.orderNo !== undefined && { orderNo: dto.orderNo }),

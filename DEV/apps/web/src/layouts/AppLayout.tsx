@@ -18,13 +18,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuthStore } from '@/stores/auth.store';
 import { useThemeStore } from '@/stores/theme.store';
 import { ChangePasswordModal } from '@/components/modals/ChangePasswordModal';
-import { MoodLogoutModal } from '@/components/modals/MoodLogoutModal';
-import { OverBreakModal } from '@/components/modals/OverBreakModal';
+// import { MoodLogoutModal } from '@/components/modals/MoodLogoutModal';   // HR feature — disabled
+// import { OverBreakModal } from '@/components/modals/OverBreakModal';     // HR feature — disabled
 import { UserAvatar } from '@/components/UserAvatar';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { Toaster } from '@/components/ui/toaster';
 import { useLogoutFlow } from '@/hooks/useLogoutFlow';
-import { FloatingWidget } from '@/components/floating-widget/FloatingWidget';
+// import { FloatingWidget } from '@/components/floating-widget/FloatingWidget'; // HR feature — disabled
 import { ClockSkewWarningBanner } from '@/components/ClockSkewWarningBanner';
 import { NAV_GROUPS, type INavGroupConfig } from '@/config/nav.config';
 import { useBrandingUrl, usePublicConfig } from '@/hooks/useSystem';
@@ -146,16 +146,7 @@ export function AppLayout() {
       return next;
     });
   }
-  const {
-    isMoodLogoutOpen,
-    isLogoutOverbreakOpen,
-    overbreakBreakContext,
-    startLogout: handleLogout,
-    cancelLogoutOverbreak,
-    closeMoodLogout,
-    confirmMoodLogout: handleMoodLogoutConfirm,
-    confirmLogoutOverbreak: handleLogoutOverbreakConfirm,
-  } = useLogoutFlow();
+  const { startLogout: handleLogout } = useLogoutFlow();
 
   const allNavItems = useMemo(() => {
     const flat: Record<string, { label: string; icon: React.ReactNode }> = {};
@@ -226,10 +217,10 @@ export function AppLayout() {
             isSidebarOpen ? 'px-5 gap-3' : 'px-4 justify-center',
           )}
         >
-          <img src={logoUrl} alt="HVFlow" className="h-8 w-8 rounded-lg flex-shrink-0 object-contain bg-white/20" />
+          <img src={logoUrl} alt="HV Docs Pro" className="h-8 w-8 rounded-lg flex-shrink-0 object-contain bg-white/20" />
           {isSidebarOpen && (
             <span className="font-extrabold text-[15px] text-white tracking-tight animate-fade-in">
-              HVFlow
+              HV Docs Pro
             </span>
           )}
         </button>
@@ -444,19 +435,10 @@ export function AppLayout() {
         </main>
       </div>
 
-      <FloatingWidget startLogout={handleLogout} />
+      {/* <FloatingWidget startLogout={handleLogout} /> */}{/* HR feature — disabled */}
       <ChangePasswordModal isOpen={isChangePasswordOpen} onClose={() => setIsChangePasswordOpen(false)} />
-      <OverBreakModal
-        isOpen={isLogoutOverbreakOpen}
-        breakContext={overbreakBreakContext}
-        onConfirm={handleLogoutOverbreakConfirm}
-        onCancel={cancelLogoutOverbreak}
-      />
-      <MoodLogoutModal
-        isOpen={isMoodLogoutOpen}
-        onClose={closeMoodLogout}
-        onConfirm={handleMoodLogoutConfirm}
-      />
+      {/* <OverBreakModal ... /> */}{/* HR feature — disabled */}
+      {/* <MoodLogoutModal ... /> */}{/* HR feature — disabled */}
       <Toaster />
     </div>
   );

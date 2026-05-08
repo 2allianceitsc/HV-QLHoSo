@@ -86,150 +86,6 @@ async function main() {
     console.log(`Marital Status: ${ms.name}`);
   }
 
-  // 4a. Global Login/Logout status (CompanyId = NULL, ScopeType = 'System').
-  //     See docs/flows/F04-global-login-logout.md.
-  //     Fixed IDs match migration 20260418120000_global_login_logout_status.
-  const GLOBAL_LOGIN_ID = '019dcb8a-0000-7001-a001-000000000001';
-  const GLOBAL_LOGOUT_ID = '019dcb8a-0000-7002-a002-000000000002';
-
-  await prisma.statusDefinition.upsert({
-    where: { id: GLOBAL_LOGIN_ID },
-    update: {
-      name: 'Login',
-      displayName: 'Login',
-      colorHex: '#22C55E',
-      companyId: null,
-      isLoginStatus: true,
-      isWorkingInStatus: true,
-      scopeType: 'System',
-      isDeleted: false,
-      isDisabled: false,
-      logUpdatedBy: 'seed',
-    },
-    create: {
-      id: GLOBAL_LOGIN_ID,
-      name: 'Login',
-      displayName: 'Login',
-      colorHex: '#22C55E',
-      isLoginStatus: true,
-      isWorkingInStatus: true,
-      scopeType: 'System',
-      orderNo: 0,
-      logCreatedBy: 'seed',
-    },
-  });
-  console.log('Status (global): Login');
-
-  await prisma.statusDefinition.upsert({
-    where: { id: GLOBAL_LOGOUT_ID },
-    update: {
-      name: 'Logout',
-      displayName: 'Logout',
-      colorHex: '#6B7280',
-      companyId: null,
-      isLogoutStatus: true,
-      isWorkingOutStatus: true,
-      scopeType: 'System',
-      isDeleted: false,
-      isDisabled: false,
-      logUpdatedBy: 'seed',
-    },
-    create: {
-      id: GLOBAL_LOGOUT_ID,
-      name: 'Logout',
-      displayName: 'Logout',
-      colorHex: '#6B7280',
-      isLogoutStatus: true,
-      isWorkingOutStatus: true,
-      scopeType: 'System',
-      orderNo: 999,
-      logCreatedBy: 'seed',
-    },
-  });
-  console.log('Status (global): Logout');
-
-  // 4b. Per-company business statuses (Login/Logout excluded — those are global).
-  const statusDefs = [
-    {
-      name: 'Working',
-      displayName: 'Working',
-      colorHex: '#3B82F6',
-      iconId: 'Briefcase',
-      isWorkingInStatus: true,
-      order: 2,
-    },
-    {
-      name: 'Coffee Break',
-      displayName: 'Coffee Break',
-      colorHex: '#F59E0B',
-      iconId: 'Coffee',
-      isBreak: true,
-      maxDurationSeconds: 15 * 60, // 15 min
-      order: 3,
-    },
-    {
-      name: 'Lunch Break',
-      displayName: 'Lunch Break',
-      colorHex: '#8B5CF6',
-      iconId: 'Utensils',
-      isBreak: true,
-      maxDurationSeconds: 60 * 60, // 60 min
-      order: 4,
-    },
-    {
-      name: 'Meeting',
-      displayName: 'Meeting',
-      colorHex: '#06B6D4',
-      iconId: 'Users',
-      isWorkingInStatus: true,
-      order: 5,
-    },
-    {
-      name: 'Out of Office',
-      displayName: 'Out of Office',
-      colorHex: '#F97316',
-      iconId: 'MapPin',
-      isWorkingOutStatus: true,
-      order: 6,
-    },
-  ];
-
-  for (const sd of statusDefs) {
-    const existing = await prisma.statusDefinition.findFirst({
-      where: {
-        name: sd.name,
-        companyId: company.id,
-        isDeleted: false,
-      },
-    });
-
-    if (!existing) {
-      await prisma.statusDefinition.create({
-        data: {
-          id: uuidv7(),
-          name: sd.name,
-          displayName: sd.displayName,
-          colorHex: sd.colorHex,
-          iconId: sd.iconId ?? null,
-          companyId: company.id,
-          isWorkingInStatus: sd.isWorkingInStatus ?? false,
-          isWorkingOutStatus: sd.isWorkingOutStatus ?? false,
-          isBreak: sd.isBreak ?? false,
-          maxDurationSeconds: sd.maxDurationSeconds ?? null,
-          orderNo: sd.order,
-          logCreatedBy: 'seed',
-        },
-      });
-      console.log(`Status: ${sd.name}`);
-    } else if (sd.iconId && !existing.iconId) {
-      await prisma.statusDefinition.update({
-        where: { id: existing.id },
-        data: { iconId: sd.iconId, logUpdatedBy: 'seed' },
-      });
-      console.log(`Status icon updated: ${sd.name} → ${sd.iconId}`);
-    }
-  }
-
   // 5. Super Admin User
   const passwordHash = await bcrypt.hash('Admin@123!', 12);
 
@@ -900,11 +756,214 @@ async function main() {
   // Permission model catalog + default matrix (idempotent; preserves admin edits)
   await seedPermissions(prisma);
 
+  // ─── HV Seed ───────────────────────────────────────────────────────────────
+  await seedHvData(prisma, company.id, roles);
+
   console.log('\nSeeding completed successfully!');
   console.log('Super Admin credentials:');
   console.log('  Username: superadmin');
   console.log('  Password: Admin@123!');
   console.log('\nESC Team default password: Vibe@123! (isFirstLogin = true)');
+  console.log('\nHV default password: HV@123! (isFirstLogin = true)');
+}
+
+async function seedHvData(
+  prisma: PrismaClient,
+  companyId: string,
+  roles: Array<{ id: string; name: string }>,
+) {
+  console.log('\n─── Seeding HV data ───');
+
+  // 1. Departments
+  const deptNames = ['IT', 'Kế toán', 'Marketing', 'Mua hàng', 'Hành chính', 'Ban lãnh đạo'];
+  const deptMap: Record<string, string> = {};
+
+  for (const name of deptNames) {
+    const existing = await prisma.department.findFirst({ where: { name, companyId, isDeleted: false } });
+    if (existing) {
+      deptMap[name] = existing.id;
+    } else {
+      const dept = await prisma.department.create({
+        data: { id: uuidv7(), companyId, name, logCreatedBy: 'seed' },
+      });
+      deptMap[name] = dept.id;
+    }
+    console.log(`  Department: ${name}`);
+  }
+
+  // 2. HV Users (Appendix A)
+  const hvPassword = await bcrypt.hash('HV@123!', 12);
+  const hvRoleMapping: Record<string, string> = {
+    reviewer: 'MANAGER',
+    approver: 'HR_ADMIN',
+    staff: 'EMPLOYEE',
+  };
+
+  const hvUsers = [
+    { username: 'quynhdt267', fullName: 'Dương Thuý Quỳnh',  dept: 'Mua hàng',     position: 'Trưởng phòng',    hvRole: 'reviewer', employeeId: 'HV001' },
+    { username: 'tanvt',      fullName: 'Trương Văn Tân',    dept: 'IT',            position: 'Trưởng phòng IT', hvRole: 'reviewer', employeeId: 'HV002' },
+    { username: 'myadh',      fullName: 'Dương Hà My',       dept: 'Kế toán',       position: 'Kế toán trưởng',  hvRole: 'reviewer', employeeId: 'HV003' },
+    { username: 'nhunght',    fullName: 'Trần Hồng Nhung',   dept: 'Marketing',     position: 'Quản lý MKT',     hvRole: 'approver', employeeId: 'HV004' },
+    { username: 'hongdv',     fullName: 'Dương Văn Hồng',    dept: 'Ban lãnh đạo', position: 'Giám đốc',        hvRole: 'approver', employeeId: 'HV005' },
+    { username: 'vanlth',     fullName: 'Lê Thị Hồng Vân',  dept: 'Ban lãnh đạo', position: 'Phó giám đốc',    hvRole: 'approver', employeeId: 'HV006' },
+    { username: 'hungnt',     fullName: 'Nguyễn Thế Hùng',  dept: 'IT',            position: 'Nhân viên IT',    hvRole: 'staff',    employeeId: 'HV007' },
+    { username: 'lienhm',     fullName: 'Hoàng Minh Liên',  dept: 'Kế toán',       position: 'Kế toán viên',    hvRole: 'staff',    employeeId: 'HV008' },
+    { username: 'thanhpv',    fullName: 'Phạm Văn Thành',   dept: 'Marketing',     position: 'Nhân viên MKT',   hvRole: 'staff',    employeeId: 'HV009' },
+  ];
+
+  const hvStaffMap: Record<string, string> = {};
+
+  for (const u of hvUsers) {
+    const nameParts = u.fullName.split(' ');
+    const firstName = nameParts[nameParts.length - 1];
+    const surname = nameParts[0];
+    const middleName = nameParts.slice(1, -1).join(' ') || undefined;
+
+    let userLogin = await prisma.userLogin.findFirst({ where: { username: u.username, isDeleted: false } });
+    if (!userLogin) {
+      userLogin = await prisma.userLogin.create({
+        data: {
+          id: uuidv7(),
+          username: u.username,
+          email: `${u.username}@hv.com`,
+          passwordHash: hvPassword,
+          isFirstLogin: true,
+          isActive: true,
+          logCreatedBy: 'seed',
+        },
+      });
+    }
+
+    let staff = await prisma.staff.findFirst({ where: { employeeId: u.employeeId, isDeleted: false } });
+    if (!staff) {
+      staff = await prisma.staff.create({
+        data: {
+          id: uuidv7(),
+          userLoginId: userLogin.id,
+          employeeId: u.employeeId,
+          companyId,
+          firstName,
+          middleName,
+          surname,
+          companyEmailAddress: `${u.username}@hv.com`,
+          departmentId: deptMap[u.dept],
+          hvRole: u.hvRole,
+          logCreatedBy: 'seed',
+        },
+      });
+    } else {
+      staff = await prisma.staff.update({
+        where: { id: staff.id },
+        data: { departmentId: deptMap[u.dept], hvRole: u.hvRole, logUpdatedBy: 'seed' },
+      });
+    }
+
+    hvStaffMap[u.username] = staff.id;
+
+    const legacyRoleName = hvRoleMapping[u.hvRole];
+    const legacyRole = roles.find((r) => r.name === legacyRoleName);
+    if (legacyRole) {
+      const existingRole = await prisma.staffRole.findFirst({
+        where: { staffId: staff.id, roleId: legacyRole.id, isDeleted: false },
+      });
+      if (!existingRole) {
+        await prisma.staffRole.create({
+          data: { id: uuidv7(), staffId: staff.id, roleId: legacyRole.id, logCreatedBy: 'seed' },
+        });
+      }
+    }
+
+    console.log(`  Staff: ${u.fullName} (${u.username} · ${u.hvRole})`);
+  }
+
+  // 3. CostCodes (Appendix B)
+  const costCodes = [
+    { code: 'IT0001', name: 'Tài sản cố định',      dept: 'IT' },
+    { code: 'IT0002', name: 'CP Phần mềm',           dept: 'IT' },
+    { code: 'IT0003', name: 'CP Sửa chữa thiết bị',  dept: 'IT' },
+    { code: 'KT0001', name: 'Tài sản cố định',       dept: 'Kế toán' },
+    { code: 'KT0002', name: 'CP Văn phòng phẩm',     dept: 'Kế toán' },
+    { code: 'CB0005', name: 'CP Marketing',           dept: 'Marketing' },
+    { code: 'DV0005', name: 'CP Dịch vụ MKT',        dept: 'Marketing' },
+    { code: 'MH0001', name: 'CP Hàng hoá',           dept: 'Mua hàng' },
+    { code: 'CL0001', name: 'CP Vận chuyển',         dept: 'IT' },
+    { code: 'HC0001', name: 'CP Hành chính',          dept: 'Hành chính' },
+  ];
+
+  for (const cc of costCodes) {
+    const existing = await prisma.costCode.findFirst({ where: { code: cc.code, isDeleted: false } });
+    if (!existing) {
+      await prisma.costCode.create({
+        data: {
+          id: uuidv7(),
+          code: cc.code,
+          name: cc.name,
+          departmentId: deptMap[cc.dept],
+          logCreatedBy: 'seed',
+        },
+      });
+    }
+    console.log(`  CostCode: ${cc.code} — ${cc.name}`);
+  }
+
+  // 4. ApprovalConfig (§3.4 defaults)
+  // IT: reviewer=tanvt, approver=hongdv
+  // Kế toán: reviewer=myadh, approver=hongdv
+  // Marketing: reviewer=myadh, approver=nhunght
+  // Mua hàng: reviewer=quynhdt267, approver=vanlth
+  // Hành chính: reviewer=myadh, approver=hongdv
+  const approvalConfigs = [
+    { dept: 'IT',         reviewerUsername: 'tanvt',      approverUsername: 'hongdv' },
+    { dept: 'Kế toán',    reviewerUsername: 'myadh',      approverUsername: 'hongdv' },
+    { dept: 'Marketing',  reviewerUsername: 'myadh',      approverUsername: 'nhunght' },
+    { dept: 'Mua hàng',   reviewerUsername: 'quynhdt267', approverUsername: 'vanlth' },
+    { dept: 'Hành chính', reviewerUsername: 'myadh',      approverUsername: 'hongdv' },
+  ];
+
+  for (const ac of approvalConfigs) {
+    const existing = await prisma.approvalConfig.findUnique({ where: { departmentId: deptMap[ac.dept] } });
+    if (!existing) {
+      await prisma.approvalConfig.create({
+        data: {
+          id: uuidv7(),
+          departmentId: deptMap[ac.dept],
+          reviewerId: hvStaffMap[ac.reviewerUsername],
+          approverId: hvStaffMap[ac.approverUsername],
+          logUpdatedBy: 'seed',
+        },
+      });
+    } else {
+      await prisma.approvalConfig.update({
+        where: { departmentId: deptMap[ac.dept] },
+        data: {
+          reviewerId: hvStaffMap[ac.reviewerUsername],
+          approverId: hvStaffMap[ac.approverUsername],
+          logUpdatedBy: 'seed',
+        },
+      });
+    }
+    console.log(`  ApprovalConfig: ${ac.dept} → reviewer=${ac.reviewerUsername}, approver=${ac.approverUsername}`);
+  }
+
+  // 5. SubmissionStatus catalog (fixed 5 records)
+  const submissionStatuses = [
+    { code: 'draft',          label: 'Bản nháp',        colorHex: '#94a3b8', orderNo: 1 },
+    { code: 'pending_review', label: 'Chờ xét duyệt',   colorHex: '#f59e0b', orderNo: 2 },
+    { code: 'in_review',      label: 'Đang xét duyệt',  colorHex: '#3b82f6', orderNo: 3 },
+    { code: 'approved',       label: 'Đã phê duyệt',    colorHex: '#22c55e', orderNo: 4 },
+    { code: 'rejected',       label: 'Từ chối',          colorHex: '#ef4444', orderNo: 5 },
+  ];
+
+  for (const s of submissionStatuses) {
+    await prisma.submissionStatus.upsert({
+      where: { code: s.code },
+      update: { orderNo: s.orderNo },
+      create: { code: s.code, label: s.label, colorHex: s.colorHex, orderNo: s.orderNo },
+    });
+    console.log(`  SubmissionStatus: ${s.code} — ${s.label}`);
+  }
+
+  console.log('─── HV seed complete ───');
 }
 
 main()

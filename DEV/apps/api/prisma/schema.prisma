@@ -163,6 +163,11 @@ model Department {
   staff    Staff[]
   managers DepartmentManager[]
 
+  // HV relations
+  costCodes      CostCode[]
+  approvalConfig ApprovalConfig?
+  submissions    Submission[]
+
   @@map("Department")
 }
 
@@ -380,6 +385,7 @@ model Staff {
   nominatedBankAccountNumber  String?   @map("NominatedBankAccountNumber")
   photoBusiness        String?   @map("PhotoBusiness")
   photoBirthday        String?   @map("PhotoBirthday")
+  avatarKey            String?   @map("AvatarKey")      // R2 object key; null = use avatarColor fallback
   presentAddress       String?   @map("PresentAddress")
   permanentAddress     String?   @map("PermanentAddress")
   personalEmailAddress String?   @map("PersonalEmailAddress")
@@ -407,6 +413,9 @@ model Staff {
   shiftEndDayOffset    Int       @default(0) @map("ShiftEndDayOffset")
   timezone             String?   @map("Timezone")  // IANA e.g. "Asia/Manila"
 
+  // HV: Document approval role — "staff" | "reviewer" | "approver" | "admin"
+  hvRole               String    @default("staff") @map("HvRole")
+
   // Standard columns
   note         String?   @map("Note")
   isDeleted    Boolean   @default(false) @map("IsDeleted")
@@ -433,6 +442,15 @@ model Staff {
   departmentManagerRoles DepartmentManager[] @relation("DepartmentManagers")
   officeManagerRoles     OfficeManager[]     @relation("OfficeManagers")
   teamManagerRoles       TeamManager[]       @relation("TeamManagers")
+
+  // HV: Document approval relations
+  submissionsCreated   Submission[] @relation("SubmissionSubmitter")
+  submissionsToReview  Submission[] @relation("SubmissionReviewer")
+  submissionsToApprove Submission[] @relation("SubmissionApprover")
+  approvalConfigsAsReviewer ApprovalConfig[] @relation("ApprovalConfigReviewer")
+  approvalConfigsAsApprover ApprovalConfig[] @relation("ApprovalConfigApprover")
+  submissionLogs       SubmissionLog[]
+  attachmentsUploaded  Attachment[]
 
   @@index([companyId, isDeleted])  // employee list filtered by company
   @@index([isDeleted, isDisabled]) // general list with active filter
@@ -989,4 +1007,182 @@ model LoginOtp {
 
   @@index([userId, isUsed])
   @@map("LoginOtp")
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// HV — Document Approval Workflow Models
+// ════════════════════════════════════════════════════════════════════════════════
+
+// ─── CostCode ─────────────────────────────────────────────────────────────────
+model CostCode {
+  id           String  @id
+  departmentId String  @map("DepartmentId")
+  code         String  @unique @map("Code")        // e.g. IT0001
+  name         String  @map("Name")
+  isActive     Boolean @default(true) @map("IsActive")
+
+  // Standard columns
+  isDeleted    Boolean  @default(false) @map("IsDeleted")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?  @map("Log_CreatedBy")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  department  Department   @relation(fields: [departmentId], references: [id])
+  expenseLines ExpenseLine[]
+
+  @@index([departmentId, isDeleted])
+  @@map("CostCode")
+}
+
+// ─── ApprovalConfig ───────────────────────────────────────────────────────────
+model ApprovalConfig {
+  id           String @id
+  departmentId String @unique @map("DepartmentId")
+  reviewerId   String @map("ReviewerId")   // Staff.id with hvRole=reviewer
+  approverId   String @map("ApproverId")   // Staff.id with hvRole=approver
+
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  department Department @relation(fields: [departmentId], references: [id])
+  reviewer   Staff      @relation("ApprovalConfigReviewer", fields: [reviewerId], references: [id])
+  approver   Staff      @relation("ApprovalConfigApprover", fields: [approverId], references: [id])
+
+  @@map("ApprovalConfig")
+}
+
+// ─── Submission ───────────────────────────────────────────────────────────────
+// status values: draft | pending_review | in_review | approved | rejected
+// type values:   MS (Mua sắm) | NT (Nguyên tắc)
+model Submission {
+  id                String    @id
+  type              String    @map("Type")             // "MS" | "NT"
+  code              String    @unique @map("Code")     // e.g. MS0001
+  submitterId       String    @map("SubmitterId")
+  departmentId      String    @map("DepartmentId")
+  submittedDate     DateTime  @map("SubmittedDate") @db.Date
+  title             String    @map("Title")
+  content           String    @map("Content") @db.Text
+  status            String    @default("draft") @map("Status")
+  reviewerId        String    @map("ReviewerId")
+  approverId        String    @map("ApproverId")
+  reviewedAt        DateTime? @map("ReviewedAt") @db.Timestamptz
+  approvedAt        DateTime? @map("ApprovedAt") @db.Timestamptz
+  rejectionReason   String?   @map("RejectionReason") @db.Text
+
+  // NT-specific fields
+  contractStartDate DateTime? @map("ContractStartDate") @db.Date
+  contractEndDate   DateTime? @map("ContractEndDate") @db.Date
+  supplier          String?   @map("Supplier")           // NT: primary supplier
+
+  // Standard columns
+  isDeleted    Boolean  @default(false) @map("IsDeleted")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?  @map("Log_CreatedBy")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  submitter         Staff      @relation("SubmissionSubmitter", fields: [submitterId], references: [id])
+  department        Department @relation(fields: [departmentId], references: [id])
+  reviewer          Staff      @relation("SubmissionReviewer", fields: [reviewerId], references: [id])
+  approver          Staff      @relation("SubmissionApprover", fields: [approverId], references: [id])
+  expenseLines      ExpenseLine[]
+  existingInventory ExistingInventory[]
+  attachments       Attachment[]
+  logs              SubmissionLog[]
+
+  @@index([departmentId, status, isDeleted])
+  @@index([submitterId, isDeleted])
+  @@index([status, isDeleted])
+  @@map("Submission")
+}
+
+// ─── ExpenseLine ──────────────────────────────────────────────────────────────
+model ExpenseLine {
+  id           String  @id
+  submissionId String  @map("SubmissionId")
+  costCodeId   String  @map("CostCodeId")
+  costCodeName String  @map("CostCodeName")    // snapshot at creation time
+  amountExVat  BigInt  @map("AmountExVat")     // VND, no decimal
+  vatRate      Int     @default(10) @map("VatRate")    // 1–100
+  amountIncVat BigInt  @map("AmountIncVat")    // = amountExVat × (1 + vatRate/100), calculated by backend
+  supplier     String  @map("Supplier")
+  purchasedFor String? @map("PurchasedFor")
+  purpose      String? @map("Purpose")
+  usedBy       String? @map("UsedBy")
+  sortOrder    Int     @default(1) @map("SortOrder")
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  costCode   CostCode   @relation(fields: [costCodeId], references: [id])
+
+  @@index([submissionId])
+  @@map("ExpenseLine")
+}
+
+// ─── ExistingInventory ────────────────────────────────────────────────────────
+model ExistingInventory {
+  id           String @id
+  submissionId String @map("SubmissionId")
+  itemName     String @map("ItemName")
+  quantity     Int    @map("Quantity")
+  unit         String @map("Unit")
+  sortOrder    Int    @default(1) @map("SortOrder")
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+  @@map("ExistingInventory")
+}
+
+// ─── Attachment ───────────────────────────────────────────────────────────────
+// fileType values: "attachment" | "signed_contract"
+model Attachment {
+  id           String   @id
+  submissionId String   @map("SubmissionId")
+  fileType     String   @map("FileType")      // "attachment" | "signed_contract"
+  name         String   @map("Name")
+  storageKey   String   @map("StorageKey")    // R2 object key; publicUrl = R2_PUBLIC_URL + "/" + storageKey
+  mimeType     String   @map("MimeType")
+  sizeBytes    BigInt   @map("SizeBytes")
+  uploadedBy   String   @map("UploadedBy")
+  uploadedAt   DateTime @default(now()) @map("UploadedAt") @db.Timestamptz
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  uploader   Staff      @relation(fields: [uploadedBy], references: [id])
+
+  @@index([submissionId])
+  @@map("Attachment")
+}
+
+// ─── SubmissionStatus ─────────────────────────────────────────────────────────
+// Fixed catalog — 5 rows, code is PK and immutable. Only label + colorHex editable.
+model SubmissionStatus {
+  code         String   @id @map("Code")    // "draft" | "pending_review" | "in_review" | "approved" | "rejected"
+  label        String   @map("Label")
+  colorHex     String   @map("ColorHex")
+  orderNo      Int      @default(0) @map("OrderNo")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  @@map("SubmissionStatus")
+}
+
+// ─── SubmissionLog ────────────────────────────────────────────────────────────
+// action values: create | update | submit | resubmit | review | approve | reject | delete
+model SubmissionLog {
+  id           String   @id
+  submissionId String   @map("SubmissionId")
+  userId       String   @map("UserId")
+  action       String   @map("Action")
+  fromStatus   String?  @map("FromStatus")
+  toStatus     String?  @map("ToStatus")
+  note         String?  @map("Note") @db.Text
+  createdAt    DateTime @default(now()) @map("CreatedAt") @db.Timestamptz
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  user       Staff      @relation(fields: [userId], references: [id])
+
+  @@index([submissionId])
+  @@map("SubmissionLog")
 }

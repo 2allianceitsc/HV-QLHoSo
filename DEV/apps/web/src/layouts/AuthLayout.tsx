@@ -15,8 +15,8 @@ export function AuthLayout() {
         {/* Logo */}
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <img src={logoUrl} alt="HVFlow" className="h-10 w-10 rounded-xl object-contain shadow-lg bg-white/20" />
-            <span className="text-2xl font-extrabold text-white tracking-tight">HVFlow</span>
+            <img src={logoUrl} alt="HV Docs Pro" className="h-10 w-10 rounded-xl object-contain shadow-lg bg-white/20" />
+            <span className="text-2xl font-extrabold text-white tracking-tight">HV Docs Pro</span>
           </div>
         </div>
 
@@ -63,8 +63,8 @@ export function AuthLayout() {
       <div className="flex-1 flex flex-col items-center justify-center bg-background px-6 py-12">
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-3 mb-8">
-          <img src={logoUrl} alt="HVFlow" className="h-9 w-9 rounded-xl object-contain shadow bg-white/20" />
-          <span className="text-xl font-extrabold text-foreground">HVFlow</span>
+          <img src={logoUrl} alt="HV Docs Pro" className="h-9 w-9 rounded-xl object-contain shadow bg-white/20" />
+          <span className="text-xl font-extrabold text-foreground">HV Docs Pro</span>
         </div>
 
         <div className="w-full max-w-[400px]">
@@ -72,7 +72,7 @@ export function AuthLayout() {
             <Outlet />
           </div>
           <p className="text-center text-xs text-muted-foreground mt-6">
-            &copy; {new Date().getFullYear()} HVFlow. All rights reserved.
+            &copy; {new Date().getFullYear()} HV Docs Pro. All rights reserved.
           </p>
         </div>
       </div>

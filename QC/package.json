@@ -1,0 +1,21 @@
+{
+  "name": "hv-qlhoso-qc",
+  "private": true,
+  "scripts": {
+    "test:e2e": "playwright test --config=playwright.config.ts",
+    "test:e2e:auth": "playwright test --config=playwright.config.ts --project=chromium playwright/scripts/auth/",
+    "test:e2e:sub": "playwright test --config=playwright.config.ts playwright/scripts/submission/",
+    "test:e2e:wf": "playwright test --config=playwright.config.ts playwright/scripts/workflow/",
+    "test:e2e:rpt": "playwright test --config=playwright.config.ts playwright/scripts/reports/",
+    "test:e2e:adm": "playwright test --config=playwright.config.ts playwright/scripts/admin/",
+    "test:e2e:perm": "playwright test --config=playwright.config.ts playwright/scripts/permission/",
+    "test:e2e:up": "playwright test --config=playwright.config.ts playwright/scripts/upload/",
+    "test:e2e:ui": "playwright test --config=playwright.config.ts --ui",
+    "test:e2e:report": "playwright show-report playwright/report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "dotenv": "^16.4.5",
+    "typescript": "^5.4.5"
+  }
+}

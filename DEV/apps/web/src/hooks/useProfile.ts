@@ -3,11 +3,11 @@ import {
   getProfileApi,
   updateProfileApi,
   updateWidgetSettingsApi,
-  uploadAvatarApi,
   uploadBirthdayPhotoApi,
   type IUpdateProfileDto,
   type IUpdateWidgetSettingsDto,
 } from '@/api/profile.api';
+import { uploadApi } from '@/api/upload.api';
 import { useAuthStore } from '@/stores/auth.store';
 
 const PROFILE_KEY = 'profile';
@@ -56,12 +56,12 @@ export function useUploadAvatar() {
   const user = useAuthStore((s) => s.user);
 
   return useMutation({
-    mutationFn: (file: File) => uploadAvatarApi(file),
+    mutationFn: (file: File) => uploadApi.uploadAvatar(file),
     onSuccess: (data) => {
       void qc.invalidateQueries({ queryKey: [PROFILE_KEY] });
-      // Update auth store with new avatar
+      // Update auth store with new avatar public URL
       if (user) {
-        setUser({ ...user, photoBusiness: data.avatarUrl });
+        setUser({ ...user, photoBusiness: data.publicUrl });
       }
     },
   });

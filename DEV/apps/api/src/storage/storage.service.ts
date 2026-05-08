@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PrismaService } from '../prisma/prisma.service';
 import { uuidv7 } from 'uuidv7';
@@ -56,6 +56,71 @@ export class StorageService {
     });
   }
 
+  getEnvPrefix(): string {
+    return process.env.R2_ENV_PREFIX ?? 'dev';
+  }
+
+  buildPublicUrl(config: R2Config, key: string): string {
+    return `${config.publicUrl.replace(/\/$/, '')}/${key}`;
+  }
+
+  /**
+   * Upload a file buffer directly to R2 (server-side upload).
+   * @returns the object key and publicUrl
+   */
+  async uploadFile(
+    key: string,
+    buffer: Buffer,
+    mimeType: string,
+  ): Promise<{ key: string; publicUrl: string }> {
+    const config = await this.getConfig();
+    const client = this.buildClient(config);
+
+    try {
+      await client.send(
+        new PutObjectCommand({
+          Bucket: config.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: mimeType,
+        }),
+      );
+    } catch (err) {
+      this.logger.error(`Failed to upload file key=${key}`, err);
+      throw new InternalServerErrorException('Failed to upload file to storage.');
+    }
+
+    return { key, publicUrl: this.buildPublicUrl(config, key) };
+  }
+
+  /**
+   * Delete an object from R2 by its storage key.
+   */
+  async deleteFile(key: string): Promise<void> {
+    let config: R2Config;
+    try {
+      config = await this.getConfig();
+    } catch {
+      this.logger.warn(`R2 not configured — skipping deleteFile for key=${key}`);
+      return;
+    }
+    const client = this.buildClient(config);
+
+    try {
+      await client.send(new DeleteObjectCommand({ Bucket: config.bucket, Key: key }));
+    } catch (err) {
+      this.logger.error(`Failed to delete file key=${key}`, err);
+    }
+  }
+
+  /**
+   * Get the public base URL from config.
+   */
+  async getPublicUrlBase(): Promise<string> {
+    const config = await this.getConfig();
+    return config.publicUrl.replace(/\/$/, '');
+  }
+
   /**
    * Generate a presigned PUT URL for direct browser → R2 upload.
    * @param folder  e.g. 'avatars'
@@ -88,7 +153,7 @@ export class StorageService {
       this.logger.error(`Failed to generate presigned URL for key=${key}`, err);
       throw new InternalServerErrorException('Failed to generate upload URL. Check R2 credentials in System Settings.');
     }
-    const publicUrl = `${config.publicUrl.replace(/\/$/, '')}/${key}`;
+    const publicUrl = this.buildPublicUrl(config, key);
 
     return { uploadUrl, key, publicUrl };
   }

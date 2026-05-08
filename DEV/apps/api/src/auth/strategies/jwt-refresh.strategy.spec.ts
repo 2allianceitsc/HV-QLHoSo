@@ -20,6 +20,7 @@ describe('JwtRefreshStrategy', () => {
     sub: 'user-1',
     staffId: 'staff-1',
     roles: [],
+    hvRole: 'staff',
     jti: 'refresh-1',
     iat: Math.floor(new Date('2026-04-09T09:52:00.000Z').getTime() / 1000),
   };

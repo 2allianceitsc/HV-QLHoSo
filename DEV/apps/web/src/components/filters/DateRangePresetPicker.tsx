@@ -1,5 +1,6 @@
 import { forwardRef, useMemo, useState } from 'react';
-import DatePicker from 'react-datepicker';
+import DatePicker, { registerLocale } from 'react-datepicker';
+import { vi } from 'date-fns/locale';
 import {
   CalendarDays,
   ChevronDown,
@@ -8,7 +9,6 @@ import {
   X,
 } from 'lucide-react';
 import {
-  addDays,
   endOfMonth,
   endOfWeek,
   format,
@@ -22,6 +22,8 @@ import {
 import { cn } from '@/lib/utils';
 import 'react-datepicker/dist/react-datepicker.css';
 
+registerLocale('vi', vi);
+
 type DateRangeValue = {
   startDate?: string;
   endDate?: string;
@@ -34,6 +36,7 @@ interface DateRangePresetPickerProps {
   label?: string;
   placeholder?: string;
   testId?: string;
+  maxDate?: Date; // undefined = no restriction (default); pass a Date to cap selection
 }
 
 type PresetKey =
@@ -77,7 +80,7 @@ function buildPresetRange(preset: PresetKey) {
     case 'this-week':
       return {
         start: startOfWeek(todayOnly, { weekStartsOn: 1 }),
-        end: todayOnly,
+        end: endOfWeek(todayOnly, { weekStartsOn: 1 }),
       };
     case 'last-week': {
       const lastWeekStart = subWeeks(startOfWeek(todayOnly, { weekStartsOn: 1 }), 1);
@@ -89,7 +92,7 @@ function buildPresetRange(preset: PresetKey) {
     case 'this-month':
       return {
         start: startOfMonth(todayOnly),
-        end: todayOnly,
+        end: endOfMonth(todayOnly),
       };
     case 'last-month': {
       const lastMonth = subMonths(todayOnly, 1);
@@ -103,12 +106,12 @@ function buildPresetRange(preset: PresetKey) {
 
 function getPresetLabel(preset: PresetKey) {
   switch (preset) {
-    case 'today':      return 'Today';
-    case 'yesterday':  return 'Yesterday';
-    case 'this-week':  return 'This week';
-    case 'last-week':  return 'Last week';
-    case 'this-month': return 'This month';
-    case 'last-month': return 'Last month';
+    case 'today':      return 'Hôm nay';
+    case 'yesterday':  return 'Hôm qua';
+    case 'this-week':  return 'Tuần này';
+    case 'last-week':  return 'Tuần trước';
+    case 'this-month': return 'Tháng này';
+    case 'last-month': return 'Tháng trước';
   }
 }
 
@@ -136,7 +139,7 @@ const RangeTriggerButton = forwardRef<HTMLButtonElement, RangeTriggerButtonProps
       aria-label={ariaLabel}
       data-testid={testId}
       className={cn(
-        'flex h-11 w-full items-center justify-between gap-3 rounded-xl border border-border/70 bg-gradient-to-br from-background via-background to-muted/40 px-3 text-left text-sm shadow-sm transition-colors hover:border-primary/40',
+        'flex h-10 w-full items-center justify-between gap-3 rounded-xl border border-border/70 bg-gradient-to-br from-background via-background to-muted/40 px-3 text-left text-sm shadow-sm transition-colors hover:border-primary/40',
         !hasValue && 'text-muted-foreground',
       )}
     >
@@ -166,8 +169,9 @@ export function DateRangePresetPicker({
   onChange,
   className,
   label = 'Date range',
-  placeholder = 'DD/MM/YYYY – DD/MM/YYYY',
+  placeholder = 'Chọn ngày',
   testId = 'date-range-picker',
+  maxDate: maxDateProp,
 }: DateRangePresetPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSelectingEnd, setIsSelectingEnd] = useState(false);
@@ -242,12 +246,12 @@ export function DateRangePresetPicker({
     setIsOpen(true);
   };
 
-  // Keep maxDate at today but allow last-week's end (which is always in the past)
-  const maxDate = addDays(new Date(), 0);
+  // undefined = no restriction (BA default); explicit Date caps the picker
+  const maxDate = maxDateProp;
 
   return (
     <div className={cn('flex flex-col gap-1', className)} data-testid={testId}>
-      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+      {label && <label className="text-xs font-medium text-muted-foreground">{label}</label>}
       <DatePicker
         selected={startDate}
         onChange={handlePickerChange}
@@ -281,7 +285,7 @@ export function DateRangePresetPicker({
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="text-sm font-semibold text-foreground">
-              {format(monthDate, 'MMMM yyyy')}
+              {format(monthDate, 'MMMM yyyy', { locale: vi })}
             </span>
             <button
               type="button"
@@ -297,6 +301,7 @@ export function DateRangePresetPicker({
             </button>
           </div>
         )}
+        locale="vi"
         maxDate={maxDate}
         shouldCloseOnSelect={isSelectingEnd}
         dateFormat="dd/MM/yyyy"

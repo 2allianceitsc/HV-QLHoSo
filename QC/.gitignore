@@ -1,0 +1,10 @@
+# Auth state files (chứa cookie/session — không commit)
+.auth/
+
+# Test artifacts
+playwright/results/
+playwright/report/
+
+# Node
+node_modules/
+dist/

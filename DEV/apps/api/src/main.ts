@@ -1,3 +1,9 @@
+// BigInt is not JSON-serializable by default; convert to Number for API responses.
+// VND amounts fit safely within Number.MAX_SAFE_INTEGER (2^53-1 ≈ 9 quadrillion đồng).
+(BigInt.prototype as unknown as { toJSON: () => number }).toJSON = function () {
+  return Number(this);
+};
+
 import { notifyGoogleChat } from './common/utils/notify';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';

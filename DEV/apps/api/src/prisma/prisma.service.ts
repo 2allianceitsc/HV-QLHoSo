@@ -43,7 +43,14 @@ export class PrismaService
       'RefreshTokenBlacklist',
       'LoginOtp',
       'Auth2FASecret',
-      'Permission',   // action catalog — uses isDisabled, not isDeleted
+      'Permission',        // action catalog — uses isDisabled, not isDeleted
+      // HV models — no isDeleted field in schema
+      'ApprovalConfig',
+      'ExpenseLine',
+      'ExistingInventory',
+      'Attachment',
+      'SubmissionLog',
+      'SubmissionStatus',
     ]);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

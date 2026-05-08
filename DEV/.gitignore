@@ -30,6 +30,7 @@ storybook-static
 .env
 .env.*
 !.env.example
+railway_tokens.md
 
 # Build artifacts — Railway always builds from source
 apps/api/public/

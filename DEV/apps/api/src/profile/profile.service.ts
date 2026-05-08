@@ -57,6 +57,7 @@ export class ProfileService {
       gender: staff.gender,
       photoBusiness: staff.photoBusiness,
       photoBirthday: staff.photoBirthday,
+      avatarKey: (staff as any).avatarKey as string | null,
       isManager: await this.computeIsManager(staff.id),
       company: staff.company,
       department: staff.department,

@@ -18,8 +18,8 @@ const TEST_ACCOUNTS = [
 ];
 
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username or email is required'),
-  password: z.string().min(1, 'Password is required'),
+  username: z.string().min(1, 'Vui lòng nhập tên đăng nhập hoặc email'),
+  password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
 });
 
 type ILoginForm = z.infer<typeof loginSchema>;
@@ -77,7 +77,7 @@ export function LoginPage() {
 
   return (
     <div>
-      {/* Dual logos: ESC (left) + HVFlow (right) */}
+      {/* Dual logos: ESC (left) + HV Docs Pro (right) */}
       <div className="flex items-center justify-between mb-6">
         <img
           src={escLogoUrl}
@@ -87,15 +87,15 @@ export function LoginPage() {
         />
         <img
           src={logoUrl}
-          alt="HVFlow"
+          alt="HV Docs Pro"
           className="h-14 max-w-[120px] object-contain"
         />
       </div>
 
       <div className="mb-6">
-        <h1 className="text-[22px] font-extrabold text-foreground tracking-tight">Welcome back</h1>
+        <h1 className="text-[22px] font-extrabold text-foreground tracking-tight">Chào mừng trở lại</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Enter your credentials to continue
+          Nhập thông tin đăng nhập để tiếp tục
         </p>
       </div>
 
@@ -111,7 +111,7 @@ export function LoginPage() {
         {/* Username */}
         <div>
           <label htmlFor="username" className="block text-[13px] font-semibold text-foreground mb-1.5">
-            Username or Email
+            Tên đăng nhập hoặc Email
           </label>
           <input
             id="username"
@@ -119,7 +119,7 @@ export function LoginPage() {
             autoComplete="username"
             autoFocus
             className="w-full h-11 px-3.5 rounded-xl border border-input bg-background text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary transition-all disabled:opacity-50"
-            placeholder="Enter your Username or Email"
+            placeholder="Nhập tên đăng nhập hoặc email"
             {...register('username')}
           />
           {errors.username && (
@@ -132,7 +132,7 @@ export function LoginPage() {
         {/* Password */}
         <div>
           <label htmlFor="password" className="block text-[13px] font-semibold text-foreground mb-1.5">
-            Password
+            Mật khẩu
           </label>
           <div className="relative">
             <input
@@ -140,14 +140,14 @@ export function LoginPage() {
               type={isPasswordVisible ? 'text' : 'password'}
               autoComplete="current-password"
               className="w-full h-11 px-3.5 pr-11 rounded-xl border border-input bg-background text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary transition-all disabled:opacity-50"
-              placeholder="Enter your password"
+              placeholder="Nhập mật khẩu"
               {...register('password')}
             />
             <button
               type="button"
               onClick={() => setIsPasswordVisible((p) => !p)}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
+              aria-label={isPasswordVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
             >
               {isPasswordVisible ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -165,7 +165,7 @@ export function LoginPage() {
             to="/forgot-password"
             className="text-[13px] text-primary font-medium hover:underline underline-offset-4 transition-colors"
           >
-            Forgot password?
+            Quên mật khẩu?
           </Link>
         </div>
 
@@ -173,10 +173,10 @@ export function LoginPage() {
           {isSubmitting ? (
             <>
               <Loader2 size={16} className="animate-spin" />
-              Signing in...
+              Đang đăng nhập...
             </>
           ) : (
-            'Sign In'
+            'Đăng nhập'
           )}
         </Button>
       </form>
@@ -188,7 +188,7 @@ export function LoginPage() {
           onClick={() => setIsTestOpen((v) => !v)}
           className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
         >
-          <span>Test accounts — click to fill</span>
+          <span>Tài khoản test — nhấn để điền</span>
           {isTestOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
         </button>
         {isTestOpen && (

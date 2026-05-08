@@ -1,38 +1,33 @@
 /**
- * nav.config.tsx — Sidebar navigation configuration
+ * nav.config.tsx — Sidebar navigation configuration (HV-QLHoSo)
  *
- * Visibility is determined in this order:
- *   1. `screen` field present → filter by `usePermission(screen, null, 'VIEW')`
- *      (authoritative — matches the backend permission matrix).
- *   2. `roles` field present → legacy role-based check (retained during
- *      migration; prefer `screen` for new items).
- *   3. Neither → visible to all roles.
+ * Visibility logic (in AppLayout.tsx):
+ *   1. `screen` present → checked against DB permission matrix (VIEW action).
+ *   2. `roles` present  → legacy role-based check against user.roles[].
+ *   3. Neither          → visible to all authenticated users.
  *
- * To hide/show a menu item, either:
- *   • Set `screen: 'SXX'` and toggle access in SY18 admin UI, OR
- *   • Remove the item from this file.
- *
- * To add a new item: append an entry with `screen` set to the destination's
- * code. The Screen row must exist in the DB catalog; run `pnpm db:seed` or
- * use SY18's "Sync Catalog" action.
+ * HV role → legacy role mapping (until hvRole lands in JWT):
+ *   staff    ≈ EMPLOYEE
+ *   reviewer ≈ MANAGER
+ *   approver ≈ HR_ADMIN
+ *   admin    ≈ SUPER_ADMIN
  */
 
 import {
-  Home,
+  FileText,
+  BarChart2,
+  DollarSign,
+  FileCheck2,
   Users,
-  Activity,
   Building2,
-  UsersRound,
-  MapPin,
-  Award,
-  Key,
-  Sliders,
-  ScrollText,
-  Bell,
-  Mail,
-  AlertTriangle,
+  Tag,
   ShieldCheck,
+  ScrollText,
+  Sliders,
+  Bell,
   FlaskConical,
+  Mail,
+  Layers,
 } from 'lucide-react';
 
 export type AppRole = 'EMPLOYEE' | 'MANAGER' | 'HR_ADMIN' | 'SUPER_ADMIN';
@@ -41,31 +36,13 @@ export interface INavItemConfig {
   label: string;
   path: string;
   icon: React.ReactNode;
-  /** `true` → only match exact path (passed to react-router NavLink `end`) */
   end?: boolean;
-  /**
-   * New (Phase 3+): Screen code in the DB catalog. If set, visibility is
-   * controlled by `usePermission(screen, null, 'VIEW')` and the item only
-   * shows when the user has VIEW on that screen.
-   */
   screen?: string;
-  /**
-   * Legacy role filter (retained for items not yet migrated to `screen`).
-   * Ignored if `screen` is set.
-   * - `undefined` → all roles
-   * - `[]`        → hidden from everyone (use to temporarily disable)
-   * - `['MANAGER', ...]` → only those roles
-   */
   roles?: AppRole[];
 }
 
 export interface INavGroupConfig {
-  /** Section header label; omit for unlabelled groups */
   label?: string;
-  /**
-   * Legacy role filter for the whole group. New groups should omit this and
-   * rely on per-item `screen` filters — an empty group is hidden automatically.
-   */
   roles?: AppRole[];
   items: INavItemConfig[];
 }
@@ -74,42 +51,47 @@ export interface INavGroupConfig {
 
 export const NAV_GROUPS: INavGroupConfig[] = [
   {
-    // No label — personal / daily use items
+    // Tờ trình — visible to all authenticated users
     items: [
-      { label: 'Dashboard',         path: '/',                    icon: <Home size={16} />,          end: true },
+      { label: 'Tờ trình', path: '/submissions', icon: <FileText size={16} />, end: true },
     ],
   },
   {
-    label: 'Tổ chức',
-    roles: ['HR_ADMIN', 'SUPER_ADMIN'],
+    label: 'Báo cáo',
+    // reviewer (MANAGER) + approver (HR_ADMIN) + admin (SUPER_ADMIN)
+    roles: ['MANAGER', 'HR_ADMIN', 'SUPER_ADMIN'],
     items: [
-      { label: 'Nhân viên',         path: '/employees',                 icon: <Users size={16} />,       screen: 'E01' },
-      { label: 'Công ty',           path: '/settings/company',          icon: <Building2 size={16} />,   screen: 'S01' },
-      { label: 'Phòng ban',         path: '/settings/departments',      icon: <UsersRound size={16} />,  screen: 'S02' },
-      { label: 'Văn phòng',         path: '/settings/offices',          icon: <MapPin size={16} />,      screen: 'S03' },
-      { label: 'Chức vụ',           path: '/settings/positions',        icon: <Award size={16} />,       screen: 'S04' },
-      { label: 'Nhóm',              path: '/settings/teams',            icon: <Users size={16} />,       screen: 'S05' },
+      { label: 'Tổng hợp',         path: '/reports',            icon: <BarChart2 size={16} />, end: true },
+      { label: 'Chi tiết chi phí', path: '/reports/expenses',  icon: <DollarSign size={16} />, roles: ['HR_ADMIN', 'SUPER_ADMIN'] },
+      { label: 'Hợp đồng',        path: '/reports/contracts', icon: <FileCheck2 size={16} /> },
+    ],
+  },
+  {
+    label: 'Quản trị',
+    // admin only (SUPER_ADMIN maps to hvRole=admin)
+    roles: ['SUPER_ADMIN'],
+    items: [
+      { label: 'Người dùng',      path: '/admin/users',           icon: <Users size={16} /> },
+      { label: 'Bộ phận',         path: '/admin/departments',     icon: <Building2 size={16} /> },
+      { label: 'Mã phí',          path: '/admin/cost-codes',      icon: <Tag size={16} /> },
+      { label: 'Phân quyền duyệt', path: '/admin/approval-config', icon: <ShieldCheck size={16} /> },
+      { label: 'Trạng thái',       path: '/admin/submission-statuses', icon: <Layers size={16} /> },
     ],
   },
   {
     label: 'Hệ thống',
-    roles: ['HR_ADMIN', 'SUPER_ADMIN'],
+    roles: ['SUPER_ADMIN'],
     items: [
-      { label: 'Hiển thị dropdown', path: '/settings/dropdown-display', icon: <Sliders size={16} />,     screen: 'S09' },
-      { label: 'Email',             path: '/system/email',           icon: <Mail size={16} />,          screen: 'SY14' },
-      { label: 'Nhật ký',           path: '/system/logs',            icon: <ScrollText size={16} />,    screen: 'SY04' },
-      { label: 'Vai trò',           path: '/system/roles',           icon: <Key size={16} />,           screen: 'SY01' },
-      { label: 'Phân quyền vai trò',path: '/system/role-permissions',icon: <ShieldCheck size={16} />,   screen: 'SY18', roles: ['SUPER_ADMIN'] },
-      { label: 'Cài đặt',           path: '/system/settings',        icon: <Sliders size={16} />,       screen: 'SY02', roles: ['SUPER_ADMIN'] },
-      { label: 'Cảnh báo hệ thống', path: '/system/warnings',        icon: <AlertTriangle size={16} />, screen: 'SY15' },
-      // { label: 'Nhóm',             path: '/system/teams',           icon: <Users size={16} />,         screen: 'SY10' },
-      { label: 'Kiểm tra đồng bộ giờ', path: '/system/test',        icon: <FlaskConical size={16} />,   roles: ['SUPER_ADMIN'] },
+      { label: 'Email template', path: '/system/email-templates', icon: <Mail size={16} /> },
+      { label: 'Nhật ký',        path: '/system/logs',            icon: <ScrollText size={16} />, screen: 'SY04' },
+      { label: 'Cài đặt',        path: '/system/settings',        icon: <Sliders size={16} />,    screen: 'SY02' },
+      { label: 'Kiểm tra đồng bộ giờ', path: '/system/test', icon: <FlaskConical size={16} /> },
     ],
   },
   {
     label: 'Tài khoản',
     items: [
-      { label: 'Thông báo',    path: '/notifications',    icon: <Bell size={16} /> },
+      { label: 'Thông báo', path: '/notifications', icon: <Bell size={16} /> },
     ],
   },
 ];

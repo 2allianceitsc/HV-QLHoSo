@@ -16,18 +16,18 @@ import { DepartmentModule } from './department/department.module';
 import { OfficeModule } from './office/office.module';
 import { PositionModule } from './position/position.module';
 import { TeamModule } from './team/team.module';
-import { ClientModule } from './client/client.module';
+// import { ClientModule } from './client/client.module'; // HR-specific — disabled
 import { ProfileModule } from './profile/profile.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { EmployeeModule } from './employee/employee.module';
-import { StatusModule } from './status/status.module';
-import { AttendanceModule } from './attendance/attendance.module';
+// import { StatusModule } from './status/status.module'; // HR-specific — disabled
+// import { AttendanceModule } from './attendance/attendance.module'; // HR-specific — disabled
 import { VibeIconsModule } from './vibe-icons/vibe-icons.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { ReportsModule } from './reports/reports.module';
+// import { ReportsModule } from './reports/reports.module'; // HR-specific — disabled
 import { SystemRolesModule } from './system/roles/roles.module';
 import { SystemSettingsModule } from './system/settings/settings.module';
-import { SystemStatusesModule } from './system/statuses/statuses.module';
+// import { SystemStatusesModule } from './system/statuses/statuses.module'; // HR-specific — disabled
 import { AuditModule } from './system/audit/audit.module';
 import { SystemVibeIconsModule } from './system/vibe-icons/vibe-icons.module';
 import { HealthModule } from './health/health.module';
@@ -41,6 +41,13 @@ import { IntegrityModule } from './system/integrity/integrity.module';
 import { DropdownDisplayModule } from './dropdown-display/dropdown-display.module';
 import { PermissionsModule } from './system/permissions/permissions.module';
 import { DebugModule } from './common/debug/debug.module';
+import { SubmissionModule } from './submission/submission.module';
+import { CostCodeModule } from './cost-code/cost-code.module';
+import { ApprovalConfigModule } from './approval-config/approval-config.module';
+import { HvReportsModule } from './hv-reports/hv-reports.module';
+import { HvAdminModule } from './hv-admin/hv-admin.module';
+import { SystemLogsModule } from './system-logs/system-logs.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -86,19 +93,19 @@ import { DebugModule } from './common/debug/debug.module';
     OfficeModule,
     PositionModule,
     TeamModule,
-    ClientModule,
+    // ClientModule, // HR-specific — disabled
     ProfileModule,
     DashboardModule,
     EmployeeModule,
-    StatusModule,
-    AttendanceModule,
+    // StatusModule, // HR-specific — disabled
+    // AttendanceModule, // HR-specific — disabled
     VibeIconsModule,
     NotificationsModule,
-    ReportsModule,
+    // ReportsModule, // HR-specific — disabled
     // System modules (EP10)
     SystemRolesModule,
     SystemSettingsModule,
-    SystemStatusesModule,
+    // SystemStatusesModule, // HR-specific — disabled
     AuditModule,
     SystemVibeIconsModule,
     HealthModule,
@@ -112,6 +119,14 @@ import { DebugModule } from './common/debug/debug.module';
     DropdownDisplayModule,
     PermissionsModule,
     DebugModule,
+    // HV modules
+    SubmissionModule,
+    CostCodeModule,
+    ApprovalConfigModule,
+    HvReportsModule,
+    HvAdminModule,
+    SystemLogsModule,
+    UploadModule,
   ],
   controllers: [],
   providers: [

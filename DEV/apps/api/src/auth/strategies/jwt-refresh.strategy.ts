@@ -27,12 +27,14 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
       throw new UnauthorizedException('Refresh token not found');
     }
 
-    // Single PK lookup — both manual logout and auto-logout now set
-    // allSessionsRevokedAt, so no separate TT notes query is needed.
     const userLogin = await this.prisma.userLogin.findUnique({
       where: { id: payload.sub },
-      select: { allSessionsRevokedAt: true },
+      select: { allSessionsRevokedAt: true, isActive: true },
     });
+
+    if (userLogin?.isActive === false) {
+      throw new UnauthorizedException('Account is deactivated');
+    }
 
     if (userLogin?.allSessionsRevokedAt && payload.iat
         && payload.iat < Math.floor(userLogin.allSessionsRevokedAt.getTime() / 1000)) {

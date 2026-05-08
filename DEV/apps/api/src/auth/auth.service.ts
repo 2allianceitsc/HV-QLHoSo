@@ -17,7 +17,6 @@ import { UserRole } from '@shared/enums/user-role.enum';
 import { IJwtPayload } from './strategies/jwt.strategy';
 import { EmailService } from './email/email.service';
 import { TwoFAService } from './two-fa/two-fa.service';
-import { isStaleSession } from '../common/utils/shift-boundary';
 import { DebugService } from '../common/debug/debug.service';
 
 interface ITokenPair {
@@ -31,8 +30,10 @@ export interface ICurrentUser {
   username: string;
   email: string;
   roles: UserRole[];
+  hvRole: string;
   fullName: string;
   photoBusiness: string | null;
+  departmentId: string | null;
 }
 
 @Injectable()
@@ -161,10 +162,6 @@ export class AuthService {
     const roles = this.extractRoles(userLogin.staff?.staffRoles ?? []);
     const tokens = await this.generateTokens(userLogin.id, userLogin.staff?.id ?? '', roles);
 
-    if (userLogin.staff?.id) {
-      await this.createLoginTimeTracking(userLogin.staff.id, userLogin.username);
-    }
-
     return {
       success: true,
       data: {
@@ -193,63 +190,7 @@ export class AuthService {
       }),
     ];
 
-    // Close the open TT row — find first so we can compute durationSeconds accurately.
-    // If the closed row was NOT already a logout-status row (meaning attendance.service.ts logout()
-    // did not run), create a System Logout trace row so Today's History shows why the session ended.
-    const closeTtRow = staffId
-      ? (async () => {
-          const row = await this.prisma.timeTracking.findFirst({
-            where: { staffId, isSuperseded: false, endTime: null, isDeleted: false },
-            select: {
-              id: true,
-              startTime: true,
-              shiftStartTime: true,
-              shiftEndTime: true,
-              notes: true,
-              status: { select: { isLogoutStatus: true } },
-            },
-          });
-          if (!row) return;
-
-          const durationSeconds = Math.floor((now.getTime() - row.startTime.getTime()) / 1000);
-          const closedNotes = row.notes
-            ? `${row.notes} [closed: auth logout]`
-            : 'Closed: auth logout';
-          await this.prisma.timeTracking.update({
-            where: { id: row.id },
-            data: { endTime: now, durationSeconds, notes: closedNotes, logUpdatedBy: 'system' },
-          });
-
-          if (!row.status.isLogoutStatus) {
-            const logoutStatus = await this.prisma.statusDefinition.findFirst({
-              where: { isLogoutStatus: true, isDeleted: false, isDisabled: false },
-              orderBy: { orderNo: 'asc' },
-              select: { id: true },
-            });
-            if (logoutStatus) {
-              await this.prisma.timeTracking.create({
-                data: {
-                  id: uuidv7(),
-                  staffId,
-                  statusId: logoutStatus.id,
-                  startTime: now,
-                  endTime: now,
-                  durationSeconds: 0,
-                  shiftStartTime: row.shiftStartTime,
-                  shiftEndTime: row.shiftEndTime,
-                  notes: 'System logout — auth-only',
-                  logCreatedBy: 'system',
-                  logUpdatedBy: 'system',
-                },
-              });
-            } else {
-              this.logger.warn(`[logout] No logout status found in DB — system logout trace not created for staffId=${staffId}`);
-            }
-          }
-        })()
-      : Promise.resolve();
-
-    await Promise.all([...ops, closeTtRow]);
+    await Promise.all(ops);
   }
 
   // ── Refresh ───────────────────────────────────────────────────────────────
@@ -677,10 +618,6 @@ export class AuthService {
     const roles = this.extractRoles(userLogin.staff?.staffRoles ?? []);
     const tokens = await this.generateTokens(userLogin.id, userLogin.staff?.id ?? '', roles);
 
-    if (userLogin.staff?.id) {
-      await this.createLoginTimeTracking(userLogin.staff.id, userLogin.username);
-    }
-
     return {
       success: true,
       data: {
@@ -751,107 +688,6 @@ export class AuthService {
     return this.buildUserInfo(userLogin, roles);
   }
 
-  // ── Create Login TimeTracking ─────────────────────────────────────────────
-  private async createLoginTimeTracking(staffId: string, createdBy: string): Promise<void> {
-    try {
-      // Parallel: fetch staff config + check for any existing open row (login OR status).
-      // Rule: if ANY open row exists, the new login row is an audit-only Superseded row —
-      // UNLESS the open row is from a previous shift cycle (stale), in which case it is
-      // auto-closed and the new login row starts fresh (isSuperseded = false).
-      //
-      // Scenarios (see A01-login.md § TimeTracking Side Effects):
-      //   S1 — no open rows          → isSuperseded = false  (fresh session)
-      //   S2 — open Login row        → isSuperseded = true   (2nd device, no status change yet)
-      //   S3 — open non-login row    → isSuperseded = true   (re-login; status was changed, no explicit logout)
-      //   S4 — post-logout re-login  → isSuperseded = false  (all rows closed by logout)
-      //   S5 — stale open row        → close stale row, isSuperseded = false (missed auto-logout)
-      const [staff, openSession] = await Promise.all([
-        this.prisma.staff.findUnique({
-          where: { id: staffId },
-          select: {
-            companyId: true,
-            shiftStartTime: true,
-            shiftEndTime: true,
-            latestEndShiftTime: true,
-            shiftEndDayOffset: true,
-            timezone: true,
-          },
-        }),
-        this.prisma.timeTracking.findFirst({
-          where: {
-            staffId,
-            isSuperseded: false,
-            endTime: null,
-            isDeleted: false,
-          },
-          select: { id: true, startTime: true },
-        }),
-      ]);
-
-      if (!staff) return;
-
-      // Resolve login status: company-scoped → system-wide
-      const loginStatus = await this.prisma.statusDefinition.findFirst({
-        where: {
-          isLoginStatus: true,
-          isDeleted: false,
-          isDisabled: false,
-          OR: [{ companyId: staff.companyId }, { companyId: null }],
-        },
-        orderBy: [
-          { companyId: 'desc' }, // Prefer company-scoped over system-wide
-          { orderNo: 'asc' },
-        ],
-        select: { id: true },
-      });
-
-      if (!loginStatus) return;
-
-      const now = new Date();
-      let isSuperseded = openSession !== null;
-
-      // S5: stale session — open row belongs to a previous shift cycle (or previous calendar day
-      // for staff without latestEndShiftTime). Close it so the new login starts clean.
-      if (openSession !== null && isStaleSession(
-        openSession.startTime,
-        now,
-        staff.latestEndShiftTime,
-        staff.timezone,
-        staff.shiftEndDayOffset ?? 0,
-      )) {
-        await this.prisma.timeTracking.update({
-          where: { id: openSession.id },
-          data: {
-            endTime: now,
-            notes: 'Stale session — closed on re-login',
-            logUpdatedBy: createdBy,
-          },
-        });
-        isSuperseded = false;
-      }
-
-      await this.prisma.timeTracking.create({
-        data: {
-          id: uuidv7(),
-          staffId,
-          statusId: loginStatus.id,
-          startTime: now,
-          shiftStartTime: staff.shiftStartTime,
-          shiftEndTime: staff.shiftEndTime,
-          isLoginStatus: true,
-          isSuperseded,
-          notes: isSuperseded ? 'Superseded login' : 'Login',
-          logCreatedBy: createdBy,
-          logUpdatedBy: createdBy,
-        },
-      });
-    } catch (err) {
-      // Awaited but error-isolated: login still succeeds even if TimeTracking fails.
-      // Log so Railway surfaces the failure for investigation.
-      this.logger.error(`createLoginTimeTracking failed for staffId=${staffId}`, err instanceof Error ? err.stack : String(err));
-    }
-  }
-
   // ── Helpers ───────────────────────────────────────────────────────────────
   /** Public — used by 2FA verify flow after challenge is cleared */
   async buildLoginResponse(userLogin: {
@@ -864,16 +700,14 @@ export class AuthService {
       middleName: string | null;
       surname: string;
       photoBusiness: string | null;
+      hvRole: string;
+      departmentId: string | null;
       staffRoles: Array<{ role: { name: string } }>;
     } | null;
   }) {
     const roles = this.extractRoles(userLogin.staff?.staffRoles ?? []);
     const tokens = await this.generateTokens(userLogin.id, userLogin.staff?.id ?? '', roles);
     const user = this.buildUserInfo(userLogin, roles);
-
-    if (userLogin.staff?.id) {
-      await this.createLoginTimeTracking(userLogin.staff.id, userLogin.username);
-    }
 
     return { user, ...tokens };
   }
@@ -882,8 +716,12 @@ export class AuthService {
     const jti = uuidv7();
     const refreshJti = uuidv7();
 
-    const accessPayload: IJwtPayload = { sub: userId, staffId, roles, jti };
-    const refreshPayload: IJwtPayload = { sub: userId, staffId, roles, jti: refreshJti };
+    const hvRole = staffId
+      ? (await this.prisma.staff.findUnique({ where: { id: staffId }, select: { hvRole: true } }))?.hvRole ?? 'staff'
+      : 'admin';
+
+    const accessPayload: IJwtPayload = { sub: userId, staffId, roles, hvRole, jti };
+    const refreshPayload: IJwtPayload = { sub: userId, staffId, roles, hvRole, jti: refreshJti };
 
     const [accessToken, refreshToken] = await Promise.all([
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -919,6 +757,8 @@ export class AuthService {
         middleName: string | null;
         surname: string;
         photoBusiness: string | null;
+        hvRole: string;
+        departmentId: string | null;
       } | null;
     },
     roles: UserRole[],
@@ -934,8 +774,10 @@ export class AuthService {
       username: userLogin.username,
       email: userLogin.email,
       roles,
+      hvRole: staff?.hvRole ?? 'staff',
       fullName,
       photoBusiness: staff?.photoBusiness ?? null,
+      departmentId: staff?.departmentId ?? null,
     };
   }
 

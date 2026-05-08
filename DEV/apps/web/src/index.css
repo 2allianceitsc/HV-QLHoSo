@@ -133,11 +133,11 @@
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
   }
   body {
     @apply bg-background text-foreground;
-    /* Prevent layout shift when dialogs add overflow:hidden to body (scrollbar gutter stays reserved) */
-    scrollbar-gutter: stable;
+    overflow: hidden;
   }
 
   /* Custom scrollbar */

@@ -6,9 +6,10 @@ import { ApiLogPage } from './ApiLogPage';
 import { ErrorLogPage } from './ErrorLogPage';
 import { DebugLogPage } from './DebugLogPage';
 import { TeamHistoryPage } from '@/pages/attendance/TeamHistoryPage';
+import { EmailLogTab } from './EmailLogTab';
 
-const BASE_TABS = ['audit', 'api'] as const;
-const ALL_TABS = ['audit', 'api', 'exception', 'debug', 'login-log'] as const;
+const BASE_TABS = ['email', 'audit', 'api'] as const;
+const ALL_TABS = ['email', 'audit', 'api', 'exception', 'debug', 'login-log'] as const;
 type LogTab = (typeof ALL_TABS)[number];
 
 function isValidTab(t: string | null, allowed: readonly string[]): t is LogTab {
@@ -28,7 +29,7 @@ export function LogsPage() {
   ];
 
   const rawTab = searchParams.get('tab');
-  const activeTab: LogTab = isValidTab(rawTab, allowedTabs) ? rawTab : 'audit';
+  const activeTab: LogTab = isValidTab(rawTab, allowedTabs) ? rawTab : 'email';
 
   function handleTabChange(value: string) {
     setSearchParams({ tab: value }, { replace: true });
@@ -37,12 +38,13 @@ export function LogsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">Logs</h1>
-        <p className="text-sm text-muted-foreground">Audit trail, API request log, and exception log.</p>
+        <h1 className="text-2xl font-semibold">Nhật ký hệ thống</h1>
+        <p className="text-sm text-muted-foreground">Email log, audit trail và nhật ký hệ thống.</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
+          <TabsTrigger value="email">Email Log</TabsTrigger>
           <TabsTrigger value="audit">Audit Log</TabsTrigger>
           <TabsTrigger value="api">API Log</TabsTrigger>
           {isSuperAdmin && <TabsTrigger value="exception">Exception Log</TabsTrigger>}
@@ -50,6 +52,9 @@ export function LogsPage() {
           {canSeeLoginLog && <TabsTrigger value="login-log">Login Log</TabsTrigger>}
         </TabsList>
 
+        <TabsContent value="email" className="pt-4">
+          <EmailLogTab />
+        </TabsContent>
         <TabsContent value="audit" className="pt-4">
           <AuditLogPage />
         </TabsContent>
