@@ -14,7 +14,7 @@ import {
   HttpStatus,
   NotFoundException,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { Response, Request } from 'express';
 import { ApiTags, ApiOperation, ApiCookieAuth } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
@@ -62,7 +62,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ auth: { ttl: 60000, limit: 5 } })
+  @Throttle({ auth: { ttl: 60000, limit: 20 } })
   @ApiOperation({ summary: 'Login with username/email and password' })
   async login(
     @Body() dto: LoginDto,
@@ -150,6 +150,7 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @SkipThrottle()
   @UseGuards(JwtRefreshGuard)
   @ApiCookieAuth('refresh_token')
   @ApiOperation({ summary: 'Refresh access token using refresh token cookie' })

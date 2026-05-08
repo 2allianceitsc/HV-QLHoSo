@@ -82,7 +82,7 @@ import { UploadModule } from './upload/upload.module';
       {
         name: 'auth',
         ttl: 60000,
-        limit: 5,
+        limit: 20,
       },
     ]),
     PrismaModule,
