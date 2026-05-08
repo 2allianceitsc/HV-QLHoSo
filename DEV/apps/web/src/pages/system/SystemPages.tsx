@@ -6,7 +6,6 @@ export { DataIntegrityPage } from './DataIntegrityPage';
 export { LoginOtpPage } from './LoginOtpPage';
 
 // Tabbed group pages
-export { EmailPage } from './EmailPage';
 export { LogsPage } from './LogsPage';
 export { ConfigurationsPage } from './ConfigurationsPage';
 

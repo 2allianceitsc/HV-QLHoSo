@@ -1,8 +1,9 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useCreateSubmission } from '@/hooks/useSubmission';
+import { useCreateSubmission, useDeleteSubmission } from '@/hooks/useSubmission';
 import { useToast } from '@/hooks/use-toast';
 import { SubmissionForm } from '@/components/submission/SubmissionForm';
 import { uploadApi } from '@/api/upload.api';
+import { submissionApi } from '@/api/submission.api';
 import type { ICreateSubmissionInput, ISubmission } from '@/api/submission.api';
 
 async function uploadAttachments(submissionId: string, files: File[], signedContract: File | null) {
@@ -15,6 +16,7 @@ export function CreateSubmissionPage() {
   const location = useLocation();
   const cloneFrom = (location.state as { cloneFrom?: ISubmission } | null)?.cloneFrom;
   const { mutateAsync: create, isPending } = useCreateSubmission();
+  const { mutateAsync: del } = useDeleteSubmission();
   const { toast } = useToast();
 
   const cloneDefaults: Partial<ISubmission> | undefined = cloneFrom
@@ -22,9 +24,21 @@ export function CreateSubmissionPage() {
     : undefined;
 
   const handleSubmit = async (data: ICreateSubmissionInput, files: File[], signedContract: File | null) => {
+    const hasFiles = files.length > 0 || signedContract !== null;
     try {
-      const submission = await create({ ...data, action: 'submit' });
-      await uploadAttachments(submission.id, files, signedContract);
+      // Create as draft first when there are files so we can roll back on upload failure.
+      // A pending_review submission cannot be deleted, so we must not commit that status
+      // until all files are confirmed uploaded.
+      const submission = await create({ ...data, action: hasFiles ? 'draft' : 'submit' });
+      if (hasFiles) {
+        try {
+          await uploadAttachments(submission.id, files, signedContract);
+        } catch (uploadErr) {
+          await del(submission.id).catch(() => {});
+          throw uploadErr;
+        }
+        await submissionApi.submit(submission.id);
+      }
       toast({ title: 'Đã gửi tờ trình' });
       navigate(`/submissions/${submission.id}`);
     } catch {
@@ -35,7 +49,14 @@ export function CreateSubmissionPage() {
   const handleSaveDraft = async (data: ICreateSubmissionInput, files: File[], signedContract: File | null) => {
     try {
       const submission = await create({ ...data, action: 'draft' });
-      await uploadAttachments(submission.id, files, signedContract);
+      if (files.length > 0 || signedContract !== null) {
+        try {
+          await uploadAttachments(submission.id, files, signedContract);
+        } catch (uploadErr) {
+          await del(submission.id).catch(() => {});
+          throw uploadErr;
+        }
+      }
       toast({ title: 'Đã lưu nháp' });
       navigate(`/submissions/${submission.id}`);
     } catch {

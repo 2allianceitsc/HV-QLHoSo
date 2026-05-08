@@ -15,6 +15,8 @@ import { safeArray } from '@/lib/safeArray';
 import { INPUT_LENGTH } from '@shared/constants/input-length';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { NotificationsSettingsPage } from './NotificationsSettingsPage';
+import { EmailConfigPage } from './EmailConfigPage';
+import { HvEmailTemplatePage } from './HvEmailTemplatePage';
 
 interface R2Config {
   accountId: string;
@@ -254,6 +256,30 @@ function LogoutConfigTab() {
   );
 }
 
+type EmailSubTab = 'templates' | 'providers' | 'settings';
+
+function EmailSettingsSection() {
+  const [sub, setSub] = useState<EmailSubTab>('templates');
+  return (
+    <Tabs value={sub} onValueChange={(v) => setSub(v as EmailSubTab)}>
+      <TabsList>
+        <TabsTrigger value="templates">Templates</TabsTrigger>
+        <TabsTrigger value="providers">Providers</TabsTrigger>
+        <TabsTrigger value="settings">Settings</TabsTrigger>
+      </TabsList>
+      <TabsContent value="templates" className="mt-4">
+        <HvEmailTemplatePage />
+      </TabsContent>
+      <TabsContent value="providers" className="mt-4">
+        <EmailConfigPage />
+      </TabsContent>
+      <TabsContent value="settings" className="mt-4">
+        <SettingsInnerPage allowedCategories={['email']} hideCategoriesSidebar />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
 type SettingsTab = 'general' | 'security' | 'email' | 'notifications' | 'attendance' | 'logout';
 
 export function SystemSettingsPage() {
@@ -290,7 +316,7 @@ export function SystemSettingsPage() {
           <SettingsInnerPage allowedCategories={['security']} hideCategoriesSidebar />
         </TabsContent>
         <TabsContent value="email" className="mt-4">
-          <SettingsInnerPage allowedCategories={['email']} hideCategoriesSidebar />
+          <EmailSettingsSection />
         </TabsContent>
         <TabsContent value="notifications" className="mt-4 space-y-8">
           <SettingsInnerPage allowedCategories={['notifications']} hideCategoriesSidebar />
