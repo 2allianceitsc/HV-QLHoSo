@@ -1,4 +1,4 @@
-import { useForm, FormProvider, Controller } from 'react-hook-form';
+import { useForm, FormProvider, Controller, type Resolver, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRef, useState } from 'react';
@@ -68,7 +68,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
   const userDepartmentId = useAuthStore((s) => s.user?.departmentId ?? null);
 
   const methods = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as unknown as Resolver<FormValues>,
     defaultValues: {
       type: defaultValues?.type ?? 'MS',
       departmentId: defaultValues?.department?.id ?? userDepartmentId ?? '',
@@ -147,8 +147,9 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
     if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
   };
 
-  const buildPayload = (data: FormValues) => ({
+  const buildPayload = (data: FormValues, action: 'submit' | 'draft'): ICreateSubmissionInput => ({
     ...data,
+    action,
     content: data.content ?? '',
     expenseLines: data.expenseLines ?? [],
     existingInventory: [],
@@ -158,7 +159,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
   });
 
   const handleFormSubmit = (data: FormValues) => {
-    onSubmit(buildPayload(data), pendingFiles, signedContractFile);
+    onSubmit(buildPayload(data, 'submit'), pendingFiles, signedContractFile);
   };
 
   return (
@@ -343,14 +344,14 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
         {/* Chi phí — chỉ hiện với loại MS */}
         {type === 'MS' && (
           <section className="border rounded-lg p-4">
-            <ExpenseLineTable control={methods.control} departmentId={departmentId || undefined} />
+            <ExpenseLineTable control={methods.control as unknown as Control<ICreateSubmissionInput>} departmentId={departmentId || undefined} />
           </section>
         )}
 
         <div className="flex gap-3 pt-2">
           {onSaveDraft && (
             <Button type="button" variant="outline" disabled={loading}
-              onClick={handleSubmit((d) => onSaveDraft(buildPayload(d), pendingFiles, signedContractFile))}>
+              onClick={handleSubmit((d) => onSaveDraft(buildPayload(d, 'draft'), pendingFiles, signedContractFile))}>
               {saveDraftLabel}
             </Button>
           )}
