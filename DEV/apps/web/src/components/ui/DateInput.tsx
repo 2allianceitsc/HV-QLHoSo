@@ -61,7 +61,7 @@ export function DateInput({
   return (
     <DatePicker
       selected={parseIso(value)}
-      onChange={(date) => onChange?.(date ? format(date, 'yyyy-MM-dd') : '')}
+      onChange={(date: Date | null) => onChange?.(date ? format(date, 'yyyy-MM-dd') : '')}
       onBlur={onBlur}
       name={name}
       dateFormat="dd/MM/yyyy"

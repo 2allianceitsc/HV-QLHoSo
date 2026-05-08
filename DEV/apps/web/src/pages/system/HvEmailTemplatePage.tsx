@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Check, Eye, Save, X } from 'lucide-react';
-import { hvEmailTemplateApi, type IHvEmailTemplate } from '@/api/hvEmailTemplate.api';
+import { hvEmailTemplateApi } from '@/api/hvEmailTemplate.api';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
