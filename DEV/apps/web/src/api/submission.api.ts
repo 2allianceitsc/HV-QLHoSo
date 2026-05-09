@@ -195,6 +195,9 @@ export const submissionApi = {
   listDepartments: () =>
     apiClient.get<ApiWrap<{ id: string; name: string }[]>>('/submissions/departments').then((r) => r.data.data),
 
+  listFilterStaff: (hvRole: 'reviewer' | 'approver') =>
+    apiClient.get<ApiWrap<{ id: string; firstName: string; middleName?: string | null; surname: string }[]>>('/submissions/filter-staff', { params: { hvRole } }).then((r) => r.data.data),
+
   getUploadUrl: (data: { mimeType: string; ext: string }) =>
     apiClient.post<ApiWrap<{ uploadUrl: string; publicUrl: string }>>('/submissions/upload-url', data).then((r) => r.data.data),
 

@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Delete, Param, Body, Query, Req, UseGuards,
+  Controller, Get, Post, Put, Delete, Param, Body, Query, Req, UseGuards, BadRequestException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { SubmissionService, SaveAttachmentDto } from './submission.service';
@@ -25,6 +25,14 @@ export class SubmissionController {
   @Get('departments')
   listDepartments() {
     return this.service.listDepartments();
+  }
+
+  @Get('filter-staff')
+  listFilterStaff(@Query('hvRole') hvRole: string) {
+    if (hvRole !== 'reviewer' && hvRole !== 'approver') {
+      throw new BadRequestException('hvRole must be reviewer or approver');
+    }
+    return this.service.listStaffByRole(hvRole);
   }
 
   @Get('stats')
