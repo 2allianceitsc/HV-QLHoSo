@@ -71,12 +71,22 @@ export class SubmissionService {
     });
   }
 
+  listStaffByRole(hvRole: 'reviewer' | 'approver') {
+    return this.prisma.staff.findMany({
+      where: { isDeleted: false, hvRole },
+      select: { id: true, firstName: true, middleName: true, surname: true },
+      orderBy: { surname: 'asc' },
+    });
+  }
+
   private async buildUserScope(user: IJwtPayload): Promise<Record<string, unknown>> {
     const where: Record<string, unknown> = { isDeleted: false };
     if (user.hvRole === 'staff') {
       const staff = await this.prisma.staff.findUnique({ where: { id: user.staffId }, select: { departmentId: true } });
-      if (staff?.departmentId) where['departmentId'] = staff.departmentId;
-      where['submitterId'] = user.staffId;
+      // §3.3: staff sees submissions in their department OR created by themselves
+      const orClauses: Record<string, unknown>[] = [{ submitterId: user.staffId }];
+      if (staff?.departmentId) orClauses.push({ departmentId: staff.departmentId });
+      where['OR'] = orClauses;
     }
     return where;
   }
@@ -156,7 +166,7 @@ export class SubmissionService {
   async findOne(user: IJwtPayload, id: string) {
     const submission = await this.prisma.submission.findUnique({ where: { id }, include: SUBMISSION_INCLUDE });
     if (!submission || submission.isDeleted) throw new NotFoundException('Submission not found');
-    this.assertCanView(user, submission);
+    await this.assertCanView(user, submission);
 
     const publicUrlBase = await this.storage.getPublicUrlBase().catch(() => '');
     return {
@@ -485,9 +495,13 @@ export class SubmissionService {
     return s;
   }
 
-  private assertCanView(user: IJwtPayload, submission: { submitterId: string; departmentId: string }) {
+  private async assertCanView(user: IJwtPayload, submission: { submitterId: string; departmentId: string }) {
     if (user.hvRole === 'admin' || user.hvRole === 'reviewer' || user.hvRole === 'approver') return;
-    if (submission.submitterId !== user.staffId) throw new ForbiddenException('Access denied');
+    if (submission.submitterId === user.staffId) return;
+    // §3.3: staff can also view submissions in their own department
+    const staff = await this.prisma.staff.findUnique({ where: { id: user.staffId }, select: { departmentId: true } });
+    if (staff?.departmentId && staff.departmentId === submission.departmentId) return;
+    throw new ForbiddenException('Access denied');
   }
 
   private assertOwnerOrAdmin(user: IJwtPayload, submission: { submitterId: string }) {

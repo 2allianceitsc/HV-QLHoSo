@@ -14,7 +14,7 @@ import { useSubmissions, useSubmissionDepartments, useDeleteSubmission } from '@
 import { submissionApi } from '@/api/submission.api';
 import type { SubmissionType, SubmissionStatus, IStatusCatalogItem } from '@/api/submission.api';
 import { useAuthStore } from '@/stores/auth.store';
-import { hvAdminApi } from '@/api/hvAdmin.api';
+
 import { DateRangePresetPicker } from '@/components/filters/DateRangePresetPicker';
 
 function fmtMoney(amount: number): string {
@@ -293,8 +293,8 @@ export function SubmissionListPage() {
   }, [qInput]);
 
   const { data: departments = [] } = useSubmissionDepartments();
-  const { data: reviewers = [] } = useQuery({ queryKey: ['users', 'reviewer'], queryFn: () => hvAdminApi.listUsers('reviewer'), staleTime: Infinity });
-  const { data: approvers = [] } = useQuery({ queryKey: ['users', 'approver'], queryFn: () => hvAdminApi.listUsers('approver'), staleTime: Infinity });
+  const { data: reviewers = [] } = useQuery({ queryKey: ['filter-staff', 'reviewer'], queryFn: () => submissionApi.listFilterStaff('reviewer'), staleTime: Infinity });
+  const { data: approvers = [] } = useQuery({ queryKey: ['filter-staff', 'approver'], queryFn: () => submissionApi.listFilterStaff('approver'), staleTime: Infinity });
 
   const { data: stats } = useQuery({
     queryKey: ['submissions', 'stats'],

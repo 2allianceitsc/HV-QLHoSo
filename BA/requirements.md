@@ -88,7 +88,7 @@
 
 | Vai Trò        | Mã         | Mô Tả                                                                                   |
 |----------------|------------|-----------------------------------------------------------------------------------------|
-| Nhân viên      | `staff`    | Tạo và quản lý tờ trình bộ phận mình; chỉ xem tờ trình cùng bộ phận                   |
+| Nhân viên      | `staff`    | Tạo và quản lý tờ trình; xem tờ trình cùng bộ phận mình **hoặc** do chính mình tạo    |
 | Thẩm định      | `reviewer` | Thẩm định tờ trình `pending_review` của tất cả bộ phận được phân công; xem tất cả tờ trình  |
 | Phê duyệt      | `approver` | Phê duyệt / từ chối tờ trình `in_review` được phân công; xem tất cả tờ trình           |
 | Quản trị       | `admin`    | Toàn quyền: CRUD users, cấu hình hệ thống, xem tất cả báo cáo, không bị giới hạn scope |
@@ -152,7 +152,7 @@
 
 | Role       | Scope tờ trình  | Điều kiện lọc phía server                                |
 |------------|-----------------|----------------------------------------------------------|
-| `staff`    | Bộ phận mình    | `WHERE departmentId = currentUser.departmentId`          |
+| `staff`    | Bộ phận mình + tờ trình do mình tạo | `WHERE departmentId = currentUser.departmentId OR submitterId = currentUser.id` |
 | `reviewer` | Tất cả          | Không filter                                             |
 | `approver` | Tất cả          | Không filter                                             |
 | `admin`    | Tất cả          | Không filter                                             |
@@ -1155,7 +1155,7 @@ Hiển thị 4 thẻ nằm ngang ngay dưới tiêu đề trang, phía trên tab
 | 3 | **Chờ phê duyệt** | Số tờ trình đang chờ người phê duyệt | `status = 'in_review'` |
 | 4 | **Đã phê duyệt** | Số tờ trình đã được phê duyệt | `status = 'approved'` |
 
-> Số đếm áp dụng cùng data scope theo role (§3.3): staff chỉ thấy bộ phận mình, reviewer/approver/admin thấy tất cả.
+> Số đếm áp dụng cùng data scope theo role (§3.3): staff thấy bộ phận mình + tờ trình do mình tạo, reviewer/approver/admin thấy tất cả.
 > Số đếm **không** bị lọc theo tab MS / NT đang chọn — luôn tính trên toàn bộ loại tờ trình.
 
 #### Bảng danh sách — Cột hiển thị
