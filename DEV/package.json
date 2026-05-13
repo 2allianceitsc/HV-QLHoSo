@@ -15,10 +15,10 @@
     "prepare": "cd .. && (husky DEV/.husky || true)",
     "lint-staged": "lint-staged"
   },
-
   "devDependencies": {
     "concurrently": "^8.2.2",
     "husky": "^9.0.0",
-    "lint-staged": "^15.0.0"
+    "lint-staged": "^15.0.0",
+    "pg": "^8.20.0"
   }
 }
