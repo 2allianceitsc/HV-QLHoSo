@@ -25,7 +25,6 @@ import {
   ScrollText,
   Sliders,
   Bell,
-  FlaskConical,
   Layers,
 } from 'lucide-react';
 
@@ -83,7 +82,6 @@ export const NAV_GROUPS: INavGroupConfig[] = [
     items: [
       { label: 'Nhật ký',        path: '/system/logs',            icon: <ScrollText size={16} />, screen: 'SY04' },
       { label: 'Cài đặt',        path: '/system/settings',        icon: <Sliders size={16} />,    screen: 'SY02' },
-      { label: 'Kiểm tra đồng bộ giờ', path: '/system/test', icon: <FlaskConical size={16} /> },
     ],
   },
   {

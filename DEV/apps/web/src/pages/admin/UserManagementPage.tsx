@@ -149,7 +149,8 @@ export function UserManagementPage() {
     if (q) {
       const fullName = [u.firstName, u.middleName, u.surname].filter(Boolean).join(' ').toLowerCase();
       const username = (u.userLogin?.username ?? '').toLowerCase();
-      if (!fullName.includes(q.toLowerCase()) && !username.includes(q.toLowerCase())) return false;
+      const email = (u.companyEmailAddress ?? '').toLowerCase();
+      if (!fullName.includes(q.toLowerCase()) && !username.includes(q.toLowerCase()) && !email.includes(q.toLowerCase())) return false;
     }
     if (filterDept && u.departmentId !== filterDept) return false;
     if (filterRole && u.hvRole !== filterRole) return false;
@@ -196,7 +197,7 @@ export function UserManagementPage() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9 h-9"
-            placeholder="Tìm họ tên, username..."
+            placeholder="Tìm họ tên, username, email..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -232,6 +233,7 @@ export function UserManagementPage() {
             <TableRow>
               <TableHead>Họ tên</TableHead>
               <TableHead>Username</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Bộ phận</TableHead>
               <TableHead>Vai trò</TableHead>
               <TableHead>Trạng thái</TableHead>
@@ -241,8 +243,9 @@ export function UserManagementPage() {
           <TableBody>
             {filtered.map((u) => (
               <TableRow key={u.id}>
-                <TableCell>{[u.firstName, u.middleName, u.surname].filter(Boolean).join(' ')}</TableCell>
+                <TableCell>{[u.surname, u.middleName, u.firstName].filter(Boolean).join(' ')}</TableCell>
                 <TableCell className="font-mono text-sm">{u.userLogin?.username ?? '—'}</TableCell>
+                <TableCell className="text-sm">{u.companyEmailAddress ?? '—'}</TableCell>
                 <TableCell>{u.department?.name ?? '—'}</TableCell>
                 <TableCell><Badge variant="outline">{ROLE_LABELS[u.hvRole as HvRole] ?? u.hvRole}</Badge></TableCell>
                 <TableCell>
