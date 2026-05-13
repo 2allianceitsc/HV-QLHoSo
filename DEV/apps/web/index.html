@@ -22,10 +22,12 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      if (window.BugReporter != null && window.BugReporter) {
+      var _host = window.location.href;
+      var _allowed = _host.startsWith("https://docspro.allianceitsc.com/") || _host.includes("localhost:");
+      if (_allowed && window.BugReporter != null && window.BugReporter) {
         window.BugReporter.init({
           apiUrl: "https://pm-api.vegasoft.vn/v1/bot-agents/create-bug",
-          apiKey: "df8279924d5051f302771e8374b4d6351501e0b2413a4885f4aea597c83364e8",
+          publicKey: "c8bb5567013fff1c84dd0b3103e531bd56f038a14c6c0e4910fb04130c829eb3",
         });
         window.BugReporter.on();
       }
