@@ -22,7 +22,7 @@ const HV_ROLES: HvRole[] = ['staff', 'reviewer', 'approver', 'admin'];
 
 interface UserFormValues {
   username: string; email: string; firstName: string; middleName?: string;
-  surname: string; departmentId: string; hvRole: HvRole;
+  surname: string; departmentId: string; hvRoles: HvRole[];
 }
 
 function UserDialog({ user, onClose }: { user?: IHvUser | null; onClose: () => void }) {
@@ -39,7 +39,7 @@ function UserDialog({ user, onClose }: { user?: IHvUser | null; onClose: () => v
       middleName: user?.middleName ?? '',
       surname: user?.surname ?? '',
       departmentId: user?.departmentId ?? '',
-      hvRole: (user?.hvRole as HvRole) ?? 'staff',
+      hvRoles: (user?.hvRoles as HvRole[]) ?? ['staff'],
     },
   });
 
@@ -94,12 +94,26 @@ function UserDialog({ user, onClose }: { user?: IHvUser | null; onClose: () => v
 
             <div className="space-y-2">
               <Label>Vai trò <span className="text-destructive">*</span></Label>
-              <Controller name="hvRole" control={control}
+              <Controller name="hvRoles" control={control} rules={{ validate: (v) => v.length > 0 || 'Cần chọn ít nhất 1 vai trò' }}
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{HV_ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <div className="flex flex-wrap gap-3 pt-1">
+                    {HV_ROLES.map((r) => (
+                      <label key={r} className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={field.value.includes(r)}
+                          onChange={(e) => {
+                            const next = e.target.checked
+                              ? [...field.value, r]
+                              : field.value.filter((v) => v !== r);
+                            field.onChange(next.length ? next : field.value);
+                          }}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                        <span className="text-sm">{ROLE_LABELS[r]}</span>
+                      </label>
+                    ))}
+                  </div>
                 )}
               />
             </div>
@@ -153,7 +167,7 @@ export function UserManagementPage() {
       if (!fullName.includes(q.toLowerCase()) && !username.includes(q.toLowerCase()) && !email.includes(q.toLowerCase())) return false;
     }
     if (filterDept && u.departmentId !== filterDept) return false;
-    if (filterRole && u.hvRole !== filterRole) return false;
+    if (filterRole && !u.hvRoles.includes(filterRole as HvRole)) return false;
     if (filterStatus === 'active' && (u.userLogin?.isActive === false || u.userLogin?.isFirstLogin)) return false;
     if (filterStatus === 'first_login' && (u.userLogin?.isActive === false || !u.userLogin?.isFirstLogin)) return false;
     if (filterStatus === 'inactive' && u.userLogin?.isActive !== false) return false;
@@ -247,7 +261,7 @@ export function UserManagementPage() {
                 <TableCell className="font-mono text-sm">{u.userLogin?.username ?? '—'}</TableCell>
                 <TableCell className="text-sm">{u.companyEmailAddress ?? '—'}</TableCell>
                 <TableCell>{u.department?.name ?? '—'}</TableCell>
-                <TableCell><Badge variant="outline">{ROLE_LABELS[u.hvRole as HvRole] ?? u.hvRole}</Badge></TableCell>
+                <TableCell className="flex flex-wrap gap-1">{u.hvRoles.map((r) => <Badge key={r} variant="outline">{ROLE_LABELS[r as HvRole] ?? r}</Badge>)}</TableCell>
                 <TableCell>
                   {u.userLogin?.isActive === false
                     ? <span className="text-xs text-red-600 font-medium">Ngưng hoạt động</span>

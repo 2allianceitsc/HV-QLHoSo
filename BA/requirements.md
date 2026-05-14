@@ -93,6 +93,8 @@
 | Phê duyệt      | `approver` | Phê duyệt / từ chối tờ trình `in_review` được phân công; xem tất cả tờ trình           |
 | Quản trị       | `admin`    | Toàn quyền: CRUD users, cấu hình hệ thống, xem tất cả báo cáo, không bị giới hạn scope |
 
+> **Đa vai trò:** Một người dùng có thể được gán **nhiều vai trò** cùng lúc (ví dụ: vừa `reviewer` vừa `approver`). Quyền truy cập là **hợp (union)** của tất cả vai trò được gán — vai trò nào cho phép thì được phép. Ma trận quyền §3.2 và scope §3.3 áp dụng theo nguyên tắc này.
+
 ### 3.2 Ma Trận Quyền
 
 #### Module Xác Thực
@@ -150,12 +152,13 @@
 
 ### 3.3 Data Access Rules
 
-| Role       | Scope tờ trình  | Điều kiện lọc phía server                                |
-|------------|-----------------|----------------------------------------------------------|
-| `staff`    | Bộ phận mình + tờ trình do mình tạo | `WHERE departmentId = currentUser.departmentId OR submitterId = currentUser.id` |
-| `reviewer` | Tất cả          | Không filter                                             |
-| `approver` | Tất cả          | Không filter                                             |
-| `admin`    | Tất cả          | Không filter                                             |
+| Tập hợp vai trò của user | Scope tờ trình | Điều kiện lọc phía server |
+|--------------------------|----------------|---------------------------|
+| Chỉ có `staff` | Bộ phận mình + tờ trình do mình tạo | `WHERE departmentId = currentUser.departmentId OR submitterId = currentUser.id` |
+| Có `reviewer` hoặc `approver` (dù có thêm `staff` hay không) | Tất cả | Không filter |
+| Có `admin` | Tất cả | Không filter |
+
+> **Quy tắc scope đa vai trò:** Lấy scope **rộng nhất** trong tất cả vai trò được gán. Nếu user có bất kỳ vai trò nào trong `{reviewer, approver, admin}`, họ thấy tất cả tờ trình.
 
 > ⚠️ **QUAN TRỌNG — Server luôn enforce:** UI chỉ ẩn/hiện nút theo role, nhưng server phải kiểm tra quyền ở mọi API call. Không được chỉ dựa vào UI để bảo vệ dữ liệu.
 
@@ -584,7 +587,7 @@ Cấu hình mặc định:
 | `email`         | VARCHAR(255)  | ✅       | Unique, RFC 5322                                                    | Email liên lạc và nhận thông báo     |
 | `departmentId`  | UUID v7       | ✅       | FK → Department.id                                                  | Bộ phận công tác                     |
 | `position`      | NVARCHAR(200) | ✅       |                                                                     | Chức vụ hiển thị                     |
-| `role`          | VARCHAR(20)   | ✅       | `"staff" \| "reviewer" \| "approver" \| "admin"`                    | Vai trò trong hệ thống               |
+| `roles`         | VARCHAR[]     | ✅       | Mảng, mỗi phần tử ∈ `{"staff", "reviewer", "approver", "admin"}`; ít nhất 1 phần tử | Danh sách vai trò (đa vai trò) |
 | `avatarColor`   | VARCHAR(7)    | ✅       | HEX `#RRGGBB`, Default: `#6366f1`                                   | Màu avatar (dùng khi chưa có ảnh)    |
 | `avatarKey`     | VARCHAR(500)  | ❌       | R2 object key, vd: `dev/user/{id}/profile-picture/{uuid}.jpg`       | Ảnh đại diện (null = dùng avatarColor) |
 | `isActive`      | BOOLEAN       | ✅       | Default: true                                                       | Tài khoản còn hoạt động              |
@@ -812,7 +815,7 @@ POST /api/auth/login
     ├─ WRITE: User.lastLoginAt = now()
     ├─ Generate: accessToken (JWT, 15 phút), refreshToken (opaque, 7 ngày)
     ├─ WRITE: INSERT RefreshToken (tokenHash, userId, expiresAt)
-    └─ Response: { accessToken, user: { id, username, fullName, departmentId, role, ... } }
+    └─ Response: { accessToken, user: { id, username, fullName, departmentId, roles: string[], ... } }
        + Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/auth/refresh
 
 POST /api/auth/refresh
@@ -845,7 +848,7 @@ POST /api/auth/google
     ├─ WRITE: User.lastLoginAt = now()
     ├─ Generate: accessToken (JWT, 15 phút), refreshToken (opaque, 7 ngày)
     ├─ WRITE: INSERT RefreshToken (tokenHash, userId, expiresAt)
-    └─ Response: { accessToken, user: { id, username, fullName, departmentId, role, ... } }
+    └─ Response: { accessToken, user: { id, username, fullName, departmentId, roles: string[], ... } }
        + Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/auth/refresh
 
 POST /api/auth/forgot-password
@@ -1040,7 +1043,7 @@ Form edit user (S11) bổ sung trường:
 ```
 GET    /api/admin/users          → Danh sách users (có filter, phân trang)
 POST   /api/admin/users          → Tạo user mới (isFirstLogin=true, password tạm)
-PUT    /api/admin/users/:id      → Cập nhật thông tin, role, isActive
+PUT    /api/admin/users/:id      → Cập nhật thông tin, roles (array, ≥ 1 phần tử), isActive
                                    Khi isActive đổi → false: WRITE revoke tất cả RefreshToken của user đó
                                    (session hiện tại tự hết hiệu lực tại lần refresh tiếp theo → E002)
 DELETE /api/admin/users/:id      → Soft delete (isDeleted=true)

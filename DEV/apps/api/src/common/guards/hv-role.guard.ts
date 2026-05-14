@@ -22,13 +22,12 @@ export class HvRoleGuard implements CanActivate {
     // SUPER_ADMIN legacy role bypasses all hvRole checks
     if (user.roles?.includes('SUPER_ADMIN' as never)) return true;
 
-    if (!user.hvRole) throw new ForbiddenException('Insufficient HV role');
+    if (!user.hvRoles?.length) throw new ForbiddenException('Insufficient HV role');
 
-    const userRole = user.hvRole as HvRole;
     // admin hvRole bypasses all role checks
-    if (userRole === 'admin') return true;
+    if (user.hvRoles.includes('admin')) return true;
 
-    if (!required.includes(userRole)) {
+    if (!required.some((r) => user.hvRoles.includes(r))) {
       throw new ForbiddenException('Insufficient HV role');
     }
     return true;

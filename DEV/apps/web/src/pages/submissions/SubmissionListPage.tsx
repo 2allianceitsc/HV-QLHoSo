@@ -139,7 +139,7 @@ function SubmissionTable({ type, status, q, approvedColor, department, supplier,
                 const reviewerDone = ['in_review', 'approved'].includes(s.status);
                 const approverDone = s.status === 'approved';
                 const rowNum = (page - 1) * 20 + idx + 1;
-                const isAdmin = currentUser?.hvRole === 'admin';
+                const isAdmin = currentUser?.hvRoles?.includes('admin');
                 const needsReview = !isAdmin && currentUser?.staffId === s.reviewer.id && s.status === 'pending_review';
                 const needsApproval = !isAdmin && currentUser?.staffId === s.approver.id && s.status === 'in_review';
 

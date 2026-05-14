@@ -3,7 +3,7 @@ import { IsHexColor, IsInt, IsOptional, MaxLength, Min } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 import { uuidv7 } from 'uuidv7';
 import * as bcrypt from 'bcryptjs';
-import { IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { ArrayMinSize, IsArray, IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 const CORE_STATUS_CODES = new Set(['draft', 'pending_review', 'in_review', 'approved', 'rejected']);
 
@@ -27,7 +27,7 @@ export class CreateHvUserDto {
   @IsString() @IsNotEmpty() surname!: string;
   @IsUUID() departmentId!: string;
   @IsString() @IsOptional() position?: string;
-  @IsEnum(['staff', 'reviewer', 'approver', 'admin']) hvRole!: string;
+  @IsArray() @IsEnum(['staff', 'reviewer', 'approver', 'admin'], { each: true }) @ArrayMinSize(1) hvRoles!: string[];
 }
 
 export class UpdateHvUserDto {
@@ -37,13 +37,13 @@ export class UpdateHvUserDto {
   @IsString() @IsOptional() surname?: string;
   @IsUUID() @IsOptional() departmentId?: string;
   @IsString() @IsOptional() position?: string;
-  @IsEnum(['staff', 'reviewer', 'approver', 'admin']) @IsOptional() hvRole?: string;
+  @IsArray() @IsEnum(['staff', 'reviewer', 'approver', 'admin'], { each: true }) @ArrayMinSize(1) @IsOptional() hvRoles?: string[];
   @IsBoolean() @IsOptional() isActive?: boolean;
 }
 
 const STAFF_SELECT = {
   id: true, employeeId: true, firstName: true, middleName: true, surname: true,
-  companyEmailAddress: true, departmentId: true, hvRole: true, isDeleted: true,
+  companyEmailAddress: true, departmentId: true, hvRoles: true, isDeleted: true,
   department: { select: { id: true, name: true } },
   userLogin: { select: { id: true, username: true, email: true, isFirstLogin: true, isActive: true } },
 };
@@ -54,7 +54,7 @@ export class HvAdminService {
 
   async listUsers(hvRole?: string) {
     return this.prisma.staff.findMany({
-      where: { isDeleted: false, ...(hvRole ? { hvRole } : {}) },
+      where: { isDeleted: false, ...(hvRole ? { hvRoles: { has: hvRole } } : {}) },
       select: STAFF_SELECT,
       orderBy: { surname: 'asc' },
     });
@@ -91,7 +91,7 @@ export class HvAdminService {
           surname: dto.surname,
           companyEmailAddress: dto.email,
           departmentId: dto.departmentId,
-          hvRole: dto.hvRole,
+          hvRoles: dto.hvRoles,
           logCreatedBy: createdBy,
         },
       });
@@ -122,7 +122,7 @@ export class HvAdminService {
         ...(dto.middleName !== undefined && { middleName: dto.middleName }),
         ...(dto.surname && { surname: dto.surname }),
         ...(dto.departmentId && { departmentId: dto.departmentId }),
-        ...(dto.hvRole && { hvRole: dto.hvRole }),
+        ...(dto.hvRoles && { hvRoles: dto.hvRoles }),
         ...(dto.email && { companyEmailAddress: dto.email }),
         logUpdatedBy: updatedBy,
       },

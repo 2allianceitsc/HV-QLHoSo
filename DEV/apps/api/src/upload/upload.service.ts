@@ -134,7 +134,7 @@ export class UploadService {
     const attachment = await this.prisma.attachment.findUnique({ where: { id } });
     if (!attachment) throw new NotFoundException('Không tìm thấy file đính kèm.');
 
-    if (user.hvRole !== 'admin' && attachment.uploadedBy !== user.staffId) {
+    if (!user.hvRoles?.includes('admin') && attachment.uploadedBy !== user.staffId) {
       throw new ForbiddenException('Bạn không có quyền xoá file này.');
     }
 
