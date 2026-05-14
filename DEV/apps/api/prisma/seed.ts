@@ -847,14 +847,14 @@ async function seedHvData(
           surname,
           companyEmailAddress: `${u.username}@hv.com`,
           departmentId: deptMap[u.dept],
-          hvRole: u.hvRole,
+          hvRoles: [u.hvRole],
           logCreatedBy: 'seed',
         },
       });
     } else {
       staff = await prisma.staff.update({
         where: { id: staff.id },
-        data: { departmentId: deptMap[u.dept], hvRole: u.hvRole, logUpdatedBy: 'seed' },
+        data: { departmentId: deptMap[u.dept], hvRoles: [u.hvRole], logUpdatedBy: 'seed' },
       });
     }
 

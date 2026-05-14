@@ -21,7 +21,7 @@ export function useCreateCostCode() {
 export function useUpdateCostCode() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: { id: string; name?: string; departmentId?: string; isActive?: boolean }) =>
+    mutationFn: ({ id, ...data }: { id: string; code?: string; name?: string; departmentId?: string; isActive?: boolean }) =>
       costCodeApi.update(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });
