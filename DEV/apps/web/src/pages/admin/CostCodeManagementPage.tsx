@@ -40,7 +40,7 @@ function CostCodeDialog({ code, onClose }: { code?: ICostCode | null; onClose: (
   const onSubmit = async (data: CostCodeFormValues) => {
     try {
       if (code) {
-        await update({ id: code.id, name: data.name, departmentId: data.departmentId, isActive: data.isActive });
+        await update({ id: code.id, code: data.code, name: data.name, departmentId: data.departmentId, isActive: data.isActive });
         toast({ title: 'Đã cập nhật mã phí' });
       } else {
         await create({ code: data.code, name: data.name, departmentId: data.departmentId });
@@ -58,12 +58,10 @@ function CostCodeDialog({ code, onClose }: { code?: ICostCode | null; onClose: (
         <DialogHeader><DialogTitle>{code ? 'Sửa mã phí' : 'Thêm mã phí'}</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="px-6 py-2 space-y-4">
-            {!code && (
-              <div className="space-y-2">
-                <Label>Mã phí <span className="text-destructive">*</span></Label>
-                <Input {...register('code', { required: true })} placeholder="VD: IT0001" className={errors.code ? 'border-destructive' : ''} />
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label>Mã phí <span className="text-destructive">*</span></Label>
+              <Input {...register('code', { required: true })} placeholder="VD: IT0001" className={errors.code ? 'border-destructive' : ''} />
+            </div>
             <div className="space-y-2">
               <Label>Tên mã phí <span className="text-destructive">*</span></Label>
               <Input {...register('name', { required: true })} className={errors.name ? 'border-destructive' : ''} />

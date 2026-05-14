@@ -10,6 +10,7 @@ export class CreateCostCodeDto {
 }
 
 export class UpdateCostCodeDto {
+  @IsString() @IsOptional() code?: string;
   @IsString() @IsOptional() name?: string;
   @IsUUID() @IsOptional() departmentId?: string;
   @IsBoolean() @IsOptional() isActive?: boolean;
