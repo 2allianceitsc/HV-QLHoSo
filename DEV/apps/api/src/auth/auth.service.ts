@@ -34,7 +34,7 @@ export interface ICurrentUser {
   username: string;
   email: string;
   roles: UserRole[];
-  hvRole: string;
+  hvRoles: string[];
   fullName: string;
   photoBusiness: string | null;
   departmentId: string | null;
@@ -781,7 +781,7 @@ export class AuthService {
       middleName: string | null;
       surname: string;
       photoBusiness: string | null;
-      hvRole: string;
+      hvRoles: string[];
       departmentId: string | null;
       staffRoles: Array<{ role: { name: string } }>;
     } | null;
@@ -797,12 +797,12 @@ export class AuthService {
     const jti = uuidv7();
     const refreshJti = uuidv7();
 
-    const hvRole = staffId
-      ? (await this.prisma.staff.findUnique({ where: { id: staffId }, select: { hvRole: true } }))?.hvRole ?? 'staff'
-      : 'admin';
+    const hvRoles = staffId
+      ? (await this.prisma.staff.findUnique({ where: { id: staffId }, select: { hvRoles: true } }))?.hvRoles ?? ['staff']
+      : ['admin'];
 
-    const accessPayload: IJwtPayload = { sub: userId, staffId, roles, hvRole, jti };
-    const refreshPayload: IJwtPayload = { sub: userId, staffId, roles, hvRole, jti: refreshJti };
+    const accessPayload: IJwtPayload = { sub: userId, staffId, roles, hvRoles, jti };
+    const refreshPayload: IJwtPayload = { sub: userId, staffId, roles, hvRoles, jti: refreshJti };
 
     const [accessToken, refreshToken] = await Promise.all([
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -838,7 +838,7 @@ export class AuthService {
         middleName: string | null;
         surname: string;
         photoBusiness: string | null;
-        hvRole: string;
+        hvRoles: string[];
         departmentId: string | null;
       } | null;
     },
@@ -855,7 +855,7 @@ export class AuthService {
       username: userLogin.username,
       email: userLogin.email,
       roles,
-      hvRole: staff?.hvRole ?? 'staff',
+      hvRoles: staff?.hvRoles ?? ['staff'],
       fullName,
       photoBusiness: staff?.photoBusiness ?? null,
       departmentId: staff?.departmentId ?? null,

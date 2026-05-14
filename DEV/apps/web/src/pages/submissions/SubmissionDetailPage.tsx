@@ -24,7 +24,7 @@ export function SubmissionDetailPage() {
   const navigate = useNavigate();
   const { data: submission, isLoading } = useSubmission(id ?? '');
   const currentUser = useAuthStore((s) => s.user);
-  const hvRole = (currentUser?.hvRole ?? 'staff') as HvRole;
+  const hvRoles = (currentUser?.hvRoles ?? ['staff']) as HvRole[];
   const { toast } = useToast();
 
   const { mutateAsync: submit, isPending: submitting } = useSubmitSubmission();
@@ -42,8 +42,8 @@ export function SubmissionDetailPage() {
   const canEdit = isOwner && ['draft', 'rejected'].includes(submission.status);
   const canSubmit = isOwner && ['draft', 'rejected'].includes(submission.status);
   const canDelete = isOwner && submission.status === 'draft';
-  const canReview = (hvRole === 'reviewer' || hvRole === 'admin') && submission.status === 'pending_review';
-  const canApprove = (hvRole === 'approver' || hvRole === 'admin') && submission.status === 'in_review';
+  const canReview = hvRoles.some((r) => r === 'reviewer' || r === 'admin') && submission.status === 'pending_review';
+  const canApprove = hvRoles.some((r) => r === 'approver' || r === 'admin') && submission.status === 'in_review';
   const canReject = (canReview || canApprove);
 
   const handleSubmit = async () => {

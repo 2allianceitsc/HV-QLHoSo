@@ -42,7 +42,7 @@ export class ApprovalConfigService {
 
   listReviewers() {
     return this.prisma.staff.findMany({
-      where: { isDeleted: false, hvRole: { in: ['reviewer', 'admin'] } },
+      where: { isDeleted: false, hvRoles: { hasSome: ['reviewer', 'admin'] } },
       select: { id: true, firstName: true, middleName: true, surname: true, departmentId: true },
       orderBy: { firstName: 'asc' },
     });
@@ -50,7 +50,7 @@ export class ApprovalConfigService {
 
   listApprovers() {
     return this.prisma.staff.findMany({
-      where: { isDeleted: false, hvRole: { in: ['approver', 'admin'] } },
+      where: { isDeleted: false, hvRoles: { hasSome: ['approver', 'admin'] } },
       select: { id: true, firstName: true, middleName: true, surname: true, departmentId: true },
       orderBy: { firstName: 'asc' },
     });

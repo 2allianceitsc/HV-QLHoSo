@@ -10,7 +10,7 @@ export interface IHvUser {
   surname: string;
   companyEmailAddress?: string | null;
   departmentId?: string | null;
-  hvRole: HvRole;
+  hvRoles: HvRole[];
   isDeleted: boolean;
   department?: { id: string; name: string } | null;
   userLogin?: { id: string; username: string; email: string; isFirstLogin: boolean; isActive: boolean } | null;
@@ -29,11 +29,11 @@ export const hvAdminApi = {
 
   createUser: (data: {
     username: string; email: string; firstName: string; middleName?: string;
-    surname: string; departmentId: string; hvRole: HvRole;
+    surname: string; departmentId: string; hvRoles: HvRole[];
   }) =>
     apiClient.post<ApiWrap<IHvUser>>('/admin/users', data).then((r) => r.data.data),
 
-  updateUser: (id: string, data: Partial<{ email: string; firstName: string; middleName: string; surname: string; departmentId: string; hvRole: HvRole; isActive: boolean }>) =>
+  updateUser: (id: string, data: Partial<{ email: string; firstName: string; middleName: string; surname: string; departmentId: string; hvRoles: HvRole[]; isActive: boolean }>) =>
     apiClient.put<ApiWrap<IHvUser>>(`/admin/users/${id}`, data).then((r) => r.data.data),
 
   deleteUser: (id: string) =>
