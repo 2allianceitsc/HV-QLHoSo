@@ -20,6 +20,7 @@ export const queryClient = new QueryClient({
         return failureCount < 2;
       },
       refetchOnWindowFocus: false,
+      refetchOnMount: 'always',
     },
     mutations: {
       retry: 0,

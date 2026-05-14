@@ -73,7 +73,7 @@ export class SubmissionService {
 
   listStaffByRole(hvRole: 'reviewer' | 'approver') {
     return this.prisma.staff.findMany({
-      where: { isDeleted: false, hvRole },
+      where: { isDeleted: false, hvRoles: { has: hvRole } },
       select: { id: true, firstName: true, middleName: true, surname: true },
       orderBy: { surname: 'asc' },
     });
@@ -81,7 +81,7 @@ export class SubmissionService {
 
   private async buildUserScope(user: IJwtPayload): Promise<Record<string, unknown>> {
     const where: Record<string, unknown> = { isDeleted: false };
-    if (user.hvRole === 'staff') {
+    if (!user.hvRoles?.some((r) => ['reviewer', 'approver', 'admin'].includes(r))) {
       const staff = await this.prisma.staff.findUnique({ where: { id: user.staffId }, select: { departmentId: true } });
       // §3.3: staff sees submissions in their department OR created by themselves
       const orClauses: Record<string, unknown>[] = [{ submitterId: user.staffId }];
@@ -387,7 +387,7 @@ export class SubmissionService {
   async review(user: IJwtPayload, id: string) {
     const submission = await this.getOrThrow(id);
     if (submission.status !== 'pending_review') throw new BadRequestException('Submission is not pending review');
-    if (user.hvRole !== 'admin' && submission.reviewerId !== user.staffId) {
+    if (!user.hvRoles?.includes('admin') && submission.reviewerId !== user.staffId) {
       throw new ForbiddenException('You are not the reviewer for this submission');
     }
 
@@ -410,7 +410,7 @@ export class SubmissionService {
   async approve(user: IJwtPayload, id: string) {
     const submission = await this.getOrThrow(id);
     if (submission.status !== 'in_review') throw new BadRequestException('Submission is not in review');
-    if (user.hvRole !== 'admin' && submission.approverId !== user.staffId) {
+    if (!user.hvRoles?.includes('admin') && submission.approverId !== user.staffId) {
       throw new ForbiddenException('You are not the approver for this submission');
     }
 
@@ -436,13 +436,13 @@ export class SubmissionService {
       throw new BadRequestException('Submission cannot be rejected in current status');
     }
 
-    const isReviewer = user.hvRole === 'reviewer' || user.hvRole === 'admin';
-    const isApprover = user.hvRole === 'approver' || user.hvRole === 'admin';
+    const isReviewer = user.hvRoles?.some((r) => r === 'reviewer' || r === 'admin');
+    const isApprover = user.hvRoles?.some((r) => r === 'approver' || r === 'admin');
 
     if (submission.status === 'pending_review' && !isReviewer) throw new ForbiddenException('Only reviewer can reject at this stage');
     if (submission.status === 'in_review' && !isApprover) throw new ForbiddenException('Only approver can reject at this stage');
 
-    if (user.hvRole !== 'admin') {
+    if (!user.hvRoles?.includes('admin')) {
       if (submission.status === 'pending_review' && submission.reviewerId !== user.staffId) throw new ForbiddenException('Not your submission to review');
       if (submission.status === 'in_review' && submission.approverId !== user.staffId) throw new ForbiddenException('Not your submission to approve');
     }
@@ -496,7 +496,7 @@ export class SubmissionService {
   }
 
   private async assertCanView(user: IJwtPayload, submission: { submitterId: string; departmentId: string }) {
-    if (user.hvRole === 'admin' || user.hvRole === 'reviewer' || user.hvRole === 'approver') return;
+    if (user.hvRoles?.some((r) => ['admin', 'reviewer', 'approver'].includes(r))) return;
     if (submission.submitterId === user.staffId) return;
     // §3.3: staff can also view submissions in their own department
     const staff = await this.prisma.staff.findUnique({ where: { id: user.staffId }, select: { departmentId: true } });
@@ -505,7 +505,7 @@ export class SubmissionService {
   }
 
   private assertOwnerOrAdmin(user: IJwtPayload, submission: { submitterId: string }) {
-    if (user.hvRole === 'admin') return;
+    if (user.hvRoles?.includes('admin')) return;
     if (submission.submitterId !== user.staffId) throw new ForbiddenException('Not your submission');
   }
 

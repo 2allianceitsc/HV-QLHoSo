@@ -413,8 +413,8 @@ model Staff {
   shiftEndDayOffset    Int       @default(0) @map("ShiftEndDayOffset")
   timezone             String?   @map("Timezone")  // IANA e.g. "Asia/Manila"
 
-  // HV: Document approval role — "staff" | "reviewer" | "approver" | "admin"
-  hvRole               String    @default("staff") @map("HvRole")
+  // HV: Document approval roles — array, at least 1 element from {"staff","reviewer","approver","admin"}
+  hvRoles              String[]  @default(["staff"]) @map("HvRoles")
 
   // Standard columns
   note         String?   @map("Note")

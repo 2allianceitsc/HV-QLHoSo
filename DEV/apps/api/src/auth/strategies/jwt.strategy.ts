@@ -11,7 +11,7 @@ export interface IJwtPayload {
   sub: string;
   staffId: string;
   roles: UserRole[];
-  hvRole: string;
+  hvRoles: string[];
   jti: string;
   iat?: number;
   exp?: number;
@@ -116,10 +116,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       await this.debugService.log('JwtStrategy.validate', 'ACCEPTED: token is valid', { sub: payload.sub, jti: payload.jti });
     }
 
-    // SUPER_ADMIN has no staff record → old tokens carry hvRole:'staff' by mistake.
+    // SUPER_ADMIN has no staff record → old tokens carry hvRoles:['staff'] by mistake.
     // Override here so existing sessions work without re-login.
-    if (payload.roles?.includes(UserRole.SUPER_ADMIN) && payload.hvRole !== 'admin') {
-      payload.hvRole = 'admin';
+    if (payload.roles?.includes(UserRole.SUPER_ADMIN) && !payload.hvRoles?.includes('admin')) {
+      payload.hvRoles = ['admin'];
     }
 
     return payload;

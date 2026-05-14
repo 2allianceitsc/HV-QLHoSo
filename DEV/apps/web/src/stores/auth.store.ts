@@ -7,7 +7,7 @@ export interface ICurrentUser {
   username: string;
   email: string;
   roles: string[];
-  hvRole: string;
+  hvRoles: string[];
   fullName: string;
   photoBusiness: string | null;
   departmentId: string | null;
