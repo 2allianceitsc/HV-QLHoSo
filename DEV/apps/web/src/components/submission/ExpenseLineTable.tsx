@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext, useWatch, type Control } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,8 @@ import type { ICreateSubmissionInput } from '@/api/submission.api';
 interface Props {
   control: Control<ICreateSubmissionInput>;
   departmentId?: string;
+  /** When provided, every line's costCodeId is locked to this value (BA §5.4, §7.2). */
+  lockedCostCodeId?: string;
   readOnly?: boolean;
 }
 
@@ -49,17 +51,31 @@ function CurrencyInput({
   );
 }
 
-export function ExpenseLineTable({ control, departmentId, readOnly }: Props) {
+export function ExpenseLineTable({ control, departmentId, lockedCostCodeId, readOnly }: Props) {
   const { fields, append, remove } = useFieldArray({ control, name: 'expenseLines' });
   const { setValue } = useFormContext<ICreateSubmissionInput>();
   const watchedLines = useWatch({ control, name: 'expenseLines' }) ?? [];
   const { data: costCodes = [] } = useCostCodes(departmentId);
+  const lockedCostCode = lockedCostCodeId ? costCodes.find((c) => c.id === lockedCostCodeId) : undefined;
+
+  // BA §5.4: when the submission's cost code changes, force every existing line to match.
+  useEffect(() => {
+    if (!lockedCostCode) return;
+    fields.forEach((_, i) => {
+      const current = watchedLines[i]?.costCodeId;
+      if (current && current !== lockedCostCode.id) {
+        setValue(`expenseLines.${i}.costCodeId`, lockedCostCode.id, { shouldValidate: false });
+        setValue(`expenseLines.${i}.costCodeName`, `${lockedCostCode.code} - ${lockedCostCode.name}`, { shouldValidate: false });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lockedCostCode?.id]);
 
   const addLine = () => {
-    const first = costCodes[0];
+    const cc = lockedCostCode ?? costCodes[0];
     append({
-      costCodeId: first?.id ?? '',
-      costCodeName: first ? `${first.code} - ${first.name}` : '',
+      costCodeId: cc?.id ?? '',
+      costCodeName: cc ? `${cc.code} - ${cc.name}` : '',
       amountExVat: 0,
       vatRate: 10,
       supplier: '',
@@ -82,8 +98,12 @@ export function ExpenseLineTable({ control, departmentId, readOnly }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Mã phí</Label>
-              {readOnly ? (
-                <p className="text-sm">{field.costCodeName || '—'}</p>
+              {readOnly || lockedCostCode ? (
+                <p className="text-sm">
+                  {lockedCostCode
+                    ? `${lockedCostCode.code} - ${lockedCostCode.name}`
+                    : (field.costCodeName || '—')}
+                </p>
               ) : (
                 <Select
                   value={watchedLines[i]?.costCodeId ?? ''}

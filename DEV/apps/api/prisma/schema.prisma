@@ -449,6 +449,9 @@ model Staff {
   submissionsToApprove Submission[] @relation("SubmissionApprover")
   approvalConfigsAsReviewer ApprovalConfig[] @relation("ApprovalConfigReviewer")
   approvalConfigsAsApprover ApprovalConfig[] @relation("ApprovalConfigApprover")
+  approvalRuleDetails  CostCodeApprovalRuleDetail[]
+  stepAsApprover         SubmissionApprovalStep[] @relation("StepApprover")
+  stepAsOriginalApprover SubmissionApprovalStep[] @relation("StepOriginalApprover")
   submissionLogs       SubmissionLog[]
   attachmentsUploaded  Attachment[]
 
@@ -784,6 +787,31 @@ model SystemSetting {
   @@map("SystemSetting")
 }
 
+// ─── NotificationChannel (§6.8 — kênh thông báo cho E001/E002) ───────────────
+// PK = type ("email" | "google_chat" | "custom_webhook"). 1 row per type.
+model NotificationChannel {
+  type         String   @id @map("Type")            // "email" | "google_chat" | "custom_webhook"
+  isEnabled    Boolean  @default(false) @map("IsEnabled")
+  webhookUrl   String?  @map("WebhookUrl")          // required when type ∈ google_chat/custom_webhook AND isEnabled
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  @@map("NotificationChannel")
+}
+
+// ─── WebhookMessageTemplate (§6.8 — nội dung tin nhắn webhook) ───────────────
+// Shared by ALL webhook channels (Google Chat + Custom). Email uses S16.
+// PK = eventId ("E001" | "E002").
+// Allowed variables: {code}, {title}, {submitter}, {recipient}, {link}
+model WebhookMessageTemplate {
+  eventId      String   @id @map("EventId")        // "E001" | "E002"
+  message      String   @map("Message") @db.Text
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  @@map("WebhookMessageTemplate")
+}
+
 // ─── EmailProviderConfig ──────────────────────────────────────────────────────
 model EmailProviderConfig {
   id          String   @id @map("Id")
@@ -1029,7 +1057,9 @@ model CostCode {
   logUpdatedBy String?  @map("Log_UpdatedBy")
 
   department  Department   @relation(fields: [departmentId], references: [id])
-  expenseLines ExpenseLine[]
+  expenseLines  ExpenseLine[]
+  approvalRules CostCodeApprovalRule[]
+  submissions   Submission[]
 
   @@index([departmentId, isDeleted])
   @@map("CostCode")
@@ -1065,8 +1095,9 @@ model Submission {
   title             String    @map("Title")
   content           String    @map("Content") @db.Text
   status            String    @default("draft") @map("Status")
-  reviewerId        String    @map("ReviewerId")
-  approverId        String    @map("ApproverId")
+  costCodeId        String?   @map("CostCodeId")        // HV approval-rules: 1 submission = 1 cost code (NT may be null)
+  reviewerId        String?   @map("ReviewerId")        // legacy 1-1 model; replaced by approvalSteps
+  approverId        String?   @map("ApproverId")        // legacy 1-1 model; replaced by approvalSteps
   reviewedAt        DateTime? @map("ReviewedAt") @db.Timestamptz
   approvedAt        DateTime? @map("ApprovedAt") @db.Timestamptz
   rejectionReason   String?   @map("RejectionReason") @db.Text
@@ -1085,11 +1116,13 @@ model Submission {
 
   submitter         Staff      @relation("SubmissionSubmitter", fields: [submitterId], references: [id])
   department        Department @relation(fields: [departmentId], references: [id])
-  reviewer          Staff      @relation("SubmissionReviewer", fields: [reviewerId], references: [id])
-  approver          Staff      @relation("SubmissionApprover", fields: [approverId], references: [id])
+  costCode          CostCode?  @relation(fields: [costCodeId], references: [id])
+  reviewer          Staff?     @relation("SubmissionReviewer", fields: [reviewerId], references: [id])
+  approver          Staff?     @relation("SubmissionApprover", fields: [approverId], references: [id])
   expenseLines      ExpenseLine[]
   existingInventory ExistingInventory[]
   attachments       Attachment[]
+  approvalSteps     SubmissionApprovalStep[]
   logs              SubmissionLog[]
 
   @@index([departmentId, status, isDeleted])
@@ -1185,4 +1218,89 @@ model SubmissionLog {
 
   @@index([submissionId])
   @@map("SubmissionLog")
+}
+
+// ─── CostCodeApprovalRule (header) ───────────────────────────────────────────
+// Per BA approval-rules-by-cost-code.md §5.1
+// - submissionType="MS": costCodeId required — per-cost-code rule, may use min/max thresholds
+// - submissionType="NT": costCodeId NULL — single global rule, no thresholds
+model CostCodeApprovalRule {
+  id             String  @id
+  submissionType String  @map("SubmissionType")  // "MS" | "NT"
+  costCodeId     String? @map("CostCodeId")
+  name           String? @map("Name")
+  isActive       Boolean @default(true) @map("IsActive")
+
+  isDeleted    Boolean  @default(false) @map("IsDeleted")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?  @map("Log_CreatedBy")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  costCode CostCode? @relation(fields: [costCodeId], references: [id])
+  details  CostCodeApprovalRuleDetail[]
+
+  @@unique([submissionType, costCodeId])
+  @@index([submissionType, isActive, isDeleted])
+  @@map("CostCodeApprovalRule")
+}
+
+// ─── CostCodeApprovalRuleDetail ──────────────────────────────────────────────
+// stepType: "REVIEW" | "APPROVE"
+// mode:     "ANY" | "ALL"
+// minAmount/maxAmount: half-open interval [min, max) — NULL = unbounded; both NULL when rule is NT.
+model CostCodeApprovalRuleDetail {
+  id          String  @id
+  ruleId      String  @map("RuleId")
+  stepOrder   Int     @map("StepOrder")
+  stepType    String  @map("StepType")
+  stepLabel   String? @map("StepLabel")
+  minAmount   BigInt? @map("MinAmount")
+  maxAmount   BigInt? @map("MaxAmount")
+  approverId  String  @map("ApproverId")
+  mode        String  @default("ANY") @map("Mode")
+
+  isDeleted    Boolean  @default(false) @map("IsDeleted")
+  logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+  logCreatedBy String?  @map("Log_CreatedBy")
+  logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
+  logUpdatedBy String?  @map("Log_UpdatedBy")
+
+  rule     CostCodeApprovalRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  approver Staff                @relation(fields: [approverId], references: [id])
+
+  @@index([ruleId, stepOrder, isDeleted])
+  @@map("CostCodeApprovalRuleDetail")
+}
+
+// ─── SubmissionApprovalStep ──────────────────────────────────────────────────
+// Snapshot of resolved workflow at submit time (BA D10).
+// status: "pending" | "in_progress" | "approved" | "rejected" | "skipped"
+model SubmissionApprovalStep {
+  id                 String   @id
+  submissionId       String   @map("SubmissionId")
+  stepOrder          Int      @map("StepOrder")
+  stepType           String   @map("StepType")
+  stepLabel          String?  @map("StepLabel")
+  approverId         String   @map("ApproverId")
+  originalApproverId String   @map("OriginalApproverId")
+  mode               String   @map("Mode")
+  status             String   @default("pending") @map("Status")
+  decidedAt          DateTime? @map("DecidedAt") @db.Timestamptz
+  decidedBy          String?   @map("DecidedBy")
+  comment            String?   @map("Comment") @db.Text
+
+  reassignedAt       DateTime? @map("ReassignedAt") @db.Timestamptz
+  reassignedBy       String?   @map("ReassignedBy")
+  reassignReason     String?   @map("ReassignReason") @db.Text
+
+  logCreatedAt       DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
+
+  submission       Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  approver         Staff      @relation("StepApprover", fields: [approverId], references: [id])
+  originalApprover Staff      @relation("StepOriginalApprover", fields: [originalApproverId], references: [id])
+
+  @@index([submissionId, stepOrder])
+  @@index([approverId, status])
+  @@map("SubmissionApprovalStep")
 }

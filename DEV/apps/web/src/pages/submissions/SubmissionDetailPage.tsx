@@ -4,12 +4,20 @@ import { format } from 'date-fns';
 import { ArrowLeft, Pencil, Copy, FileText, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SubmissionStatusBadge } from '@/components/submission/SubmissionStatusBadge';
-import { WorkflowTimeline } from '@/components/submission/WorkflowTimeline';
+import { StepTimeline } from '@/components/submission/StepTimeline';
 import { RejectDialog } from '@/components/submission/RejectDialog';
-import { useSubmission, useSubmitSubmission, useReviewSubmission, useApproveSubmission, useRejectSubmission, useDeleteSubmission } from '@/hooks/useSubmission';
+import { ReassignDialog } from '@/components/submission/ReassignDialog';
+import {
+  useSubmission,
+  useSubmitSubmission,
+  useApproveStep,
+  useRejectStep,
+  useReassignStep,
+  useDeleteSubmission,
+} from '@/hooks/useSubmission';
 import { useAuthStore } from '@/stores/auth.store';
 import { useToast } from '@/hooks/use-toast';
-import type { HvRole } from '@/api/submission.api';
+import type { HvRole, ISubmissionApprovalStep } from '@/api/submission.api';
 
 function fullName(s: { firstName: string; middleName?: string | null; surname: string }) {
   return [s.firstName, s.middleName, s.surname].filter(Boolean).join(' ');
@@ -28,56 +36,63 @@ export function SubmissionDetailPage() {
   const { toast } = useToast();
 
   const { mutateAsync: submit, isPending: submitting } = useSubmitSubmission();
-  const { mutateAsync: review, isPending: reviewing } = useReviewSubmission();
-  const { mutateAsync: approve, isPending: approving } = useApproveSubmission();
-  const { mutateAsync: reject, isPending: rejecting } = useRejectSubmission();
+  const { mutateAsync: approveStep } = useApproveStep();
+  const { mutateAsync: rejectStep, isPending: rejecting } = useRejectStep();
+  const { mutateAsync: reassignStep, isPending: reassigning } = useReassignStep();
   const { mutateAsync: del, isPending: deleting } = useDeleteSubmission();
 
-  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectStepTarget, setRejectStepTarget] = useState<ISubmissionApprovalStep | null>(null);
+  const [reassignStepTarget, setReassignStepTarget] = useState<ISubmissionApprovalStep | null>(null);
 
   if (isLoading) return <div className="p-6 text-muted-foreground">Đang tải...</div>;
   if (!submission) return <div className="p-6 text-muted-foreground">Không tìm thấy tờ trình.</div>;
 
   const isOwner = currentUser?.staffId === submission.submitter.id;
+  const isAdmin = hvRoles.includes('admin');
   const canEdit = isOwner && ['draft', 'rejected'].includes(submission.status);
   const canSubmit = isOwner && ['draft', 'rejected'].includes(submission.status);
   const canDelete = isOwner && submission.status === 'draft';
-  const canReview = hvRoles.some((r) => r === 'reviewer' || r === 'admin') && submission.status === 'pending_review';
-  const canApprove = hvRoles.some((r) => r === 'approver' || r === 'admin') && submission.status === 'in_review';
-  const canReject = (canReview || canApprove);
 
   const handleSubmit = async () => {
     try {
       await submit(submission.id);
-      toast({ title: 'Đã gửi tờ trình để thẩm định' });
+      toast({ title: 'Đã gửi tờ trình' });
     } catch {
       toast({ title: 'Không thể gửi tờ trình', variant: 'destructive' });
     }
   };
 
-  const handleReview = async () => {
+  const handleApproveStep = async (step: ISubmissionApprovalStep) => {
     try {
-      await review(submission.id);
-      toast({ title: 'Đã nhận thẩm định tờ trình' });
+      await approveStep({ id: submission.id, stepId: step.id });
+      toast({ title: 'Đã duyệt bước này' });
     } catch {
       toast({ title: 'Có lỗi xảy ra', variant: 'destructive' });
     }
   };
 
-  const handleApprove = async () => {
+  const handleRejectStepSubmit = async (reason: string) => {
+    if (!rejectStepTarget) return;
     try {
-      await approve(submission.id);
-      toast({ title: 'Đã phê duyệt tờ trình' });
-    } catch {
-      toast({ title: 'Có lỗi xảy ra', variant: 'destructive' });
-    }
-  };
-
-  const handleReject = async (reason: string) => {
-    try {
-      await reject({ id: submission.id, reason });
+      await rejectStep({ id: submission.id, stepId: rejectStepTarget.id, comment: reason });
       toast({ title: 'Đã từ chối tờ trình' });
-      setRejectOpen(false);
+      setRejectStepTarget(null);
+    } catch {
+      toast({ title: 'Có lỗi xảy ra', variant: 'destructive' });
+    }
+  };
+
+  const handleReassignSubmit = async (newApproverId: string, reason: string) => {
+    if (!reassignStepTarget) return;
+    try {
+      await reassignStep({
+        id: submission.id,
+        stepId: reassignStepTarget.id,
+        newApproverId,
+        reason,
+      });
+      toast({ title: 'Đã đổi người duyệt' });
+      setReassignStepTarget(null);
     } catch {
       toast({ title: 'Có lỗi xảy ra', variant: 'destructive' });
     }
@@ -127,9 +142,9 @@ export function SubmissionDetailPage() {
         <div><span className="text-muted-foreground block">Bộ phận</span><strong>{submission.department.name}</strong></div>
         <div><span className="text-muted-foreground block">Ngày lập</span><strong>{format(new Date(submission.submittedDate), 'dd/MM/yyyy')}</strong></div>
         <div><span className="text-muted-foreground block">Người lập</span><strong>{fullName(submission.submitter)}</strong></div>
-        <div><span className="text-muted-foreground block">Người thẩm định</span><strong>{fullName(submission.reviewer)}</strong></div>
-        <div><span className="text-muted-foreground block">Người phê duyệt</span><strong>{fullName(submission.approver)}</strong></div>
-        {submission.reviewedAt && <div><span className="text-muted-foreground block">Ngày thẩm định</span><strong>{format(new Date(submission.reviewedAt), 'dd/MM/yyyy HH:mm')}</strong></div>}
+        {submission.costCode && (
+          <div><span className="text-muted-foreground block">Loại chi phí</span><strong>{submission.costCode.code} - {submission.costCode.name}</strong></div>
+        )}
         {submission.approvedAt && <div><span className="text-muted-foreground block">Ngày phê duyệt</span><strong>{format(new Date(submission.approvedAt), 'dd/MM/yyyy HH:mm')}</strong></div>}
       </div>
 
@@ -255,33 +270,40 @@ export function SubmissionDetailPage() {
 
       <div className="space-y-2">
         <h2 className="font-semibold">Tiến trình phê duyệt</h2>
-        <WorkflowTimeline logs={submission.logs ?? []} />
+        <StepTimeline
+          steps={submission.approvalSteps ?? []}
+          currentStaffId={currentUser?.staffId ?? null}
+          isAdmin={isAdmin}
+          onApprove={handleApproveStep}
+          onReject={(s) => setRejectStepTarget(s)}
+          onReassign={(s) => setReassignStepTarget(s)}
+        />
       </div>
 
-      {(canSubmit || canReview || canApprove || canReject) && (
+      {canSubmit && (
         <div className="flex gap-3 pt-2 border-t">
-          {canSubmit && (
-            <Button onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Đang gửi...' : 'Gửi tờ trình'}
-            </Button>
-          )}
-          {canReview && (
-            <Button onClick={handleReview} disabled={reviewing}>
-              {reviewing ? 'Đang thẩm định...' : 'Thẩm định'}
-            </Button>
-          )}
-          {canApprove && (
-            <Button onClick={handleApprove} disabled={approving}>
-              {approving ? 'Đang phê duyệt...' : 'Phê duyệt'}
-            </Button>
-          )}
-          {canReject && (
-            <Button variant="destructive" onClick={() => setRejectOpen(true)}>Từ chối</Button>
-          )}
+          <Button onClick={handleSubmit} disabled={submitting}>
+            {submitting ? 'Đang gửi...' : 'Gửi tờ trình'}
+          </Button>
         </div>
       )}
 
-      <RejectDialog open={rejectOpen} onClose={() => setRejectOpen(false)} onConfirm={handleReject} loading={rejecting} />
+      <RejectDialog
+        open={!!rejectStepTarget}
+        onClose={() => setRejectStepTarget(null)}
+        onConfirm={handleRejectStepSubmit}
+        loading={rejecting}
+      />
+      {reassignStepTarget && (
+        <ReassignDialog
+          open
+          currentApproverId={reassignStepTarget.approverId}
+          currentApproverName={fullName(reassignStepTarget.approver)}
+          onClose={() => setReassignStepTarget(null)}
+          onConfirm={handleReassignSubmit}
+          loading={reassigning}
+        />
+      )}
     </div>
   );
 }

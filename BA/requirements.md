@@ -67,6 +67,7 @@
 |-----|-------------------------|----------------------------|---------|-------------------------------------------------------------------------------------|
 | S16 | Cấu hình email template | `/system/email-templates`  | `admin` | Xem và chỉnh sửa nội dung các email template theo từng sự kiện workflow (E001–E007) |
 | S17 | Email Log               | `/system/logs`             | `admin` | Xem lịch sử email đã gửi: người nhận, tiêu đề, loại, trạng thái, thời gian, ghi chú lỗi; xem nội dung chi tiết từng email |
+| S20 | Cấu hình kênh thông báo | `/system/notification-channels` | `admin` | Bật/tắt và cấu hình các kênh nhận thông báo cần duyệt (Email, Google Chat, Custom Webhook) |
 
 ### 2.6 Modals / Dialogs
 
@@ -148,6 +149,7 @@
 | Cấu hình phân quyền duyệt  | ❌    | ❌       | ❌       | ✅    |
 | Cấu hình danh mục trạng thái | ❌  | ❌       | ❌       | ✅    |
 | Cấu hình email template     | ❌    | ❌       | ❌       | ✅    |
+| Cấu hình kênh thông báo (S20) | ❌  | ❌       | ❌       | ✅    |
 | Xem email log               | ❌    | ❌       | ❌       | ✅    |
 
 ### 3.3 Data Access Rules
@@ -1097,6 +1099,86 @@ GET /api/system/logs/emails
 
 > **Trường `status`:** `sent` (gửi thành công) | `failed` (gửi thất bại, có `errorMessage`). Log chỉ đọc — không cho sửa hay xoá.
 
+### 6.8 Hệ Thống — Notification Channels
+
+Cấu hình áp dụng **toàn hệ thống**, chỉ cho sự kiện cần duyệt (E001, E002). Các kênh có thể bật đồng thời — khi trigger, server gửi song song tất cả kênh đang `enabled`.
+
+```
+GET /api/system/notification-channels
+    Auth: admin
+    └─ Response: NotificationChannel[] (1 phần tử mỗi loại)
+
+PUT /api/system/notification-channels/:type
+    Auth: admin
+    Param type: "email" | "google_chat" | "custom_webhook"
+    Body: { isEnabled: boolean, webhookUrl?: string }
+    ├─ webhookUrl: bắt buộc khi type ∈ ["google_chat", "custom_webhook"] và isEnabled=true
+    ├─ Validate: webhookUrl là URL hợp lệ nếu có
+    └─ Response: NotificationChannel đã cập nhật
+
+POST /api/system/notification-channels/:type/test
+    Auth: admin
+    └─ Gửi tin thử đến kênh; Response: { success, error? }
+
+GET /api/system/notification-channels/webhook-templates
+    Auth: admin
+    └─ Response: WebhookMessageTemplate[] (1 phần tử mỗi eventId)
+
+PUT /api/system/notification-channels/webhook-templates/:eventId
+    Auth: admin
+    Param eventId: "E001" | "E002"
+    Body: { messageTemplate: string }
+    ├─ Validate: không rỗng; các biến dùng phải nằm trong danh sách biến hợp lệ
+    └─ Response: WebhookMessageTemplate đã cập nhật
+```
+
+#### Entity: NotificationChannel
+
+| Field        | Type         | Mô tả |
+|--------------|--------------|-------|
+| `type`       | VARCHAR(20)  | `"email"` \| `"google_chat"` \| `"custom_webhook"` — PK |
+| `isEnabled`  | BOOLEAN      | Mặc định: `email=true`, còn lại `false` |
+| `webhookUrl` | VARCHAR(500) | Nullable; bắt buộc khi type ≠ `email` và `isEnabled=true` |
+| `updatedAt`  | TIMESTAMPTZ  | Auto-update |
+
+#### Entity: WebhookMessageTemplate
+
+| Field             | Type          | Mô tả |
+|-------------------|---------------|-------|
+| `eventId`         | VARCHAR(10)   | `"E001"` \| `"E002"` — PK |
+| `messageTemplate` | NVARCHAR(500) | Chuỗi text có biến động; dùng chung cho tất cả webhook channel |
+| `updatedAt`       | TIMESTAMPTZ   | Auto-update |
+
+**Biến động hợp lệ trong template:**
+
+| Biến | Giá trị |
+|------|---------|
+| `{code}` | Mã tờ trình (vd: MS0012) |
+| `{title}` | Tiêu đề tờ trình |
+| `{submitter}` | Họ tên người trình |
+| `{recipient}` | Họ tên người nhận thông báo |
+| `{link}` | URL trực tiếp đến tờ trình |
+
+**Giá trị mặc định:**
+- E001: `Tờ trình {code} "{title}" đang chờ thẩm định. Người trình: {submitter}. Xem tại: {link}`
+- E002: `Tờ trình {code} "{title}" đang chờ phê duyệt. Người trình: {submitter}. Xem tại: {link}`
+
+#### Payload gửi đến webhook (Google Chat & Custom)
+
+Server điền biến vào `messageTemplate` rồi đưa vào payload:
+
+```json
+{
+  "event": "E001",
+  "message": "Tờ trình MS0012 \"Mua laptop bổ sung\" đang chờ thẩm định. Người trình: Nguyễn Thế Hùng. Xem tại: https://...",
+  "submissionCode": "MS0012",
+  "submissionUrl": "https://app.hv.vn/submissions/abc123",
+  "triggeredAt": "2026-05-13T08:00:00Z"
+}
+```
+
+> Google Chat: server map `message` → `{ "text": "<message>" }` trước khi POST đến webhook URL.
+
 ---
 
 ## 7. MOCKUP / WIREFRAME
@@ -1408,6 +1490,56 @@ Khi `status = rejected`, hiển thị thêm section ngay dưới "Thông tin chu
 - Kích hoạt `window.print()` — in toàn bộ bảng đang hiển thị trên màn hình.
 - Trang in ẩn sidebar, header, filter; chỉ giữ summary cards + bảng danh sách.
 
+### S20 — Cấu Hình Kênh Thông Báo
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ Kênh thông báo cần duyệt                                         │
+│ (Áp dụng cho: E001 — Cần thẩm định, E002 — Cần phê duyệt)       │
+│                                                                  │
+│ ┌─ Email ──────────────────────────────────────── [Bật ●] ─────┐ │
+│ │ Dùng cấu hình SMTP hiện có. Không cần cấu hình thêm.        │ │
+│ │                                              [Gửi thử]      │ │
+│ └──────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│ ┌─ Google Chat Webhook ─────────────────────── [Bật ○] ────────┐ │
+│ │ Webhook URL                                                  │ │
+│ │ [https://chat.googleapis.com/v1/spaces/...         ]        │ │
+│ │                                              [Gửi thử]      │ │
+│ └──────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│ ┌─ Custom Webhook ──────────────────────────── [Bật ○] ────────┐ │
+│ │ Webhook URL                                                  │ │
+│ │ [https://hooks.example.com/notify              ]             │ │
+│ │                                              [Gửi thử]      │ │
+│ └──────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│ ┌─ Nội dung tin nhắn (dùng chung cho tất cả webhook) ──────────┐ │
+│ │ Biến hợp lệ: {code} {title} {submitter} {recipient} {link}  │ │
+│ │                                                              │ │
+│ │ E001 — Cần thẩm định                                         │ │
+│ │ ┌──────────────────────────────────────────────────────────┐ │ │
+│ │ │ Tờ trình {code} "{title}" đang chờ thẩm định.           │ │ │
+│ │ │ Người trình: {submitter}. Xem tại: {link}               │ │ │
+│ │ └──────────────────────────────────────────────────────────┘ │ │
+│ │                                                              │ │
+│ │ E002 — Cần phê duyệt                                         │ │
+│ │ ┌──────────────────────────────────────────────────────────┐ │ │
+│ │ │ Tờ trình {code} "{title}" đang chờ phê duyệt.           │ │ │
+│ │ │ Người trình: {submitter}. Xem tại: {link}               │ │ │
+│ │ └──────────────────────────────────────────────────────────┘ │ │
+│ └──────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│                                           [Lưu cấu hình]        │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+- **Bật/Tắt** toggle mỗi kênh độc lập; có thể bật nhiều kênh cùng lúc.
+- **Webhook URL**: bắt buộc nhập trước khi bật kênh Google Chat / Custom Webhook.
+- **Gửi thử**: POST payload mẫu đến kênh đó, hiển thị kết quả `✅ Thành công` hoặc `❌ Lỗi: <message>` inline.
+- Kênh `email` không có ô nhập URL (dùng SMTP config sẵn có) và không dùng webhook template — nội dung email cấu hình riêng tại S16.
+- **Nội dung tin nhắn**: dùng chung cho tất cả webhook channel (Google Chat + Custom). Mỗi sự kiện (E001/E002) có 1 textarea riêng; hỗ trợ biến động; server validate biến trước khi lưu.
+
 ---
 
 ## 8. REQUIREMENT BACKLOG
@@ -1501,8 +1633,8 @@ Toast tự đóng sau 4 giây, góc dưới phải màn hình.
 
 | ID   | Kênh  | Trigger                                 | Người Nhận    | Template / Nội Dung                                               |
 |------|-------|-----------------------------------------|---------------|--------------------------------------------------------------------|
-| E001 | Email | Submit (→ pending_review)               | Reviewer      | Thông báo có tờ trình mới cần thẩm định + link trực tiếp          |
-| E002 | Email | Review xong (→ in_review)               | Approver      | Thông báo có tờ trình cần phê duyệt + link trực tiếp              |
+| E001 | Kênh được cấu hình (§6.8) | Submit (→ pending_review)  | Reviewer      | Thông báo có tờ trình mới cần thẩm định + link trực tiếp          |
+| E002 | Kênh được cấu hình (§6.8) | Review xong (→ in_review)  | Approver      | Thông báo có tờ trình cần phê duyệt + link trực tiếp              |
 | E003 | Email | Approve thành công                      | Submitter     | Chúc mừng tờ trình {code} "{title}" đã được phê duyệt             |
 | E004 | Email | Reject                                  | Submitter     | Thông báo từ chối + lý do + link để sửa và gửi lại               |
 | E005 | Email | Tạo tài khoản mới                       | User mới      | Thông tin đăng nhập tạm, link đổi mật khẩu lần đầu               |
@@ -1549,6 +1681,7 @@ Toast tự đóng sau 4 giây, góc dưới phải màn hình.
   - Danh mục trạng thái (`/admin/submission-statuses`)
 - **HỆ THỐNG**
   - Cấu hình email template (`/system/email-templates`)
+  - Kênh thông báo (`/system/notification-channels`)
   - Email Log (`/system/logs`)
 
 ### Sidebar Footer (tất cả role)

@@ -32,6 +32,7 @@ import { UserManagementPage } from '@/pages/admin/UserManagementPage';
 import { DepartmentManagementPage } from '@/pages/admin/DepartmentManagementPage';
 import { CostCodeManagementPage } from '@/pages/admin/CostCodeManagementPage';
 import { ApprovalConfigPage } from '@/pages/admin/ApprovalConfigPage';
+import { ApprovalRulesPage } from '@/pages/admin/ApprovalRulesPage';
 import { SubmissionStatusPage } from '@/pages/admin/SubmissionStatusPage';
 
 // ── HR pages (kept, not exposed in nav/routes for HV) ────────────────────────
@@ -52,6 +53,9 @@ import {
   NotificationsInboxPage,
   SystemTestPage,
 } from '@/pages/system/SystemPages';
+
+// HV System
+import { NotificationChannelsPage } from '@/pages/system/NotificationChannelsPage';
 
 // Misc
 import { ProfilePage, NotFoundPage } from '@/pages/MiscPages';
@@ -104,6 +108,7 @@ const router = createBrowserRouter(
         <Route path="/admin/departments" element={<DepartmentManagementPage />} />
         <Route path="/admin/cost-codes" element={<CostCodeManagementPage />} />
         <Route path="/admin/approval-config" element={<ApprovalConfigPage />} />
+        <Route path="/admin/approval-rules" element={<ApprovalRulesPage />} />
         <Route path="/admin/submission-statuses" element={<SubmissionStatusPage />} />
 
         {/* ── HR routes disabled (kept for reference) ── */}
@@ -124,6 +129,7 @@ const router = createBrowserRouter(
         <Route path="/system/roles" element={<RequirePermission screen="SY01" redirect="/submissions"><RolesPage /></RequirePermission>} />
         <Route path="/system/role-permissions" element={<RequirePermission screen="SY18" redirect="/submissions"><RolePermissionsPage /></RequirePermission>} />
         <Route path="/system/settings" element={<RequirePermission screen="SY02" redirect="/submissions"><SystemSettingsPage /></RequirePermission>} />
+        <Route path="/system/notification-channels" element={<NotificationChannelsPage />} />
         <Route path="/system/warnings" element={<RequirePermission screen="SY15" redirect="/submissions"><SystemWarningsPage /></RequirePermission>} />
         <Route path="/system/teams" element={<RequirePermission screen="SY10" redirect="/submissions"><TeamsPage /></RequirePermission>} />
         <Route path="/system/test" element={<RequirePermission screen="SY02" redirect="/submissions"><SystemTestPage /></RequirePermission>} />

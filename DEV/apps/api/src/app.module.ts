@@ -44,10 +44,12 @@ import { DebugModule } from './common/debug/debug.module';
 import { SubmissionModule } from './submission/submission.module';
 import { CostCodeModule } from './cost-code/cost-code.module';
 import { ApprovalConfigModule } from './approval-config/approval-config.module';
+import { ApprovalRulesModule } from './approval-rules/approval-rules.module';
 import { HvReportsModule } from './hv-reports/hv-reports.module';
 import { HvAdminModule } from './hv-admin/hv-admin.module';
 import { SystemLogsModule } from './system-logs/system-logs.module';
 import { UploadModule } from './upload/upload.module';
+import { NotificationChannelsModule } from './notification-channels/notification-channels.module';
 
 @Module({
   imports: [
@@ -123,10 +125,12 @@ import { UploadModule } from './upload/upload.module';
     SubmissionModule,
     CostCodeModule,
     ApprovalConfigModule,
+    ApprovalRulesModule,
     HvReportsModule,
     HvAdminModule,
     SystemLogsModule,
     UploadModule,
+    NotificationChannelsModule,
   ],
   controllers: [],
   providers: [

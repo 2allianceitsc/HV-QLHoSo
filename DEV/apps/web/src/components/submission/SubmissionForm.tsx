@@ -12,9 +12,12 @@ import { Paperclip, X, FileText, Image, Upload } from 'lucide-react';
 import { ExpenseLineTable } from '@/components/submission/ExpenseLineTable';
 import { DateInput } from '@/components/ui/DateInput';
 import { useSubmissionDepartments } from '@/hooks/useSubmission';
+import { useCostCodes } from '@/hooks/useCostCode';
+import { usePreviewApproval } from '@/hooks/useApprovalRules';
 import { useAuthStore } from '@/stores/auth.store';
 import type { ICreateSubmissionInput, ISubmission } from '@/api/submission.api';
 import { uploadApi } from '@/api/upload.api';
+import { useEffect } from 'react';
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -37,6 +40,7 @@ const expenseLineSchema = z.object({
 const schema = z.object({
   type: z.enum(['MS', 'NT']),
   departmentId: z.string().min(1, 'Vui lòng chọn bộ phận'),
+  costCodeId: z.string().optional(),
   submittedDate: z.string().min(1, 'Bắt buộc'),
   title: z.string().min(1, 'Tiêu đề bắt buộc').max(200),
   content: z.string().optional(),
@@ -46,6 +50,9 @@ const schema = z.object({
   expenseLines: z.array(expenseLineSchema).optional(),
   existingInventory: z.array(z.any()).optional(),
 }).superRefine((data, ctx) => {
+  if (data.type === 'MS' && !data.costCodeId) {
+    ctx.addIssue({ code: 'custom', path: ['costCodeId'], message: 'Vui lòng chọn loại chi phí' });
+  }
   if (data.type === 'NT') {
     if (!data.supplier?.trim()) ctx.addIssue({ code: 'custom', path: ['supplier'], message: 'Bắt buộc' });
     if (!data.contractStartDate) ctx.addIssue({ code: 'custom', path: ['contractStartDate'], message: 'Bắt buộc' });
@@ -72,6 +79,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
     defaultValues: {
       type: defaultValues?.type ?? 'MS',
       departmentId: defaultValues?.department?.id ?? userDepartmentId ?? '',
+      costCodeId: defaultValues?.costCodeId ?? '',
       submittedDate: defaultValues?.submittedDate?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
       title: defaultValues?.title ?? '',
       content: defaultValues?.content ?? '',
@@ -96,6 +104,35 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
 
   const type = watch('type');
   const departmentId = watch('departmentId');
+  const costCodeId = watch('costCodeId');
+  const expenseLines = watch('expenseLines') ?? [];
+  const { data: allCostCodes = [] } = useCostCodes(departmentId || undefined);
+
+  // BA §7.2: changing cost code after lines are entered clears them (with confirm).
+  const handleCostCodeChange = (newId: string) => {
+    if (costCodeId && newId !== costCodeId && expenseLines.length > 0) {
+      const ok = window.confirm('Đổi loại chi phí sẽ xóa các dòng chi phí đang nhập. Tiếp tục?');
+      if (!ok) return;
+      methods.setValue('expenseLines', []);
+    }
+    setValue('costCodeId', newId);
+  };
+
+  // Workflow preview: re-run when costCode or total changes (MS), or once for NT.
+  const { mutate: preview, data: previewResult, isPending: previewing, reset: resetPreview } = usePreviewApproval();
+  const totalIncVat = expenseLines.reduce(
+    (s, l) => s + Math.round((l.amountExVat ?? 0) * (1 + (l.vatRate ?? 10) / 100)),
+    0,
+  );
+
+  useEffect(() => {
+    if (type === 'NT') {
+      preview({ submissionType: 'NT' });
+      return;
+    }
+    if (!costCodeId) { resetPreview(); return; }
+    preview({ submissionType: 'MS', costCodeId, total: totalIncVat });
+  }, [type, costCodeId, totalIncVat, preview, resetPreview]);
 
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -215,11 +252,54 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
             </div>
           </div>
 
+          {type === 'MS' && (
+            <div className="space-y-1.5">
+              <Label>Loại chi phí <span className="text-destructive">*</span></Label>
+              <Select value={costCodeId ?? ''} onValueChange={handleCostCodeChange}>
+                <SelectTrigger><SelectValue placeholder="Chọn loại chi phí" /></SelectTrigger>
+                <SelectContent>
+                  {allCostCodes.map((cc) => (
+                    <SelectItem key={cc.id} value={cc.id}>{cc.code} - {cc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.costCodeId && <p className="text-xs text-destructive">{errors.costCodeId.message}</p>}
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label>Tiêu đề / Về việc <span className="text-destructive">*</span></Label>
             <Input {...register('title')} placeholder="Nhập tiêu đề tờ trình" autoFocus />
             {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
           </div>
+
+          {/* Workflow preview (BA §7.2) */}
+          {((type === 'MS' && costCodeId) || type === 'NT') && (
+            <div className="border-l-2 border-primary/40 pl-3 py-2 bg-muted/20 text-xs space-y-1">
+              {previewing && <span className="text-muted-foreground">Đang dò luồng duyệt...</span>}
+              {!previewing && previewResult && previewResult.steps.length > 0 && (
+                <>
+                  <div className="font-medium">Luồng duyệt dự kiến ({previewResult.steps.length} bước):</div>
+                  <ol className="list-decimal ml-5 space-y-0.5">
+                    {previewResult.steps.map((s) => (
+                      <li key={s.stepOrder}>
+                        <span className="font-medium">{s.stepLabel ?? (s.stepType === 'REVIEW' ? 'Thẩm định' : 'Phê duyệt')}</span>
+                        {' — '}
+                        {s.approvers.map((a) => a.name).join(s.mode === 'ALL' ? ' + ' : ' / ')}
+                        {s.mode === 'ALL' && ' (tất cả)'}
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              )}
+              {!previewing && previewResult && previewResult.steps.length === 0 && (
+                <span className="text-destructive">Chưa có cấu hình duyệt cho loại chi phí này.</span>
+              )}
+              {!previewing && !previewResult && type === 'MS' && (
+                <span className="text-amber-700">⚠️ Loại chi phí này có thể chưa được cấu hình duyệt — liên hệ admin.</span>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Nội dung đề xuất */}
@@ -344,7 +424,11 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
         {/* Chi phí — chỉ hiện với loại MS */}
         {type === 'MS' && (
           <section className="border rounded-lg p-4">
-            <ExpenseLineTable control={methods.control as unknown as Control<ICreateSubmissionInput>} departmentId={departmentId || undefined} />
+            <ExpenseLineTable
+              control={methods.control as unknown as Control<ICreateSubmissionInput>}
+              departmentId={departmentId || undefined}
+              lockedCostCodeId={costCodeId || undefined}
+            />
           </section>
         )}
 

@@ -13,6 +13,9 @@ import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { ListSubmissionsDto } from './dto/list-submissions.dto';
 import { RejectSubmissionDto } from './dto/reject-submission.dto';
+import { ReassignStepDto, StepApproveDto, StepRejectDto } from './dto/step-action.dto';
+import { ApprovalRulesService } from '../approval-rules/approval-rules.service';
+import { NotificationChannelsService } from '../notification-channels/notification-channels.service';
 import { IJwtPayload } from '../auth/strategies/jwt.strategy';
 
 const HV_EMAIL_DEFAULTS: Record<'E001' | 'E002' | 'E003' | 'E004', { subject: string; body: string }> = {
@@ -42,17 +45,27 @@ export class SaveAttachmentDto {
   @IsNumber() @Min(0) sizeBytes!: number;
 }
 
+const STAFF_NAME_SELECT = { id: true, firstName: true, middleName: true, surname: true } as const;
+
 const SUBMISSION_INCLUDE = {
-  submitter: { select: { id: true, firstName: true, middleName: true, surname: true, companyEmailAddress: true } },
-  reviewer: { select: { id: true, firstName: true, middleName: true, surname: true, companyEmailAddress: true } },
-  approver: { select: { id: true, firstName: true, middleName: true, surname: true, companyEmailAddress: true } },
+  submitter: { select: { ...STAFF_NAME_SELECT, companyEmailAddress: true } },
+  reviewer: { select: { ...STAFF_NAME_SELECT, companyEmailAddress: true } },
+  approver: { select: { ...STAFF_NAME_SELECT, companyEmailAddress: true } },
   department: { select: { id: true, name: true } },
+  costCode: { select: { id: true, code: true, name: true } },
   expenseLines: { orderBy: { sortOrder: 'asc' as const } },
   existingInventory: { orderBy: { sortOrder: 'asc' as const } },
   attachments: true,
+  approvalSteps: {
+    orderBy: [{ stepOrder: 'asc' as const }, { logCreatedAt: 'asc' as const }],
+    include: {
+      approver: { select: STAFF_NAME_SELECT },
+      originalApprover: { select: STAFF_NAME_SELECT },
+    },
+  },
   logs: {
     orderBy: { createdAt: 'desc' as const },
-    include: { user: { select: { id: true, firstName: true, middleName: true, surname: true } } },
+    include: { user: { select: STAFF_NAME_SELECT } },
   },
 };
 
@@ -61,6 +74,8 @@ export class SubmissionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    private readonly approvalRules: ApprovalRulesService,
+    private readonly notificationChannels: NotificationChannelsService,
   ) {}
 
   listDepartments() {
@@ -179,27 +194,40 @@ export class SubmissionService {
   }
 
   async create(user: IJwtPayload, dto: CreateSubmissionDto) {
-    const config = await this.prisma.approvalConfig.findUnique({ where: { departmentId: dto.departmentId } });
-    if (!config) throw new BadRequestException('No approval config for this department');
-
     const isSubmit = dto.action === 'submit';
 
-    // Submitting MS requires at least 1 expense line
+    // BA §5.4: every expense line must match submission.costCodeId.
+    if (dto.type === 'MS') {
+      if (!dto.costCodeId) throw new BadRequestException('costCodeId là bắt buộc cho tờ trình Mua sắm');
+      this.assertLinesMatchCostCode(dto.expenseLines, dto.costCodeId);
+    }
+
     if (isSubmit && dto.type === 'MS' && (!dto.expenseLines || dto.expenseLines.length === 0)) {
       throw new BadRequestException('Mua sắm submission requires at least one expense line');
     }
 
-    // NT requires supplier and contract dates
     if (dto.type === 'NT') {
       if (!dto.supplier?.trim()) throw new BadRequestException('Nhà cung cấp là bắt buộc');
       if (!dto.contractStartDate) throw new BadRequestException('Ngày bắt đầu hợp đồng là bắt buộc');
       if (!dto.contractEndDate) throw new BadRequestException('Ngày kết thúc hợp đồng là bắt buộc');
     }
 
+    // Resolve plan BEFORE the tx so a missing-rule failure doesn't leave a half-created submission.
+    let plan: Awaited<ReturnType<ApprovalRulesService['resolvePlan']>>['plan'] | null = null;
+    if (isSubmit) {
+      const total = dto.type === 'NT' ? null : this.sumLines(dto.expenseLines ?? []);
+      const resolved = await this.approvalRules.resolvePlan(
+        dto.type,
+        dto.type === 'NT' ? null : dto.costCodeId ?? null,
+        total,
+      );
+      plan = resolved.plan;
+    }
+
     const status = isSubmit ? 'pending_review' : 'draft';
     const code = await this.generateCode(dto.type);
 
-    const submission = await this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       const created = await tx.submission.create({
         data: {
           id: uuidv7(),
@@ -207,12 +235,11 @@ export class SubmissionService {
           code,
           submitterId: user.staffId,
           departmentId: dto.departmentId,
+          costCodeId: dto.costCodeId ?? null,
           submittedDate: new Date(dto.submittedDate),
           title: dto.title,
           content: dto.content ?? '',
           status,
-          reviewerId: config.reviewerId,
-          approverId: config.approverId,
           contractStartDate: dto.contractStartDate ? new Date(dto.contractStartDate) : null,
           contractEndDate: dto.contractEndDate ? new Date(dto.contractEndDate) : null,
           supplier: dto.supplier ?? null,
@@ -257,6 +284,11 @@ export class SubmissionService {
         });
       }
 
+      if (isSubmit && plan) {
+        await this.snapshotPlan(tx, created.id, plan);
+        await this.activateNextGroup(tx, created.id, user.staffId);
+      }
+
       await tx.submissionLog.create({
         data: {
           id: uuidv7(),
@@ -267,14 +299,8 @@ export class SubmissionService {
         },
       });
 
-      if (isSubmit) {
-        await this.queueNotification(created.reviewerId, 'E001', created.id, {}, tx);
-      }
-
       return created;
     });
-
-    return submission;
   }
 
   async update(user: IJwtPayload, id: string, dto: UpdateSubmissionDto) {
@@ -283,6 +309,12 @@ export class SubmissionService {
       throw new BadRequestException('Can only edit draft or rejected submissions');
     }
     this.assertOwnerOrAdmin(user, submission);
+
+    // BA §5.4: changing costCode forces all lines to match new code; FE confirms before sending.
+    const newCostCodeId = dto.costCodeId ?? submission.costCodeId ?? null;
+    if (submission.type === 'MS' && dto.expenseLines !== undefined && newCostCodeId) {
+      this.assertLinesMatchCostCode(dto.expenseLines, newCostCodeId);
+    }
 
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.submission.update({
@@ -294,6 +326,7 @@ export class SubmissionService {
           ...(dto.contractStartDate && { contractStartDate: new Date(dto.contractStartDate) }),
           ...(dto.contractEndDate && { contractEndDate: new Date(dto.contractEndDate) }),
           ...(dto.supplier !== undefined && { supplier: dto.supplier ?? null }),
+          ...(dto.costCodeId !== undefined && { costCodeId: dto.costCodeId }),
           logUpdatedBy: user.staffId,
         },
       });
@@ -356,6 +389,7 @@ export class SubmissionService {
     return this.prisma.submission.update({ where: { id }, data: { isDeleted: true, logUpdatedBy: user.staffId } });
   }
 
+  /** Submit a previously-drafted submission (BA §6.1). Resolves plan + snapshots steps. */
   async submit(user: IJwtPayload, id: string) {
     const submission = await this.getOrThrow(id);
     if (!['draft', 'rejected'].includes(submission.status)) {
@@ -364,104 +398,234 @@ export class SubmissionService {
     this.assertOwnerOrAdmin(user, submission);
 
     if (submission.type === 'MS') {
+      if (!submission.costCodeId) throw new BadRequestException('Tờ trình chưa có loại chi phí');
       const lineCount = await this.prisma.expenseLine.count({ where: { submissionId: id } });
       if (lineCount === 0) throw new BadRequestException('Mua sắm submission requires at least one expense line');
     }
 
+    const total = submission.type === 'NT'
+      ? null
+      : await this.computeTotal(id);
+
+    const { plan } = await this.approvalRules.resolvePlan(
+      submission.type as 'MS' | 'NT',
+      submission.type === 'NT' ? null : submission.costCodeId,
+      total,
+    );
+
     return this.prisma.$transaction(async (tx) => {
+      // re-submit (status='rejected'): clear prior step snapshot before re-snapshotting.
+      await tx.submissionApprovalStep.deleteMany({ where: { submissionId: id } });
+
       const updated = await tx.submission.update({
         where: { id },
-        data: { status: 'pending_review', logUpdatedBy: user.staffId },
+        data: {
+          status: 'pending_review',
+          rejectionReason: null,
+          logUpdatedBy: user.staffId,
+        },
       });
+
+      await this.snapshotPlan(tx, id, plan);
+      await this.activateNextGroup(tx, id, user.staffId);
 
       await tx.submissionLog.create({
         data: { id: uuidv7(), submissionId: id, userId: user.staffId, action: 'submit',
           fromStatus: submission.status, toStatus: 'pending_review' },
       });
 
-      await this.queueNotification(submission.reviewerId, 'E001', id, {}, tx);
       return updated;
     });
   }
 
-  async review(user: IJwtPayload, id: string) {
-    const submission = await this.getOrThrow(id);
-    if (submission.status !== 'pending_review') throw new BadRequestException('Submission is not pending review');
-    if (!user.hvRoles?.includes('admin') && submission.reviewerId !== user.staffId) {
-      throw new ForbiddenException('You are not the reviewer for this submission');
+  /** Step-based approve (BA §6.2). One approver decides one in_progress step they own. */
+  async approveStep(user: IJwtPayload, submissionId: string, dto: StepApproveDto) {
+    const step = await this.loadStepForAction(submissionId, dto.stepId);
+    if (step.approverId !== user.staffId && !user.hvRoles?.includes('admin')) {
+      throw new ForbiddenException('Bạn không có quyền duyệt bước này.');
     }
 
     return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.submission.update({
-        where: { id },
-        data: { status: 'in_review', reviewedAt: new Date(), logUpdatedBy: user.staffId },
+      await tx.submissionApprovalStep.update({
+        where: { id: step.id },
+        data: {
+          status: 'approved',
+          decidedAt: new Date(),
+          decidedBy: user.staffId,
+          comment: dto.comment ?? null,
+        },
       });
+
+      // ANY: peer steps in the same group → skipped.
+      // ALL: wait until every peer step is approved.
+      const peers = await tx.submissionApprovalStep.findMany({
+        where: { submissionId, stepOrder: step.stepOrder, NOT: { id: step.id } },
+      });
+
+      if (step.mode === 'ANY' && peers.some((p) => p.status === 'in_progress' || p.status === 'pending')) {
+        await tx.submissionApprovalStep.updateMany({
+          where: {
+            submissionId,
+            stepOrder: step.stepOrder,
+            id: { not: step.id },
+            status: { in: ['pending', 'in_progress'] },
+          },
+          data: { status: 'skipped' },
+        });
+      }
+
+      const groupComplete =
+        step.mode === 'ANY'
+          ? true
+          : peers.every((p) => p.status === 'approved' || p.status === 'skipped');
+
+      let nextStatus: 'in_review' | 'approved' | null = null;
+      if (groupComplete) {
+        const advanced = await this.activateNextGroup(tx, submissionId, user.staffId);
+        if (!advanced) {
+          // last APPROVE done — submission approved.
+          await tx.submission.update({
+            where: { id: submissionId },
+            data: { status: 'approved', approvedAt: new Date(), logUpdatedBy: user.staffId },
+          });
+          nextStatus = 'approved';
+
+          const submission = await tx.submission.findUnique({ where: { id: submissionId } });
+          if (submission) {
+            await this.queueNotification(submission.submitterId, 'E003', submissionId, {}, tx);
+          }
+        } else {
+          // moved past first step → submission is in_review.
+          await tx.submission.update({
+            where: { id: submissionId },
+            data: { status: 'in_review', logUpdatedBy: user.staffId },
+          });
+          nextStatus = 'in_review';
+        }
+      }
 
       await tx.submissionLog.create({
-        data: { id: uuidv7(), submissionId: id, userId: user.staffId, action: 'review',
-          fromStatus: 'pending_review', toStatus: 'in_review' },
+        data: {
+          id: uuidv7(),
+          submissionId,
+          userId: user.staffId,
+          action: 'approve',
+          note: step.stepLabel ?? null,
+          toStatus: nextStatus ?? undefined,
+        },
       });
 
-      await this.queueNotification(submission.approverId, 'E002', id, {}, tx);
-      return updated;
+      return { ok: true };
     });
   }
 
-  async approve(user: IJwtPayload, id: string) {
-    const submission = await this.getOrThrow(id);
-    if (submission.status !== 'in_review') throw new BadRequestException('Submission is not in review');
-    if (!user.hvRoles?.includes('admin') && submission.approverId !== user.staffId) {
-      throw new ForbiddenException('You are not the approver for this submission');
+  /** Step-based reject (BA §6.3). Rejecting any step terminates the submission. */
+  async rejectStep(user: IJwtPayload, submissionId: string, dto: StepRejectDto) {
+    const step = await this.loadStepForAction(submissionId, dto.stepId);
+    if (step.approverId !== user.staffId && !user.hvRoles?.includes('admin')) {
+      throw new ForbiddenException('Bạn không có quyền từ chối bước này.');
     }
+    if (!dto.comment?.trim()) throw new BadRequestException('Lý do từ chối là bắt buộc');
 
     return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.submission.update({
-        where: { id },
-        data: { status: 'approved', approvedAt: new Date(), logUpdatedBy: user.staffId },
+      await tx.submissionApprovalStep.update({
+        where: { id: step.id },
+        data: {
+          status: 'rejected',
+          decidedAt: new Date(),
+          decidedBy: user.staffId,
+          comment: dto.comment,
+        },
+      });
+
+      // Skip all remaining live steps.
+      await tx.submissionApprovalStep.updateMany({
+        where: { submissionId, status: { in: ['pending', 'in_progress'] } },
+        data: { status: 'skipped' },
+      });
+
+      const submission = await tx.submission.update({
+        where: { id: submissionId },
+        data: { status: 'rejected', rejectionReason: dto.comment, logUpdatedBy: user.staffId },
       });
 
       await tx.submissionLog.create({
-        data: { id: uuidv7(), submissionId: id, userId: user.staffId, action: 'approve',
-          fromStatus: 'in_review', toStatus: 'approved' },
+        data: {
+          id: uuidv7(),
+          submissionId,
+          userId: user.staffId,
+          action: 'reject',
+          note: dto.comment,
+          toStatus: 'rejected',
+        },
       });
 
-      await this.queueNotification(submission.submitterId, 'E003', id, {}, tx);
-      return updated;
+      await this.queueNotification(submission.submitterId, 'E004', submissionId, { reason: dto.comment }, tx);
+      return { ok: true };
     });
   }
 
-  async reject(user: IJwtPayload, id: string, dto: RejectSubmissionDto) {
-    const submission = await this.getOrThrow(id);
-    if (!['pending_review', 'in_review'].includes(submission.status)) {
-      throw new BadRequestException('Submission cannot be rejected in current status');
-    }
-
-    const isReviewer = user.hvRoles?.some((r) => r === 'reviewer' || r === 'admin');
-    const isApprover = user.hvRoles?.some((r) => r === 'approver' || r === 'admin');
-
-    if (submission.status === 'pending_review' && !isReviewer) throw new ForbiddenException('Only reviewer can reject at this stage');
-    if (submission.status === 'in_review' && !isApprover) throw new ForbiddenException('Only approver can reject at this stage');
-
+  /** Admin-only reassign of step.approverId (BA §6.4). */
+  async reassignStep(user: IJwtPayload, submissionId: string, stepId: string, dto: ReassignStepDto) {
     if (!user.hvRoles?.includes('admin')) {
-      if (submission.status === 'pending_review' && submission.reviewerId !== user.staffId) throw new ForbiddenException('Not your submission to review');
-      if (submission.status === 'in_review' && submission.approverId !== user.staffId) throw new ForbiddenException('Not your submission to approve');
+      throw new ForbiddenException('Chỉ admin mới được đổi người duyệt.');
     }
 
-    const fromStatus = submission.status;
+    const step = await this.prisma.submissionApprovalStep.findFirst({
+      where: { id: stepId, submissionId },
+    });
+    if (!step) throw new NotFoundException('Step not found');
+    if (!['pending', 'in_progress'].includes(step.status)) {
+      throw new BadRequestException('Chỉ đổi được người duyệt khi bước đang chờ hoặc đang xử lý.');
+    }
+    if (step.approverId === dto.newApproverId) {
+      throw new BadRequestException('Người duyệt mới trùng với người hiện tại.');
+    }
+
+    const newApprover = await this.prisma.staff.findFirst({
+      where: { id: dto.newApproverId, isDeleted: false },
+    });
+    if (!newApprover) throw new BadRequestException('Người duyệt mới không tồn tại.');
+
     return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.submission.update({
-        where: { id },
-        data: { status: 'rejected', rejectionReason: dto.reason, logUpdatedBy: user.staffId },
+      await tx.submissionApprovalStep.update({
+        where: { id: stepId },
+        data: {
+          approverId: dto.newApproverId,
+          reassignedAt: new Date(),
+          reassignedBy: user.staffId,
+          reassignReason: dto.reason,
+        },
       });
 
       await tx.submissionLog.create({
-        data: { id: uuidv7(), submissionId: id, userId: user.staffId, action: 'reject',
-          fromStatus, toStatus: 'rejected', note: dto.reason },
+        data: {
+          id: uuidv7(),
+          submissionId,
+          userId: user.staffId,
+          action: 'reassign',
+          note: dto.reason,
+        },
       });
 
-      await this.queueNotification(submission.submitterId, 'E004', id, { reason: dto.reason }, tx);
-      return updated;
+      if (step.status === 'in_progress') {
+        // notify new approver immediately
+        await this.queueNotification(dto.newApproverId, 'E001', submissionId, {}, tx);
+      }
+
+      return { ok: true };
     });
+  }
+
+  /** Back-compat shim: legacy callers may still POST /reject with a submission-level reason. */
+  async reject(user: IJwtPayload, id: string, dto: RejectSubmissionDto) {
+    const activeStep = await this.prisma.submissionApprovalStep.findFirst({
+      where: { submissionId: id, status: 'in_progress' },
+    });
+    if (!activeStep) {
+      throw new BadRequestException('Không có bước nào đang chờ xử lý để từ chối.');
+    }
+    return this.rejectStep(user, id, { stepId: activeStep.id, comment: dto.reason });
   }
 
   async getUploadUrl(mimeType: string, ext: string) {
@@ -487,6 +651,94 @@ export class SubmissionService {
         uploadedBy: user.staffId,
       },
     });
+  }
+
+  // ──────── helpers: approval engine ────────
+
+  private sumLines(lines: Array<{ amountExVat: number; vatRate?: number }>): bigint {
+    return lines.reduce((acc, l) => {
+      const rate = l.vatRate ?? 10;
+      return acc + BigInt(Math.round(l.amountExVat * (1 + rate / 100)));
+    }, 0n);
+  }
+
+  private async computeTotal(submissionId: string): Promise<bigint> {
+    const agg = await this.prisma.expenseLine.aggregate({
+      where: { submissionId },
+      _sum: { amountIncVat: true },
+    });
+    return agg._sum.amountIncVat ?? 0n;
+  }
+
+  private assertLinesMatchCostCode(
+    lines: Array<{ costCodeId: string }> | undefined,
+    submissionCostCodeId: string,
+  ) {
+    if (!lines?.length) return;
+    if (lines.some((l) => l.costCodeId !== submissionCostCodeId)) {
+      throw new BadRequestException('Tất cả dòng chi phí phải cùng loại với tờ trình.');
+    }
+  }
+
+  private async snapshotPlan(
+    tx: Prisma.TransactionClient,
+    submissionId: string,
+    plan: Array<{ stepOrder: number; stepType: string; stepLabel: string | null; approverId: string; mode: string }>,
+  ) {
+    await tx.submissionApprovalStep.createMany({
+      data: plan.map((d) => ({
+        id: uuidv7(),
+        submissionId,
+        stepOrder: d.stepOrder,
+        stepType: d.stepType,
+        stepLabel: d.stepLabel,
+        approverId: d.approverId,
+        originalApproverId: d.approverId,
+        mode: d.mode,
+        status: 'pending',
+      })),
+    });
+  }
+
+  /**
+   * Find the next group of pending steps (smallest stepOrder), flip them to in_progress,
+   * notify each approver. Returns true if a group was activated, false if none remain.
+   */
+  private async activateNextGroup(
+    tx: Prisma.TransactionClient,
+    submissionId: string,
+    _actor: string,
+  ): Promise<boolean> {
+    const next = await tx.submissionApprovalStep.findFirst({
+      where: { submissionId, status: 'pending' },
+      orderBy: { stepOrder: 'asc' },
+    });
+    if (!next) return false;
+
+    const group = await tx.submissionApprovalStep.findMany({
+      where: { submissionId, stepOrder: next.stepOrder, status: 'pending' },
+    });
+
+    await tx.submissionApprovalStep.updateMany({
+      where: { submissionId, stepOrder: next.stepOrder, status: 'pending' },
+      data: { status: 'in_progress' },
+    });
+
+    for (const s of group) {
+      await this.queueNotification(s.approverId, 'E001', submissionId, {}, tx);
+    }
+    return true;
+  }
+
+  private async loadStepForAction(submissionId: string, stepId: string) {
+    const step = await this.prisma.submissionApprovalStep.findFirst({
+      where: { id: stepId, submissionId },
+    });
+    if (!step) throw new NotFoundException('Step not found');
+    if (step.status !== 'in_progress') {
+      throw new BadRequestException('Bước này đã được xử lý.');
+    }
+    return step;
   }
 
   private async getOrThrow(id: string) {
@@ -545,7 +797,7 @@ export class SubmissionService {
       db.systemSetting.findUnique({ where: { key: `hv.email.${eventId}.body` } }),
     ]);
 
-    if (!toStaff?.companyEmailAddress || !submission) return;
+    if (!submission) return;
 
     const vars: Record<string, string> = {
       code: submission.code,
@@ -568,15 +820,38 @@ export class SubmissionService {
     const subject  = fill(subjectRow?.value?.trim() || defaults.subject);
     const bodyHtml = fill(bodyRow?.value?.trim()    || defaults.body);
 
-    await db.emailQueue.create({
-      data: {
-        id: uuidv7(),
-        to: toStaff.companyEmailAddress,
-        subject,
-        bodyHtml,
-        type: 'submission_notification',
-        logCreatedBy: 'system',
-      },
-    });
+    // E001/E002 honor the per-channel toggle (§6.8). E003/E004 are email-only by spec.
+    const channelGated = eventId === 'E001' || eventId === 'E002';
+    const emailEnabled = channelGated ? await this.notificationChannels.isEmailEnabled() : true;
+
+    if (emailEnabled && toStaff?.companyEmailAddress) {
+      await db.emailQueue.create({
+        data: {
+          id: uuidv7(),
+          to: toStaff.companyEmailAddress,
+          subject,
+          bodyHtml,
+          type: 'submission_notification',
+          logCreatedBy: 'system',
+        },
+      });
+    }
+
+    // For E001/E002 also dispatch to enabled webhook channels (Google Chat / Custom).
+    if (channelGated) {
+      const recipientName = staffName(
+        eventId === 'E001' ? submission.reviewer : submission.approver,
+      );
+      // Best-effort; never block the workflow on a webhook failure.
+      void this.notificationChannels.dispatchToEnabledWebhooks({
+        event: eventId,
+        submissionCode: submission.code,
+        submissionTitle: submission.title,
+        submissionUrl: this.submissionUrl(submissionId),
+        recipientName,
+        submitterName: staffName(submission.submitter),
+        triggeredAt: new Date().toISOString(),
+      });
+    }
   }
 }

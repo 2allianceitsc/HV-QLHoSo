@@ -140,8 +140,8 @@ function SubmissionTable({ type, status, q, approvedColor, department, supplier,
                 const approverDone = s.status === 'approved';
                 const rowNum = (page - 1) * 20 + idx + 1;
                 const isAdmin = currentUser?.hvRoles?.includes('admin');
-                const needsReview = !isAdmin && currentUser?.staffId === s.reviewer.id && s.status === 'pending_review';
-                const needsApproval = !isAdmin && currentUser?.staffId === s.approver.id && s.status === 'in_review';
+                const needsReview = !isAdmin && currentUser?.staffId === s.reviewer?.id && s.status === 'pending_review';
+                const needsApproval = !isAdmin && currentUser?.staffId === s.approver?.id && s.status === 'in_review';
 
                 return (
                   <TableRow
@@ -197,13 +197,13 @@ function SubmissionTable({ type, status, q, approvedColor, department, supplier,
 
                     <TableCell className="whitespace-nowrap text-sm">
                       <span style={{ color: reviewerDone ? approvedColor : undefined }}>
-                        {fullName(s.reviewer)}
+                        {s.reviewer ? fullName(s.reviewer) : '—'}
                       </span>
                     </TableCell>
 
                     <TableCell className="whitespace-nowrap text-sm">
                       <span style={{ color: approverDone ? approvedColor : undefined }}>
-                        {fullName(s.approver)}
+                        {s.approver ? fullName(s.approver) : '—'}
                       </span>
                     </TableCell>
 
