@@ -284,33 +284,82 @@ export class ApprovalRulesService {
     return { rule, plan: matches };
   }
 
-  /** Used by FE preview at create-submission step 1. */
+  /**
+   * Used by FE preview at create-submission step 1.
+   * - If `total` is provided → return the single matching branch per step (real plan).
+   * - If `total` is omitted (user hasn't entered any expense lines yet) → return ALL
+   *   threshold branches grouped by step, so the user can see every possible approver.
+   */
   async preview(dto: PreviewApprovalDto) {
-    const total = dto.total !== undefined ? BigInt(Math.trunc(dto.total)) : null;
-    const { plan } = await this.resolvePlan(
-      dto.submissionType,
-      dto.costCodeId ?? null,
-      dto.submissionType === 'NT' ? null : total,
-    );
-    // group by stepOrder for UI rendering
-    const groups: Record<number, typeof plan> = {};
-    for (const d of plan) (groups[d.stepOrder] ??= []).push(d);
-    const stepInfo = await this.attachApproverNames(plan);
+    const isExploratory = dto.submissionType !== 'NT' && dto.total === undefined;
+
+    const rule = await this.findHeader(dto.submissionType, dto.costCodeId ?? null);
+    if (!rule) {
+      throw new BadRequestException(
+        dto.submissionType === 'MS'
+          ? 'Chưa có cấu hình duyệt cho loại chi phí này.'
+          : 'Chưa có cấu hình duyệt cho tờ trình Nguyên tắc.',
+      );
+    }
+
+    const allDetails = await this.prisma.costCodeApprovalRuleDetail.findMany({
+      where: { ruleId: rule.id, isDeleted: false },
+      orderBy: [{ stepOrder: 'asc' }, { minAmount: 'asc' }, { logCreatedAt: 'asc' }],
+    });
+
+    const matches = isExploratory
+      ? allDetails
+      : (
+          await this.resolvePlan(
+            dto.submissionType,
+            dto.costCodeId ?? null,
+            dto.submissionType === 'NT' ? null : BigInt(Math.trunc(dto.total!)),
+          )
+        ).plan;
+
+    // name lookup for all involved approvers
+    const ids = Array.from(new Set(matches.map((d) => d.approverId)));
+    const staff = await this.prisma.staff.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, firstName: true, middleName: true, surname: true },
+    });
+    const nameOf = (id: string) => {
+      const s = staff.find((x) => x.id === id);
+      return s ? [s.firstName, s.middleName, s.surname].filter(Boolean).join(' ') : '';
+    };
+
+    // Group by stepOrder. In exploratory mode every detail is its own "branch" with its own threshold.
+    const groups: Record<number, typeof matches> = {};
+    for (const d of matches) (groups[d.stepOrder] ??= []).push(d);
+
     return {
       steps: Object.keys(groups)
         .map(Number)
         .sort((a, b) => a - b)
-        .map((order) => ({
-          stepOrder: order,
-          stepType: groups[order][0].stepType,
-          stepLabel: groups[order][0].stepLabel,
-          mode: groups[order][0].mode,
-          approvers: stepInfo
-            .filter((s) => s.stepOrder === order)
-            .map((s) => ({ id: s.approverId, name: s.name })),
-          minAmount: groups[order][0].minAmount?.toString() ?? null,
-          maxAmount: groups[order][0].maxAmount?.toString() ?? null,
-        })),
+        .flatMap((order) => {
+          const details = groups[order];
+          if (isExploratory && details.length > 1) {
+            // Split into one preview row per threshold branch so all options are visible.
+            return details.map((d) => ({
+              stepOrder: order,
+              stepType: d.stepType,
+              stepLabel: d.stepLabel,
+              mode: d.mode,
+              approvers: [{ id: d.approverId, name: nameOf(d.approverId) }],
+              minAmount: d.minAmount?.toString() ?? null,
+              maxAmount: d.maxAmount?.toString() ?? null,
+            }));
+          }
+          return [{
+            stepOrder: order,
+            stepType: details[0].stepType,
+            stepLabel: details[0].stepLabel,
+            mode: details[0].mode,
+            approvers: details.map((d) => ({ id: d.approverId, name: nameOf(d.approverId) })),
+            minAmount: details[0].minAmount?.toString() ?? null,
+            maxAmount: details[0].maxAmount?.toString() ?? null,
+          }];
+        }),
     };
   }
 

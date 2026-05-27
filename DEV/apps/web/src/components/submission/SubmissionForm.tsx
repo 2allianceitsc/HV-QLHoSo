@@ -131,8 +131,14 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
       return;
     }
     if (!costCodeId) { resetPreview(); return; }
-    preview({ submissionType: 'MS', costCodeId, total: totalIncVat });
-  }, [type, costCodeId, totalIncVat, preview, resetPreview]);
+    // Exploratory mode (no lines yet): show every threshold branch so user sees all approvers.
+    // Once lines exist, send total → server returns the single matching branch per step.
+    preview({
+      submissionType: 'MS',
+      costCodeId,
+      ...(expenseLines.length > 0 ? { total: totalIncVat } : {}),
+    });
+  }, [type, costCodeId, totalIncVat, expenseLines.length, preview, resetPreview]);
 
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -277,21 +283,60 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
           {((type === 'MS' && costCodeId) || type === 'NT') && (
             <div className="border-l-2 border-primary/40 pl-3 py-2 bg-muted/20 text-xs space-y-1">
               {previewing && <span className="text-muted-foreground">Đang dò luồng duyệt...</span>}
-              {!previewing && previewResult && previewResult.steps.length > 0 && (
-                <>
-                  <div className="font-medium">Luồng duyệt dự kiến ({previewResult.steps.length} bước):</div>
-                  <ol className="list-decimal ml-5 space-y-0.5">
-                    {previewResult.steps.map((s) => (
-                      <li key={s.stepOrder}>
-                        <span className="font-medium">{s.stepLabel ?? (s.stepType === 'REVIEW' ? 'Thẩm định' : 'Phê duyệt')}</span>
-                        {' — '}
-                        {s.approvers.map((a) => a.name).join(s.mode === 'ALL' ? ' + ' : ' / ')}
-                        {s.mode === 'ALL' && ' (tất cả)'}
-                      </li>
-                    ))}
-                  </ol>
-                </>
-              )}
+              {!previewing && previewResult && previewResult.steps.length > 0 && (() => {
+                // Distinct step orders for the "N bước" count (branches share a stepOrder).
+                const stepOrders = new Set(previewResult.steps.map((s) => s.stepOrder));
+                const fmtMoneyShort = (v: string) => {
+                  const n = Number(v);
+                  if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString('vi-VN')}tr`;
+                  if (n >= 1_000) return `${(n / 1_000).toLocaleString('vi-VN')}k`;
+                  return n.toLocaleString('vi-VN');
+                };
+                const thresholdText = (min: string | null, max: string | null) => {
+                  if (!min && !max) return '';
+                  if (!min) return ` (<${fmtMoneyShort(max!)})`;
+                  if (!max) return ` (≥${fmtMoneyShort(min)})`;
+                  return ` (${fmtMoneyShort(min)}–${fmtMoneyShort(max)})`;
+                };
+                const isExploratory = type === 'MS' && expenseLines.length === 0;
+                // Build "1, 2, 3.1, 3.2" numbering: each stepOrder gets sub-indices only when it has >1 branch.
+                const branchCountByOrder = new Map<number, number>();
+                for (const s of previewResult.steps) {
+                  branchCountByOrder.set(s.stepOrder, (branchCountByOrder.get(s.stepOrder) ?? 0) + 1);
+                }
+                const orderRank = new Map<number, number>();
+                Array.from(stepOrders).sort((a, b) => a - b).forEach((o, i) => orderRank.set(o, i + 1));
+                const seenPerOrder = new Map<number, number>();
+                return (
+                  <>
+                    <div className="font-medium">
+                      Luồng duyệt dự kiến ({stepOrders.size} bước
+                      {isExploratory ? ', chưa nhập chi phí — hiện tất cả ngưỡng' : ''}):
+                    </div>
+                    <ul className="ml-5 space-y-0.5">
+                      {previewResult.steps.map((s, i) => {
+                        const rank = orderRank.get(s.stepOrder)!;
+                        const hasBranches = (branchCountByOrder.get(s.stepOrder) ?? 1) > 1;
+                        const subIdx = (seenPerOrder.get(s.stepOrder) ?? 0) + 1;
+                        seenPerOrder.set(s.stepOrder, subIdx);
+                        const num = hasBranches ? `${rank}.${subIdx}` : `${rank}`;
+                        return (
+                          <li key={`${s.stepOrder}-${i}`} className="flex gap-1.5">
+                            <span className="tabular-nums text-muted-foreground shrink-0">{num}.</span>
+                            <span>
+                              <span className="font-medium">{s.stepLabel ?? (s.stepType === 'REVIEW' ? 'Thẩm định' : 'Phê duyệt')}</span>
+                              <span className="text-muted-foreground">{thresholdText(s.minAmount, s.maxAmount)}</span>
+                              {' — '}
+                              {s.approvers.map((a) => a.name).join(s.mode === 'ALL' ? ' + ' : ' / ')}
+                              {s.mode === 'ALL' && ' (tất cả)'}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </>
+                );
+              })()}
               {!previewing && previewResult && previewResult.steps.length === 0 && (
                 <span className="text-destructive">Chưa có cấu hình duyệt cho loại chi phí này.</span>
               )}
