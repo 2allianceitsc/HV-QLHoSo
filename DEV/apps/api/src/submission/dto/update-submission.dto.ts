@@ -10,6 +10,7 @@ export class UpdateSubmissionDto {
   @IsDateString() @IsOptional() contractEndDate?: string;
   @IsString() @IsOptional() supplier?: string;
   @IsUUID() @IsOptional() departmentId?: string;
+  @IsUUID() @IsOptional() costCodeId?: string;
 
   @IsArray() @IsOptional() @ValidateNested({ each: true }) @Type(() => ExpenseLineDto)
   expenseLines?: ExpenseLineDto[];

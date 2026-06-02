@@ -1,0 +1,411 @@
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { uuidv7 } from 'uuidv7';
+import {
+  CreateApprovalRuleDetailDto,
+  CreateApprovalRuleDto,
+  PreviewApprovalDto,
+  UpdateApprovalRuleDetailDto,
+  UpdateApprovalRuleDto,
+} from './dto/approval-rule.dto';
+
+/**
+ * Approval-rules engine (BA approval-rules-by-cost-code.md).
+ * Header is per (submissionType, costCodeId); details = per-step approvers with
+ * optional [minAmount, maxAmount) thresholds for MS rules.
+ */
+@Injectable()
+export class ApprovalRulesService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  private toBigInt(v: string | number | null | undefined): bigint | null {
+    if (v === null || v === undefined || v === '') return null;
+    if (typeof v === 'number') return BigInt(Math.trunc(v));
+    return BigInt(v);
+  }
+
+  /** Resolve the active rule header for the given (type, costCode). */
+  private async findHeader(submissionType: 'MS' | 'NT', costCodeId: string | null) {
+    return this.prisma.costCodeApprovalRule.findFirst({
+      where: {
+        submissionType,
+        costCodeId: submissionType === 'NT' ? null : costCodeId,
+        isActive: true,
+        isDeleted: false,
+      },
+    });
+  }
+
+  // ───────────────────────── CRUD ─────────────────────────
+
+  /** List rules for admin matrix/sidebar. */
+  async list(submissionType: 'MS' | 'NT', costCodeId?: string) {
+    const where: Record<string, unknown> = { submissionType, isDeleted: false };
+    if (submissionType === 'MS' && costCodeId) where.costCodeId = costCodeId;
+    if (submissionType === 'NT') where.costCodeId = null;
+    return this.prisma.costCodeApprovalRule.findMany({
+      where,
+      include: {
+        costCode: { select: { id: true, code: true, name: true, departmentId: true } },
+        details: {
+          where: { isDeleted: false },
+          orderBy: [{ stepOrder: 'asc' }, { logCreatedAt: 'asc' }],
+          include: {
+            approver: { select: { id: true, firstName: true, middleName: true, surname: true } },
+          },
+        },
+      },
+      orderBy: [{ logCreatedAt: 'desc' }],
+    });
+  }
+
+  /** Matrix pivot: rows = costCode, columns = staff (only MS). */
+  async matrix() {
+    const rules = await this.prisma.costCodeApprovalRule.findMany({
+      where: { submissionType: 'MS', isActive: true, isDeleted: false },
+      include: {
+        costCode: { select: { id: true, code: true, name: true, departmentId: true } },
+        details: {
+          where: { isDeleted: false },
+          orderBy: { stepOrder: 'asc' },
+          include: {
+            approver: { select: { id: true, firstName: true, middleName: true, surname: true } },
+          },
+        },
+      },
+    });
+
+    const staffMap = new Map<string, { id: string; name: string }>();
+    const rows = rules
+      .filter((r) => r.costCode)
+      .map((r) => {
+        const cells: Record<string, Array<{ stepLabel: string | null; minAmount: string | null; maxAmount: string | null; mode: string }>> = {};
+        for (const d of r.details) {
+          const fullName = [d.approver.firstName, d.approver.middleName, d.approver.surname]
+            .filter(Boolean)
+            .join(' ');
+          if (!staffMap.has(d.approverId)) staffMap.set(d.approverId, { id: d.approverId, name: fullName });
+          (cells[d.approverId] ??= []).push({
+            stepLabel: d.stepLabel,
+            minAmount: d.minAmount?.toString() ?? null,
+            maxAmount: d.maxAmount?.toString() ?? null,
+            mode: d.mode,
+          });
+        }
+        return { costCode: r.costCode!, ruleId: r.id, cells };
+      });
+
+    return { staff: Array.from(staffMap.values()), rows };
+  }
+
+  async getOne(id: string) {
+    const r = await this.prisma.costCodeApprovalRule.findUnique({
+      where: { id },
+      include: {
+        costCode: true,
+        details: {
+          where: { isDeleted: false },
+          orderBy: [{ stepOrder: 'asc' }, { logCreatedAt: 'asc' }],
+          include: {
+            approver: { select: { id: true, firstName: true, middleName: true, surname: true } },
+          },
+        },
+      },
+    });
+    if (!r || r.isDeleted) throw new NotFoundException('Approval rule not found');
+    return r;
+  }
+
+  async createHeader(dto: CreateApprovalRuleDto, actor: string) {
+    if (dto.submissionType === 'NT' && dto.costCodeId)
+      throw new BadRequestException('NT rule must not have costCodeId');
+    if (dto.submissionType === 'MS' && !dto.costCodeId)
+      throw new BadRequestException('MS rule requires costCodeId');
+
+    const dup = await this.prisma.costCodeApprovalRule.findFirst({
+      where: {
+        submissionType: dto.submissionType,
+        costCodeId: dto.submissionType === 'NT' ? null : dto.costCodeId,
+        isDeleted: false,
+      },
+    });
+    if (dup) throw new ConflictException('Rule already exists for this scope');
+
+    return this.prisma.costCodeApprovalRule.create({
+      data: {
+        id: uuidv7(),
+        submissionType: dto.submissionType,
+        costCodeId: dto.submissionType === 'NT' ? null : dto.costCodeId!,
+        name: dto.name ?? null,
+        isActive: true,
+        logCreatedBy: actor,
+        logUpdatedBy: actor,
+      },
+    });
+  }
+
+  async updateHeader(id: string, dto: UpdateApprovalRuleDto, actor: string) {
+    await this.getOne(id);
+    return this.prisma.costCodeApprovalRule.update({
+      where: { id },
+      data: {
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+        logUpdatedBy: actor,
+      },
+    });
+  }
+
+  async deleteHeader(id: string, actor: string) {
+    await this.getOne(id);
+    return this.prisma.costCodeApprovalRule.update({
+      where: { id },
+      data: { isDeleted: true, logUpdatedBy: actor },
+    });
+  }
+
+  /** Inserts a detail row + validates threshold non-overlap inside the same (ruleId, stepOrder). */
+  async addDetail(ruleId: string, dto: CreateApprovalRuleDetailDto, actor: string) {
+    const rule = await this.getOne(ruleId);
+    const isNt = rule.submissionType === 'NT';
+    const min = isNt ? null : this.toBigInt(dto.minAmount);
+    const max = isNt ? null : this.toBigInt(dto.maxAmount);
+
+    if (isNt && (this.toBigInt(dto.minAmount) !== null || this.toBigInt(dto.maxAmount) !== null))
+      throw new BadRequestException('NT rule details must not have minAmount/maxAmount');
+
+    if (min !== null && max !== null && min >= max)
+      throw new BadRequestException('minAmount must be less than maxAmount');
+
+    // overlap check among MS details in the same step
+    if (!isNt) await this.assertNoOverlap(ruleId, dto.stepOrder, min, max, null);
+
+    return this.prisma.costCodeApprovalRuleDetail.create({
+      data: {
+        id: uuidv7(),
+        ruleId,
+        stepOrder: dto.stepOrder,
+        stepType: dto.stepType,
+        stepLabel: dto.stepLabel ?? null,
+        minAmount: min,
+        maxAmount: max,
+        approverId: dto.approverId,
+        mode: dto.mode ?? 'ANY',
+        logCreatedBy: actor,
+        logUpdatedBy: actor,
+      },
+    });
+  }
+
+  async updateDetail(id: string, dto: UpdateApprovalRuleDetailDto, actor: string) {
+    const detail = await this.prisma.costCodeApprovalRuleDetail.findUnique({
+      where: { id },
+      include: { rule: true },
+    });
+    if (!detail || detail.isDeleted) throw new NotFoundException('Detail not found');
+    const isNt = detail.rule.submissionType === 'NT';
+
+    const min = isNt ? null
+      : dto.minAmount !== undefined ? this.toBigInt(dto.minAmount) : detail.minAmount;
+    const max = isNt ? null
+      : dto.maxAmount !== undefined ? this.toBigInt(dto.maxAmount) : detail.maxAmount;
+    const stepOrder = dto.stepOrder ?? detail.stepOrder;
+
+    if (min !== null && max !== null && min >= max)
+      throw new BadRequestException('minAmount must be less than maxAmount');
+
+    if (!isNt) await this.assertNoOverlap(detail.ruleId, stepOrder, min, max, id);
+
+    return this.prisma.costCodeApprovalRuleDetail.update({
+      where: { id },
+      data: {
+        ...(dto.stepOrder !== undefined && { stepOrder }),
+        ...(dto.stepType !== undefined && { stepType: dto.stepType }),
+        ...(dto.stepLabel !== undefined && { stepLabel: dto.stepLabel }),
+        ...(dto.minAmount !== undefined && { minAmount: min }),
+        ...(dto.maxAmount !== undefined && { maxAmount: max }),
+        ...(dto.approverId !== undefined && { approverId: dto.approverId }),
+        ...(dto.mode !== undefined && { mode: dto.mode }),
+        logUpdatedBy: actor,
+      },
+    });
+  }
+
+  async deleteDetail(id: string, actor: string) {
+    const detail = await this.prisma.costCodeApprovalRuleDetail.findUnique({ where: { id } });
+    if (!detail || detail.isDeleted) throw new NotFoundException('Detail not found');
+    return this.prisma.costCodeApprovalRuleDetail.update({
+      where: { id },
+      data: { isDeleted: true, logUpdatedBy: actor },
+    });
+  }
+
+  // ───────────────────────── Engine ─────────────────────────
+
+  /**
+   * Resolve plan for a submission about to be submitted.
+   * Returns the ordered list of (stepOrder, stepType, stepLabel, approverId, mode) tuples
+   * that the caller should snapshot into SubmissionApprovalStep.
+   */
+  async resolvePlan(submissionType: 'MS' | 'NT', costCodeId: string | null, total: bigint | null) {
+    const rule = await this.findHeader(submissionType, costCodeId);
+    if (!rule) {
+      throw new BadRequestException(
+        submissionType === 'MS'
+          ? 'Chưa có cấu hình duyệt cho loại chi phí này.'
+          : 'Chưa có cấu hình duyệt cho tờ trình Nguyên tắc.',
+      );
+    }
+
+    const details = await this.prisma.costCodeApprovalRuleDetail.findMany({
+      where: { ruleId: rule.id, isDeleted: false },
+      orderBy: [{ stepOrder: 'asc' }, { logCreatedAt: 'asc' }],
+    });
+
+    const matches = submissionType === 'NT'
+      ? details
+      : details.filter((d) => {
+          if (total === null) return d.minAmount === null && d.maxAmount === null;
+          if (d.minAmount !== null && total < d.minAmount) return false;
+          if (d.maxAmount !== null && total >= d.maxAmount) return false;
+          return true;
+        });
+
+    if (!matches.length)
+      throw new BadRequestException('Chưa có cấu hình duyệt phù hợp ở mức tiền này.');
+    if (!matches.some((d) => d.stepType === 'APPROVE'))
+      throw new BadRequestException('Cấu hình duyệt thiếu bước Phê duyệt.');
+
+    return { rule, plan: matches };
+  }
+
+  /**
+   * Used by FE preview at create-submission step 1.
+   * - If `total` is provided → return the single matching branch per step (real plan).
+   * - If `total` is omitted (user hasn't entered any expense lines yet) → return ALL
+   *   threshold branches grouped by step, so the user can see every possible approver.
+   */
+  async preview(dto: PreviewApprovalDto) {
+    const isExploratory = dto.submissionType !== 'NT' && dto.total === undefined;
+
+    const rule = await this.findHeader(dto.submissionType, dto.costCodeId ?? null);
+    if (!rule) {
+      throw new BadRequestException(
+        dto.submissionType === 'MS'
+          ? 'Chưa có cấu hình duyệt cho loại chi phí này.'
+          : 'Chưa có cấu hình duyệt cho tờ trình Nguyên tắc.',
+      );
+    }
+
+    const allDetails = await this.prisma.costCodeApprovalRuleDetail.findMany({
+      where: { ruleId: rule.id, isDeleted: false },
+      orderBy: [{ stepOrder: 'asc' }, { minAmount: 'asc' }, { logCreatedAt: 'asc' }],
+    });
+
+    const matches = isExploratory
+      ? allDetails
+      : (
+          await this.resolvePlan(
+            dto.submissionType,
+            dto.costCodeId ?? null,
+            dto.submissionType === 'NT' ? null : BigInt(Math.trunc(dto.total!)),
+          )
+        ).plan;
+
+    // name lookup for all involved approvers
+    const ids = Array.from(new Set(matches.map((d) => d.approverId)));
+    const staff = await this.prisma.staff.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, firstName: true, middleName: true, surname: true },
+    });
+    const nameOf = (id: string) => {
+      const s = staff.find((x) => x.id === id);
+      return s ? [s.firstName, s.middleName, s.surname].filter(Boolean).join(' ') : '';
+    };
+
+    // Group by stepOrder. In exploratory mode every detail is its own "branch" with its own threshold.
+    const groups: Record<number, typeof matches> = {};
+    for (const d of matches) (groups[d.stepOrder] ??= []).push(d);
+
+    return {
+      steps: Object.keys(groups)
+        .map(Number)
+        .sort((a, b) => a - b)
+        .flatMap((order) => {
+          const details = groups[order];
+          if (isExploratory && details.length > 1) {
+            // Split into one preview row per threshold branch so all options are visible.
+            return details.map((d) => ({
+              stepOrder: order,
+              stepType: d.stepType,
+              stepLabel: d.stepLabel,
+              mode: d.mode,
+              approvers: [{ id: d.approverId, name: nameOf(d.approverId) }],
+              minAmount: d.minAmount?.toString() ?? null,
+              maxAmount: d.maxAmount?.toString() ?? null,
+            }));
+          }
+          return [{
+            stepOrder: order,
+            stepType: details[0].stepType,
+            stepLabel: details[0].stepLabel,
+            mode: details[0].mode,
+            approvers: details.map((d) => ({ id: d.approverId, name: nameOf(d.approverId) })),
+            minAmount: details[0].minAmount?.toString() ?? null,
+            maxAmount: details[0].maxAmount?.toString() ?? null,
+          }];
+        }),
+    };
+  }
+
+  private async attachApproverNames(details: Array<{ approverId: string; stepOrder: number }>) {
+    const ids = Array.from(new Set(details.map((d) => d.approverId)));
+    const staff = await this.prisma.staff.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, firstName: true, middleName: true, surname: true },
+    });
+    const nameOf = (id: string) => {
+      const s = staff.find((x) => x.id === id);
+      return s ? [s.firstName, s.middleName, s.surname].filter(Boolean).join(' ') : '';
+    };
+    return details.map((d) => ({ ...d, name: nameOf(d.approverId) }));
+  }
+
+  // ───────────────────────── helpers ─────────────────────────
+
+  /**
+   * Reject if the new range [min,max) overlaps any other live detail in the same
+   * (ruleId, stepOrder). Treats NULL ends as ±∞.
+   */
+  private async assertNoOverlap(
+    ruleId: string,
+    stepOrder: number,
+    min: bigint | null,
+    max: bigint | null,
+    excludeDetailId: string | null,
+  ) {
+    const siblings = await this.prisma.costCodeApprovalRuleDetail.findMany({
+      where: {
+        ruleId,
+        stepOrder,
+        isDeleted: false,
+        ...(excludeDetailId ? { NOT: { id: excludeDetailId } } : {}),
+      },
+    });
+    for (const s of siblings) {
+      const overlap =
+        (min === null || s.maxAmount === null || min < s.maxAmount) &&
+        (max === null || s.minAmount === null || max > s.minAmount);
+      if (overlap) {
+        throw new BadRequestException(
+          'Khoảng ngưỡng bị trùng với cấu hình hiện có trong cùng bước duyệt.',
+        );
+      }
+    }
+  }
+}

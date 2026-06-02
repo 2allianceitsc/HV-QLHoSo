@@ -59,6 +59,30 @@ export interface IStaffRef {
   companyEmailAddress?: string | null;
 }
 
+export type StepStatus = 'pending' | 'in_progress' | 'approved' | 'rejected' | 'skipped';
+export type StepMode = 'ANY' | 'ALL';
+export type StepType = 'REVIEW' | 'APPROVE';
+
+export interface ISubmissionApprovalStep {
+  id: string;
+  submissionId: string;
+  stepOrder: number;
+  stepType: StepType;
+  stepLabel: string | null;
+  approverId: string;
+  originalApproverId: string;
+  mode: StepMode;
+  status: StepStatus;
+  decidedAt?: string | null;
+  decidedBy?: string | null;
+  comment?: string | null;
+  reassignedAt?: string | null;
+  reassignedBy?: string | null;
+  reassignReason?: string | null;
+  approver: IStaffRef;
+  originalApprover: IStaffRef;
+}
+
 export interface ISubmission {
   id: string;
   type: SubmissionType;
@@ -67,6 +91,7 @@ export interface ISubmission {
   title: string;
   content: string;
   submittedDate: string;
+  costCodeId?: string | null;
   supplier?: string | null;
   contractStartDate?: string | null;
   contractEndDate?: string | null;
@@ -75,12 +100,14 @@ export interface ISubmission {
   approvedAt?: string | null;
   logCreatedAt: string;
   submitter: IStaffRef;
-  reviewer: IStaffRef;
-  approver: IStaffRef;
+  reviewer?: IStaffRef | null;
+  approver?: IStaffRef | null;
   department: { id: string; name: string };
+  costCode?: { id: string; code: string; name: string } | null;
   expenseLines?: IExpenseLine[];
   existingInventory?: IExistingInventory[];
   attachments?: IAttachment[];
+  approvalSteps?: ISubmissionApprovalStep[];
   logs?: ISubmissionLog[];
 }
 
@@ -129,6 +156,7 @@ export interface ICreateSubmissionInput {
   type: SubmissionType;
   action: 'submit' | 'draft';
   departmentId: string;
+  costCodeId?: string;
   submittedDate: string;
   title: string;
   content: string;
@@ -177,14 +205,23 @@ export const submissionApi = {
   submit: (id: string) =>
     apiClient.post<ApiWrap<ISubmission>>(`/submissions/${id}/submit`).then((r) => r.data.data),
 
-  review: (id: string) =>
-    apiClient.post<ApiWrap<ISubmission>>(`/submissions/${id}/review`).then((r) => r.data.data),
+  approveStep: (id: string, stepId: string, comment?: string) =>
+    apiClient
+      .post<ApiWrap<{ ok: true }>>(`/submissions/${id}/approve`, { stepId, comment })
+      .then((r) => r.data.data),
 
-  approve: (id: string) =>
-    apiClient.post<ApiWrap<ISubmission>>(`/submissions/${id}/approve`).then((r) => r.data.data),
+  rejectStep: (id: string, stepId: string, comment: string) =>
+    apiClient
+      .post<ApiWrap<{ ok: true }>>(`/submissions/${id}/reject`, { stepId, comment })
+      .then((r) => r.data.data),
 
-  reject: (id: string, reason: string) =>
-    apiClient.post<ApiWrap<ISubmission>>(`/submissions/${id}/reject`, { reason }).then((r) => r.data.data),
+  reassignStep: (id: string, stepId: string, newApproverId: string, reason: string) =>
+    apiClient
+      .patch<ApiWrap<{ ok: true }>>(`/submissions/${id}/steps/${stepId}/reassign`, {
+        newApproverId,
+        reason,
+      })
+      .then((r) => r.data.data),
 
   stats: () =>
     apiClient.get<ApiWrap<ISubmissionStats>>('/submissions/stats').then((r) => r.data.data),

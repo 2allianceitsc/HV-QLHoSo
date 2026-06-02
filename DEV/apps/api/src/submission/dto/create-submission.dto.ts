@@ -40,6 +40,14 @@ export class CreateSubmissionDto {
   @IsEnum(['MS', 'NT']) type!: SubmissionType;
   @IsEnum(['submit', 'draft']) action!: 'submit' | 'draft';
   @IsUUID() departmentId!: string;
+
+  // costCodeId: required for MS (BA approval-rules-by-cost-code.md §5.3, §7.2).
+  // NT submissions resolve against the single global rule and may omit costCodeId.
+  @ValidateIf((o: CreateSubmissionDto) => o.type === 'MS')
+  @IsUUID()
+  @IsNotEmpty()
+  costCodeId?: string;
+
   @IsDateString() submittedDate!: string;
   @IsString() @IsNotEmpty() title!: string;
   @IsString() @IsOptional() content?: string;

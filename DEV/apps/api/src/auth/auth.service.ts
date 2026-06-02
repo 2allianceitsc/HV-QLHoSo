@@ -684,13 +684,6 @@ export class AuthService {
       data: { passwordHash, isFirstLogin: false, lastLogin: new Date() },
     });
 
-    // Send welcome email after first-time password is set
-    const staff = userLogin.staff;
-    const fullName = staff
-      ? [staff.firstName, staff.middleName, staff.surname].filter(Boolean).join(' ')
-      : userLogin.username;
-    void this.emailService.queueWelcomeEmail(userLogin.email, fullName);
-
     // ── 2FA Decision Tree (after first-login password change) ────────────────
     const twoFaResult = await this.twoFAService.evaluate2FA(userLogin.id, userLogin.username, userLogin.staff?.id ?? null, userLogin.email);
     if (twoFaResult) return { success: true, data: twoFaResult };

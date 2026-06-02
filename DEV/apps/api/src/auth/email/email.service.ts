@@ -6,7 +6,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { EmailJobService } from '../../email/email-job.service';
 import {
   DEFAULT_OTP_TEMPLATE,
-  DEFAULT_WELCOME_TEMPLATE,
   DEFAULT_AUTO_LOGOUT_TEMPLATE,
 } from '../../email/email-default-templates';
 
@@ -76,29 +75,6 @@ export class EmailService {
       },
     });
     this.emailJobService.trigger();
-  }
-
-  /** Queue welcome email via EmailQueue — non-blocking */
-  async queueWelcomeEmail(to: string, fullName: string): Promise<void> {
-    const templateSetting = await this.prisma.systemSetting.findUnique({
-      where: { key: 'email.template.welcome' },
-    });
-
-    const baseTemplate = templateSetting?.value?.trim() || DEFAULT_WELCOME_TEMPLATE;
-    const html = baseTemplate.replace(/{{FULL_NAME}}/g, fullName);
-
-    await this.prisma.emailQueue.create({
-      data: {
-        id: uuidv7(),
-        to,
-        subject: 'Welcome to HVFlow — Your account is ready',
-        bodyHtml: html,
-        type: 'welcome',
-        logCreatedBy: 'system',
-      },
-    });
-    this.emailJobService.trigger();
-    this.logger.log(`Welcome email queued for ${to}`);
   }
 
   async sendAutoLogoutAlert(to: string, firstName: string, logoutTime: string): Promise<void> {

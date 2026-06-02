@@ -51,6 +51,9 @@ export class PrismaService
       'Attachment',
       'SubmissionLog',
       'SubmissionStatus',
+      'NotificationChannel',
+      'WebhookMessageTemplate',
+      'SubmissionApprovalStep',
     ]);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
