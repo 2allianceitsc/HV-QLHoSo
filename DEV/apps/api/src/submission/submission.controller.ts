@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Delete, Param, Body, Query, Req, UseGuards, BadRequestException,
+  Controller, Get, Post, Patch, Put, Delete, Param, Body, Query, Req, UseGuards, BadRequestException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { SubmissionService, SaveAttachmentDto } from './submission.service';
@@ -7,6 +7,7 @@ import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { ListSubmissionsDto } from './dto/list-submissions.dto';
 import { RejectSubmissionDto } from './dto/reject-submission.dto';
+import { ReassignStepDto, StepApproveDto, StepRejectDto } from './dto/step-action.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HvRoleGuard } from '../common/guards/hv-role.guard';
 import { IJwtPayload } from '../auth/strategies/jwt.strategy';
@@ -75,19 +76,30 @@ export class SubmissionController {
     return this.service.submit(req.user as IJwtPayload, id);
   }
 
-  @Post(':id/review')
-  review(@Req() req: Request, @Param('id') id: string) {
-    return this.service.review(req.user as IJwtPayload, id);
-  }
-
+  // Step-based decisions (BA approval-rules-by-cost-code.md §8.2).
+  // Body must include { stepId, comment? }.
   @Post(':id/approve')
-  approve(@Req() req: Request, @Param('id') id: string) {
-    return this.service.approve(req.user as IJwtPayload, id);
+  approve(@Req() req: Request, @Param('id') id: string, @Body() dto: StepApproveDto) {
+    return this.service.approveStep(req.user as IJwtPayload, id, dto);
   }
 
   @Post(':id/reject')
-  reject(@Req() req: Request, @Param('id') id: string, @Body() dto: RejectSubmissionDto) {
+  reject(@Req() req: Request, @Param('id') id: string, @Body() dto: StepRejectDto | RejectSubmissionDto) {
+    // Accept new step-based body { stepId, comment } or legacy { reason }.
+    if ('stepId' in dto) {
+      return this.service.rejectStep(req.user as IJwtPayload, id, dto);
+    }
     return this.service.reject(req.user as IJwtPayload, id, dto);
+  }
+
+  @Patch(':id/steps/:stepId/reassign')
+  reassign(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Param('stepId') stepId: string,
+    @Body() dto: ReassignStepDto,
+  ) {
+    return this.service.reassignStep(req.user as IJwtPayload, id, stepId, dto);
   }
 
   @Post('upload-url')

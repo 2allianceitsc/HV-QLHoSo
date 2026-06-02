@@ -54,26 +54,29 @@ export function useSubmitSubmission() {
   });
 }
 
-export function useReviewSubmission() {
+export function useApproveStep() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => submissionApi.review(id),
-    onSuccess: (_d, id) => { qc.invalidateQueries({ queryKey: [KEY] }); qc.invalidateQueries({ queryKey: [KEY, id] }); },
+    mutationFn: ({ id, stepId, comment }: { id: string; stepId: string; comment?: string }) =>
+      submissionApi.approveStep(id, stepId, comment),
+    onSuccess: (_d, { id }) => { qc.invalidateQueries({ queryKey: [KEY] }); qc.invalidateQueries({ queryKey: [KEY, id] }); },
   });
 }
 
-export function useApproveSubmission() {
+export function useRejectStep() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => submissionApi.approve(id),
-    onSuccess: (_d, id) => { qc.invalidateQueries({ queryKey: [KEY] }); qc.invalidateQueries({ queryKey: [KEY, id] }); },
+    mutationFn: ({ id, stepId, comment }: { id: string; stepId: string; comment: string }) =>
+      submissionApi.rejectStep(id, stepId, comment),
+    onSuccess: (_d, { id }) => { qc.invalidateQueries({ queryKey: [KEY] }); qc.invalidateQueries({ queryKey: [KEY, id] }); },
   });
 }
 
-export function useRejectSubmission() {
+export function useReassignStep() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) => submissionApi.reject(id, reason),
+    mutationFn: ({ id, stepId, newApproverId, reason }: { id: string; stepId: string; newApproverId: string; reason: string }) =>
+      submissionApi.reassignStep(id, stepId, newApproverId, reason),
     onSuccess: (_d, { id }) => { qc.invalidateQueries({ queryKey: [KEY] }); qc.invalidateQueries({ queryKey: [KEY, id] }); },
   });
 }
