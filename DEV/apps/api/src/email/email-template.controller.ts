@@ -14,12 +14,11 @@ class UpdateTemplateDto {
   html!: string;
 }
 
-const TEMPLATE_TYPES = ['otp', 'welcome', 'auto_logout'] as const;
+const TEMPLATE_TYPES = ['otp', 'auto_logout'] as const;
 type TemplateType = typeof TEMPLATE_TYPES[number];
 
 const TEMPLATE_DESCRIPTIONS: Record<TemplateType, string> = {
   otp:         'OTP email template — use {{OTP}} as placeholder for the code, {{EXPIRY_MINUTES}} for expiry',
-  welcome:     'Welcome email template — use {{FULL_NAME}} for recipient name',
   auto_logout: 'Auto-logout alert template — use {{FIRST_NAME}} and {{LOGOUT_TIME}}',
 };
 

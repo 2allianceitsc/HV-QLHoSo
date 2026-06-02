@@ -20,7 +20,7 @@ const statusLabel: Record<StepStatus, string> = {
   in_progress: 'Đang xử lý',
   approved: 'Đã duyệt',
   rejected: 'Từ chối',
-  skipped: 'Bỏ qua (do ANY)',
+  skipped: 'Bỏ qua',
 };
 
 interface Props {

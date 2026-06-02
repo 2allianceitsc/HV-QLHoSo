@@ -258,6 +258,12 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
             </div>
           </div>
 
+          <div className="space-y-1.5">
+            <Label>Tiêu đề / Về việc <span className="text-destructive">*</span></Label>
+            <Input {...register('title')} placeholder="Nhập tiêu đề tờ trình" autoFocus />
+            {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
+          </div>
+
           {type === 'MS' && (
             <div className="space-y-1.5">
               <Label>Loại chi phí <span className="text-destructive">*</span></Label>
@@ -272,12 +278,6 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
               {errors.costCodeId && <p className="text-xs text-destructive">{errors.costCodeId.message}</p>}
             </div>
           )}
-
-          <div className="space-y-1.5">
-            <Label>Tiêu đề / Về việc <span className="text-destructive">*</span></Label>
-            <Input {...register('title')} placeholder="Nhập tiêu đề tờ trình" autoFocus />
-            {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
-          </div>
 
           {/* Workflow preview (BA §7.2) */}
           {((type === 'MS' && costCodeId) || type === 'NT') && (
@@ -310,8 +310,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
                 return (
                   <>
                     <div className="font-medium">
-                      Luồng duyệt dự kiến ({stepOrders.size} bước
-                      {isExploratory ? ', chưa nhập chi phí — hiện tất cả ngưỡng' : ''}):
+                      Luồng duyệt dự kiến ({stepOrders.size} bước):
                     </div>
                     <ul className="ml-5 space-y-0.5">
                       {previewResult.steps.map((s, i) => {

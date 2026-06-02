@@ -136,12 +136,12 @@ function SubmissionTable({ type, status, q, approvedColor, department, supplier,
               {data.items.map((s, idx) => {
                 const totalIncVat = (s.expenseLines ?? []).reduce((sum, l) => sum + (l.amountIncVat ?? 0), 0);
                 const signedContract = (s.attachments ?? []).find((a) => a.fileType === 'signed_contract');
-                const reviewerDone = ['in_review', 'approved'].includes(s.status);
-                const approverDone = s.status === 'approved';
                 const rowNum = (page - 1) * 20 + idx + 1;
                 const isAdmin = currentUser?.hvRoles?.includes('admin');
-                const needsReview = !isAdmin && currentUser?.staffId === s.reviewer?.id && s.status === 'pending_review';
-                const needsApproval = !isAdmin && currentUser?.staffId === s.approver?.id && s.status === 'in_review';
+                const reviewSteps = (s.approvalSteps ?? []).filter((st) => st.stepType === 'REVIEW');
+                const approveSteps = (s.approvalSteps ?? []).filter((st) => st.stepType === 'APPROVE');
+                const needsReview = !isAdmin && reviewSteps.some((st) => st.approverId === currentUser?.staffId && st.status === 'in_progress');
+                const needsApproval = !isAdmin && approveSteps.some((st) => st.approverId === currentUser?.staffId && st.status === 'in_progress');
 
                 return (
                   <TableRow
@@ -196,15 +196,33 @@ function SubmissionTable({ type, status, q, approvedColor, department, supplier,
                     )}
 
                     <TableCell className="whitespace-nowrap text-sm">
-                      <span style={{ color: reviewerDone ? approvedColor : undefined }}>
-                        {s.reviewer ? fullName(s.reviewer) : '—'}
-                      </span>
+                      {reviewSteps.length === 0 ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : (
+                        reviewSteps.map((st, i) => (
+                          <span key={st.id}>
+                            {i > 0 && ', '}
+                            <span style={{ color: ['approved', 'skipped'].includes(st.status) ? approvedColor : undefined }}>
+                              {fullName(st.approver)}
+                            </span>
+                          </span>
+                        ))
+                      )}
                     </TableCell>
 
                     <TableCell className="whitespace-nowrap text-sm">
-                      <span style={{ color: approverDone ? approvedColor : undefined }}>
-                        {s.approver ? fullName(s.approver) : '—'}
-                      </span>
+                      {approveSteps.length === 0 ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : (
+                        approveSteps.map((st, i) => (
+                          <span key={st.id}>
+                            {i > 0 && ', '}
+                            <span style={{ color: ['approved', 'skipped'].includes(st.status) ? approvedColor : undefined }}>
+                              {fullName(st.approver)}
+                            </span>
+                          </span>
+                        ))
+                      )}
                     </TableCell>
 
                     <TableCell>

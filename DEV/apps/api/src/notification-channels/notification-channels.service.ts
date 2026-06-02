@@ -4,15 +4,18 @@ import { UpdateChannelDto } from './dto/update-channel.dto';
 import { UpdateWebhookTemplateDto } from './dto/update-template.dto';
 
 export type ChannelType = 'email' | 'google_chat' | 'custom_webhook';
-export type WebhookEventId = 'E001' | 'E002';
+export type WebhookEventId = 'E001' | 'E002' | 'E003' | 'E005' | 'E006';
 
 const CHANNEL_TYPES: ChannelType[] = ['email', 'google_chat', 'custom_webhook'];
-const WEBHOOK_EVENT_IDS: WebhookEventId[] = ['E001', 'E002'];
+const WEBHOOK_EVENT_IDS: WebhookEventId[] = ['E001', 'E002', 'E003', 'E005', 'E006'];
 
 // Default message templates — used when no row exists in DB yet.
 const DEFAULT_TEMPLATES: Record<WebhookEventId, string> = {
   E001: 'Tờ trình {code} - "{title}" từ {submitter} đang chờ {recipient} thẩm định.\nLink: {link}',
   E002: 'Tờ trình {code} - "{title}" đã được thẩm định, đang chờ {recipient} phê duyệt.\nLink: {link}',
+  E003: 'Tờ trình {code} - "{title}" của {submitter} đã được phê duyệt.\nLink: {link}',
+  E005: 'Tờ trình {code} - "{title}" bị {decider} từ chối thẩm định.\nLý do: {reason}\nLink: {link}',
+  E006: 'Tờ trình {code} - "{title}" bị {decider} từ chối phê duyệt.\nLý do: {reason}\nLink: {link}',
 };
 
 export interface IWebhookPayload {
@@ -23,6 +26,8 @@ export interface IWebhookPayload {
   recipientName: string;
   submitterName: string;
   triggeredAt: string; // ISO
+  deciderName?: string;  // E005/E006: người từ chối
+  reason?: string;       // E005/E006: lý do từ chối
 }
 
 @Injectable()
@@ -195,6 +200,8 @@ export class NotificationChannelsService {
       submitter: payload.submitterName,
       recipient: payload.recipientName,
       link: payload.submissionUrl,
+      ...(payload.deciderName !== undefined && { decider: payload.deciderName }),
+      ...(payload.reason !== undefined && { reason: payload.reason }),
     };
     return Object.entries(vars).reduce(
       (acc, [k, v]) => acc.replaceAll(`{${k}}`, v),
@@ -210,9 +217,7 @@ export class NotificationChannelsService {
     payload: IWebhookPayload,
   ): Promise<{ success: boolean; error?: string }> {
     const message = await this.renderMessage(payload);
-    const enriched = { ...payload, message };
-    const body =
-      type === 'google_chat' ? { text: message } : enriched;
+    const body = { text: message };
 
     try {
       const res = await fetch(url, {

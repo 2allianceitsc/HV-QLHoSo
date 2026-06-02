@@ -49,8 +49,8 @@ export function SubmissionDetailPage() {
 
   const isOwner = currentUser?.staffId === submission.submitter.id;
   const isAdmin = hvRoles.includes('admin');
-  const canEdit = isOwner && ['draft', 'rejected'].includes(submission.status);
-  const canSubmit = isOwner && ['draft', 'rejected'].includes(submission.status);
+  const canEdit = isOwner && submission.status === 'draft';
+  const canSubmit = isOwner && submission.status === 'draft';
   const canDelete = isOwner && submission.status === 'draft';
 
   const handleSubmit = async () => {

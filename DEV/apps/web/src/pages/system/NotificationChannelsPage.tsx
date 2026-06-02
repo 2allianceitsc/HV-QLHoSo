@@ -21,6 +21,9 @@ import type {
 const WEBHOOK_EVENTS: Array<{ id: WebhookEventId; label: string }> = [
   { id: 'E001', label: 'E001 — Cần thẩm định' },
   { id: 'E002', label: 'E002 — Cần phê duyệt' },
+  { id: 'E003', label: 'E003 — Đã được phê duyệt' },
+  { id: 'E005', label: 'E005 — Từ chối thẩm định' },
+  { id: 'E006', label: 'E006 — Từ chối phê duyệt' },
 ];
 
 const TEMPLATE_VARS: Array<{ key: string; desc: string }> = [
@@ -189,7 +192,7 @@ export function NotificationChannelsPage() {
       <div>
         <h1 className="text-2xl font-semibold">Kênh thông báo cần duyệt</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Áp dụng cho: <strong>E001</strong> — Cần thẩm định, <strong>E002</strong> — Cần phê duyệt.
+          Áp dụng cho: E001 Cần thẩm định, E002 Cần phê duyệt, E003 Đã được phê duyệt, E005 Từ chối thẩm định, E006 Từ chối phê duyệt.
           Các kênh đang bật sẽ được gửi đồng thời.
         </p>
       </div>

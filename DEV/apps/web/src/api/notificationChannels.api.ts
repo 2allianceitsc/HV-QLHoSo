@@ -22,7 +22,7 @@ export interface ITestChannelResult {
   error?: string;
 }
 
-export type WebhookEventId = 'E001' | 'E002';
+export type WebhookEventId = 'E001' | 'E002' | 'E003' | 'E005' | 'E006';
 
 export interface IWebhookMessageTemplate {
   eventId: WebhookEventId;
