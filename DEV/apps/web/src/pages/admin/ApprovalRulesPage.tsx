@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCostCodes } from '@/hooks/useCostCode';
 import { useHvDepartments } from '@/hooks/useHvAdmin';
-import { useApprovalConfigApprovers } from '@/hooks/useApprovalConfig';
+import { useApprovalConfigApprovers, useApprovalConfigReviewers } from '@/hooks/useApprovalConfig';
 import {
   useAddRuleDetail,
   useApprovalRule,
@@ -278,6 +278,7 @@ interface RuleEditorProps {
 
 function RuleEditor({ submissionType, costCodeId, ruleId }: RuleEditorProps) {
   const { data: rule, isLoading } = useApprovalRule(ruleId);
+  const { data: reviewers = [] } = useApprovalConfigReviewers();
   const { data: approvers = [] } = useApprovalConfigApprovers();
   const { mutateAsync: createRule, isPending: creating } = useCreateApprovalRule();
   const { mutateAsync: updateRule } = useUpdateApprovalRule();
@@ -334,9 +335,16 @@ function RuleEditor({ submissionType, costCodeId, ruleId }: RuleEditorProps) {
     const nextOrder = rule.details.length
       ? Math.max(...rule.details.map((d) => d.stepOrder)) + 1
       : 1;
-    const firstApprover = approvers[0];
-    if (!firstApprover) {
-      toast({ title: 'Chưa có nhân sự nào đóng vai trò người duyệt.', variant: 'destructive' });
+    const stepType: StepType = nextOrder === 1 ? 'REVIEW' : 'APPROVE';
+    const pool = stepType === 'REVIEW' ? reviewers : approvers;
+    const firstPerson = pool[0];
+    if (!firstPerson) {
+      toast({
+        title: stepType === 'REVIEW'
+          ? 'Chưa có nhân sự nào đóng vai trò thẩm định.'
+          : 'Chưa có nhân sự nào đóng vai trò phê duyệt.',
+        variant: 'destructive',
+      });
       return;
     }
     try {
@@ -344,9 +352,9 @@ function RuleEditor({ submissionType, costCodeId, ruleId }: RuleEditorProps) {
         ruleId: rule.id,
         data: {
           stepOrder: nextOrder,
-          stepType: nextOrder === 1 ? 'REVIEW' : 'APPROVE',
-          stepLabel: nextOrder === 1 ? 'Thẩm định' : 'Phê duyệt',
-          approverId: firstApprover.id,
+          stepType,
+          stepLabel: stepType === 'REVIEW' ? 'Thẩm định' : 'Phê duyệt',
+          approverId: firstPerson.id,
           mode: 'ANY',
           minAmount: null,
           maxAmount: null,
@@ -417,6 +425,7 @@ function RuleEditor({ submissionType, costCodeId, ruleId }: RuleEditorProps) {
             submissionType={submissionType}
             stepOrder={stepOrder}
             details={details}
+            reviewers={reviewers}
             approvers={approvers}
           />
         ))}
@@ -434,18 +443,20 @@ interface StepGroupProps {
   submissionType: 'MS' | 'NT';
   stepOrder: number;
   details: IApprovalRuleDetail[];
+  reviewers: IStaffOption[];
   approvers: IStaffOption[];
 }
 
-function StepGroup({ ruleId, submissionType, stepOrder, details, approvers }: StepGroupProps) {
+function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, approvers }: StepGroupProps) {
   const { mutateAsync: addDetail } = useAddRuleDetail();
   const { mutateAsync: updateDetail } = useUpdateRuleDetail();
   const { mutateAsync: removeDetail } = useDeleteRuleDetail();
   const { toast } = useToast();
   const first = details[0];
+  const pool = first.stepType === 'REVIEW' ? reviewers : approvers;
 
   const handleAddSibling = async () => {
-    const fallback = approvers[0];
+    const fallback = pool[0];
     if (!fallback) return;
     // Default the new range to [highest existing max, null) so it doesn't overlap
     // siblings. For NT (no thresholds) and rules with all-null ranges, fall back to [null, null].
@@ -538,7 +549,7 @@ function StepGroup({ ruleId, submissionType, stepOrder, details, approvers }: St
                 <Select value={d.approverId} onValueChange={(v) => updateField(d, 'approverId', v)}>
                   <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {approvers.map((a) => (
+                    {pool.map((a) => (
                       <SelectItem key={a.id} value={a.id}>{fullName(a)}</SelectItem>
                     ))}
                   </SelectContent>
