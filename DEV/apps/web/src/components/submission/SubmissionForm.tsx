@@ -298,7 +298,6 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
                   if (!max) return ` (≥${fmtMoneyShort(min)})`;
                   return ` (${fmtMoneyShort(min)}–${fmtMoneyShort(max)})`;
                 };
-                const isExploratory = type === 'MS' && expenseLines.length === 0;
                 // Build "1, 2, 3.1, 3.2" numbering: each stepOrder gets sub-indices only when it has >1 branch.
                 const branchCountByOrder = new Map<number, number>();
                 for (const s of previewResult.steps) {
