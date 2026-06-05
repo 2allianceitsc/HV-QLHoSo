@@ -1,9 +1,17 @@
 # BA Doc — Phân Quyền Duyệt Tờ Trình Theo Loại Chi Phí
 
-> **Phiên bản:** 1.0
+> **Phiên bản:** 1.2
 > **Ngày tạo:** 2026-05-15
+> **Cập nhật lần cuối:** 2026-06-04
 > **Trạng thái:** Đề xuất — chờ phê duyệt
 > **Liên quan:** `requirements.md` §2.2 (Tờ trình), `From Clients/Giao diện web tờ trình.xlsx`, ma trận phân quyền do khách HV gửi 2026-05-15
+>
+> **Lịch sử thay đổi:**
+>
+> | Phiên bản | Ngày | Nội dung |
+> |---|---|---|
+> | 1.0 | 2026-05-15 | Khởi tạo |
+> | 1.2 | 2026-06-04 | Bổ sung phân quyền duyệt NT theo bộ phận tờ trình |
 
 ---
 
@@ -21,9 +29,10 @@ Khách HV cung cấp bảng phân quyền chi tiết — 13 loại chi phí (Cos
 | **Nhiều bước thẩm định** | TT5 (Chi phí vật tư): "thẩm định bước 1" → "thẩm định bước 2" → "Phê duyệt" | ❌ Chỉ 1 bước reviewer |
 | **Routing theo ngưỡng tiền** | TT7: <2tr → Tài; ≥2tr → Hà My. TT12: <15tr / <50tr / ≥50tr | ❌ |
 | **Nhiều người cùng 1 role** | TT5: 2 người cùng "thẩm định bước 2" | ❌ Quan hệ 1-1 |
+| **Routing theo bộ phận tờ trình (NT)** | NT: Bộ phận A → người duyệt X; Bộ phận B → người duyệt Y | ❌ |
 
 ### 1.3 Mục tiêu
-Refactor cơ chế phân quyền duyệt từ "per-department" sang **rule-engine per-cost-code**, hỗ trợ multi-step, threshold routing, và multi-approver per step.
+Refactor cơ chế phân quyền duyệt từ "per-department" sang **rule-engine per-cost-code**, hỗ trợ multi-step, threshold routing, multi-approver per step, và (riêng với NT) routing theo bộ phận tờ trình.
 
 ---
 
@@ -56,6 +65,7 @@ Refactor cơ chế phân quyền duyệt từ "per-department" sang **rule-engin
 | **Mode (ANY/ALL)** | Khi 1 step có nhiều người: `ANY` = ai duyệt trước cũng pass; `ALL` = tất cả phải duyệt. |
 | **Ngưỡng (threshold)** | Khoảng tiền `[minAmount, maxAmount)` mà rule áp dụng. `null` = vô cực. |
 | **Plan duyệt (snapshot)** | Danh sách step + người duyệt cụ thể, được "đóng băng" vào DB lúc submit. |
+| **Bộ phận tờ trình** | `Department` của tờ trình (lấy từ bộ phận của người tạo tờ trình tại thời điểm submit). Dùng để route người duyệt ở các step của tờ trình Nguyên tắc (NT). |
 
 ---
 
@@ -73,6 +83,7 @@ Refactor cơ chế phân quyền duyệt từ "per-department" sang **rule-engin
 | D8 | **Chỉ role `admin`** sửa được rule | Khớp với phân quyền hệ thống hiện tại |
 | D9 | **Xóa tay** tờ trình cũ, không cần migration | Hệ thống chưa go-live, dữ liệu test |
 | D10 | Plan duyệt **snapshot lúc submit** | Tránh trường hợp rule đổi giữa chừng làm tờ trình "đi lạc" |
+| D11 | **NT detail có thể gắn `departmentId`** (nullable). `null` = áp dụng cho mọi bộ phận (fallback). Nhiều detail cùng `stepOrder` nhưng khác `departmentId` = routing theo bộ phận. Tại thời điểm resolve, ưu tiên detail có `departmentId` khớp trước, nếu không có thì dùng detail `departmentId = null`. Nếu không có cả fallback → reject submit (tương tự D5). | Đáp ứng yêu cầu mỗi bộ phận có người duyệt NT riêng. Dùng cùng cơ chế detail-per-row, không cần bảng mới. |
 
 ---
 
@@ -109,15 +120,18 @@ model CostCodeApprovalRule {
 }
 
 model CostCodeApprovalRuleDetail {
-  id          String  @id
-  ruleId      String  @map("RuleId")
-  stepOrder   Int     @map("StepOrder")            // 1, 2, 3...
-  stepType    String  @map("StepType")             // "REVIEW" | "APPROVE"
-  stepLabel   String? @map("StepLabel")            // "Thẩm định bước 1", "Phê duyệt"...
-  minAmount   BigInt? @map("MinAmount")            // NULL = -∞ — luôn NULL khi rule.submissionType = "NT"
-  maxAmount   BigInt? @map("MaxAmount")            // NULL = +∞ — luôn NULL khi rule.submissionType = "NT"
-  approverId  String  @map("ApproverId")
-  mode        String  @default("ANY") @map("Mode") // "ANY" | "ALL"
+  id           String  @id
+  ruleId       String  @map("RuleId")
+  stepOrder    Int     @map("StepOrder")            // 1, 2, 3...
+  stepType     String  @map("StepType")             // "REVIEW" | "APPROVE"
+  stepLabel    String? @map("StepLabel")            // "Thẩm định bước 1", "Phê duyệt"...
+  minAmount    BigInt? @map("MinAmount")            // NULL = -∞ — luôn NULL khi rule.submissionType = "NT"
+  maxAmount    BigInt? @map("MaxAmount")            // NULL = +∞ — luôn NULL khi rule.submissionType = "NT"
+  approverId   String  @map("ApproverId")
+  mode         String  @default("ANY") @map("Mode") // "ANY" | "ALL"
+  // Chỉ dùng cho NT: NULL = áp dụng mọi bộ phận (fallback); có giá trị = chỉ áp dụng khi tờ trình thuộc bộ phận đó.
+  // Với MS luôn phải NULL (API reject nếu client gửi giá trị).
+  departmentId String? @map("DepartmentId")
 
   // Audit
   isDeleted    Boolean  @default(false) @map("IsDeleted")
@@ -126,8 +140,9 @@ model CostCodeApprovalRuleDetail {
   logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
   logUpdatedBy String?  @map("Log_UpdatedBy")
 
-  rule     CostCodeApprovalRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
-  approver Staff                @relation(fields: [approverId], references: [id])
+  rule       CostCodeApprovalRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  approver   Staff                @relation(fields: [approverId], references: [id])
+  department Department?          @relation(fields: [departmentId], references: [id])
 
   @@index([ruleId, stepOrder, isDeleted])
   @@map("CostCodeApprovalRuleDetail")
@@ -136,7 +151,7 @@ model CostCodeApprovalRuleDetail {
 
 **Semantic ngưỡng (chỉ áp dụng với MS):** detail áp dụng khi `total ∈ [minAmount, maxAmount)` — `min` inclusive, `max` exclusive. Để biểu diễn "≥2tr" thì `min=2_000_000, max=null`.
 
-**Với NT:** `costCodeId` của header là `null`, tất cả `minAmount`/`maxAmount` của detail là `null`. Chỉ có chuỗi step + approver. Validation DTO phải enforce điều này.
+**Với NT:** `costCodeId` của header là `null`, tất cả `minAmount`/`maxAmount` của detail là `null`. Chuỗi step + approver, có thể kèm `departmentId` để route theo bộ phận. Validation DTO phải enforce: `minAmount`/`maxAmount` phải null; `departmentId` chỉ hợp lệ khi `rule.submissionType = "NT"`.
 
 ### 5.2 Bảng mới: `SubmissionApprovalStep`
 
@@ -206,7 +221,8 @@ model SubmissionApprovalStep {
      rule = SELECT * FROM CostCodeApprovalRule
             WHERE submissionType='NT' AND costCodeId IS NULL
               AND isActive=true AND isDeleted=false
-     total = NULL  // không xét ngưỡng
+     total = NULL         // không xét ngưỡng
+     dept  = submission.submitter.departmentId
 
 2. IF rule IS NULL:
      → REJECT submit (HTTP 422). Message MS: "Chưa có cấu hình duyệt cho loại chi phí X."
@@ -219,8 +235,14 @@ model SubmissionApprovalStep {
                  AND (minAmount IS NULL OR total >= minAmount)
                  AND (maxAmount IS NULL OR total < maxAmount)
    ELSE:
-     matches = SELECT * FROM CostCodeApprovalRuleDetail
-               WHERE ruleId=rule.id AND isDeleted=false
+     // Ưu tiên detail có departmentId khớp; fallback về detail departmentId IS NULL.
+     // Nếu 1 stepOrder có cả detail khớp dept VÀ detail fallback → chỉ lấy detail khớp dept.
+     specific  = SELECT * FROM CostCodeApprovalRuleDetail
+                 WHERE ruleId=rule.id AND isDeleted=false AND departmentId=dept
+     fallback  = SELECT * FROM CostCodeApprovalRuleDetail
+                 WHERE ruleId=rule.id AND isDeleted=false AND departmentId IS NULL
+     // Với mỗi stepOrder: nếu có ≥1 dòng specific → dùng specific; ngược lại dùng fallback.
+     matches = MERGE(specific, fallback) theo logic ưu tiên trên
 
 4. IF matches IS EMPTY:
      → REJECT, message MS: "Chưa có cấu hình duyệt cho cost code X tại mức tiền Y."
@@ -335,13 +357,16 @@ Có 2 sub-tab:
   - List step theo `stepOrder` tăng dần.
   - Mỗi step: card có:
     - Label.
-    - List detail: rows `[Người duyệt] [Mode]` — **không có field Min/Max** (UI ẩn hoàn toàn).
-    - Button "+ Thêm người duyệt cùng cấp" → thêm detail mới cùng `stepOrder`.
+    - List detail: rows `[Bộ phận] [Người duyệt] [Mode]` — **không có field Min/Max** (UI ẩn hoàn toàn).
+      - Cột **Bộ phận**: dropdown chọn department (có search) hoặc chọn "Tất cả bộ phận" (= `departmentId = null`, hiển thị đầu danh sách dạng mục riêng, tô xám nhẹ để phân biệt với các dòng specific).
+    - Button "+ Thêm dòng phân quyền" → thêm detail mới cùng `stepOrder` (có thể cùng hoặc khác bộ phận).
     - Button "Xóa step".
   - Button "+ Thêm cấp duyệt" cuối list.
-- Validation:
+- Validation real-time:
   - Phải có ≥1 step `APPROVE`.
   - Không cho nhập Min/Max (API reject nếu client cố gửi).
+  - Cùng `stepOrder` + cùng `departmentId` + cùng `approverId` → duplicate, highlight đỏ.
+  - Warning nếu 1 step không có dòng fallback (`departmentId = null`) và không có dòng cho tất cả bộ phận → tờ trình từ bộ phận chưa cấu hình sẽ bị reject submit.
 
 ### 7.2 Màn hình tạo tờ trình S06 (sửa)
 
@@ -417,7 +442,9 @@ Có 2 sub-tab:
 - `minAmount`, `maxAmount`: bigint ≥ 0, `min < max` nếu cả 2 đều có. **Phải NULL khi rule header là NT.**
 - `approverId`: existing Staff, không deleted.
 - `mode`: enum `ANY`|`ALL`.
+- `departmentId`: optional. **Chỉ hợp lệ khi rule header là NT** — API reject nếu gửi `departmentId` cho rule MS. Nếu có, phải là existing Department, không deleted.
 - **Cross-detail check (MS only):** không overlap với detail khác cùng `(ruleId, stepOrder)`. Cụ thể: 2 khoảng `[min1, max1)` và `[min2, max2)` không được giao nhau (trừ khi cùng người + cùng mode — coi như duplicate, reject).
+- **Cross-detail check (NT only):** không cho duplicate `(ruleId, stepOrder, departmentId, approverId)` — cùng bộ phận + cùng người + cùng bước là thừa.
 
 ---
 
@@ -484,6 +511,20 @@ Có 2 sub-tab:
 - [ ] Reassign sang chính approver hiện tại → API trả 400.
 - [ ] Approver gốc đăng nhập sau khi đã bị reassign → KHÔNG thấy nút duyệt (vì `approverId` đã đổi).
 
+### US-11 — Admin cấu hình NT với routing theo bộ phận
+
+**Là** admin, **tôi muốn** cấu hình tờ trình Nguyên tắc sao cho mỗi bộ phận có người duyệt riêng, **để** tờ trình NT của từng bộ phận đi đúng người phụ trách.
+
+**AC:**
+- [ ] Tab "Nguyên tắc" → step "Phê duyệt" → thêm dòng: Bộ phận = "Kinh doanh", Người duyệt = Hà My, Mode = ANY → save thành công.
+- [ ] Thêm tiếp dòng fallback: Bộ phận = "Tất cả bộ phận" (departmentId = null), Người duyệt = Hồng Nhung, Mode = ANY → save thành công.
+- [ ] Nhân viên bộ phận Kinh doanh submit NT → step Phê duyệt route đến Hà My.
+- [ ] Nhân viên bộ phận Kế toán (không có dòng specific) submit NT → step Phê duyệt route đến Hồng Nhung (fallback).
+- [ ] Xóa dòng fallback, nhân viên bộ phận Kế toán submit NT → HTTP 422 "Chưa có cấu hình duyệt cho bộ phận Kế toán."
+- [ ] Cố thêm dòng duplicate (cùng bộ phận + cùng người + cùng bước) → toast error, không save.
+- [ ] UI hiển thị warning nếu step không có dòng fallback: "Bộ phận chưa được cấu hình sẽ không thể submit tờ trình."
+- [ ] Admin cố gửi `departmentId` cho rule MS → API trả 400.
+
 ### US-08 — Audit khi sửa rule
 **AC:**
 - [ ] Admin A tạo rule lúc T1 → `Log_CreatedBy=A`, `Log_CreatedAt=T1`.
@@ -513,6 +554,7 @@ Có 2 sub-tab:
 | `RULE_MISSING_APPROVE` | Có rule REVIEW nhưng thiếu APPROVE | "Cấu hình duyệt cho *{costCode}* thiếu bước Phê duyệt. Liên hệ admin." |
 | `RULE_OVERLAP` | Admin tạo rule có ngưỡng overlap | "Ngưỡng *{min}–{max}* trùng với rule khác trong cùng bước." |
 | `RULE_GAP` | Admin tạo rule có "khoảng hở" (warning) | "Khoảng *{from}–{to}* chưa có rule. Tờ trình rơi vào khoảng này sẽ không submit được." |
+| `NT_DEPT_NOT_CONFIGURED` | Submit NT nhưng không có detail khớp bộ phận và không có fallback | "Chưa có cấu hình duyệt cho bộ phận *{department}* trên tờ trình Nguyên tắc. Vui lòng liên hệ admin." |
 | `STEP_NOT_AUTHORIZED` | User không phải approver bấm duyệt | "Bạn không có quyền duyệt bước này." |
 | `STEP_ALREADY_DECIDED` | Step đã approved/rejected, có người bấm lại | "Bước này đã được xử lý." |
 | `MIXED_COST_CODE` | Line khác cost code với submission | "Tất cả dòng chi phí phải cùng loại với tờ trình." |
@@ -589,12 +631,13 @@ Header: `{submissionType: "NT", costCodeId: null, name: "Flow duyệt tờ trìn
 
 Details (min/max luôn null):
 
-| stepOrder | stepType | label | approver | mode |
-|---|---|---|---|---|
-| 1 | REVIEW | Thẩm định | Dương Thị Gấn | ANY |
-| 2 | APPROVE | Phê duyệt | Trần Thị Hồng Nhung | ANY |
+| stepOrder | stepType | label | departmentId | approver | mode |
+|---|---|---|---|---|---|
+| 1 | REVIEW | Thẩm định | null (tất cả) | Dương Thị Gấn | ANY |
+| 2 | APPROVE | Phê duyệt | `<id Kinh doanh>` | Dương Hà My | ANY |
+| 2 | APPROVE | Phê duyệt | null (fallback) | Trần Thị Hồng Nhung | ANY |
 
-> Ghi chú: chuỗi cấp duyệt NT thực tế cần xác nhận với khách HV — đây là placeholder minh họa cấu trúc dữ liệu.
+> Ghi chú: cấu hình trên minh họa routing — bộ phận Kinh doanh duyệt bởi Hà My, các bộ phận còn lại duyệt bởi Hồng Nhung. Cấu hình thực tế cần xác nhận với khách HV.
 
 ---
 

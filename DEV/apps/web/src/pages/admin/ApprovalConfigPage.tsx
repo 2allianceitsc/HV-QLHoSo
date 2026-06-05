@@ -7,7 +7,7 @@ import { useState } from 'react';
 import type { IStaffOption } from '@/api/approvalConfig.api';
 
 function fullName(s: IStaffOption) {
-  return [s.firstName, s.middleName, s.surname].filter(Boolean).join(' ');
+  return [s.surname, s.middleName, s.firstName].filter(Boolean).join(' ');
 }
 
 interface RowState {

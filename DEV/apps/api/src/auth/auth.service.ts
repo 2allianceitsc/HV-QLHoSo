@@ -839,7 +839,7 @@ export class AuthService {
   ): ICurrentUser {
     const staff = userLogin.staff;
     const fullName = staff
-      ? [staff.firstName, staff.middleName, staff.surname].filter(Boolean).join(' ')
+      ? [staff.surname, staff.middleName, staff.firstName].filter(Boolean).join(' ')
       : userLogin.username;
 
     return {

@@ -111,7 +111,7 @@ export function EmployeeDetailPage() {
     return <div className="p-6 text-destructive">Employee not found.</div>;
   }
 
-  const fullName = [employee.firstName, employee.middleName, employee.surname].filter(Boolean).join(' ');
+  const fullName = [employee.surname, employee.middleName, employee.firstName].filter(Boolean).join(' ');
 
   function handleEditClick() {
     reset({

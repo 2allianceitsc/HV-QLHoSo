@@ -31,7 +31,7 @@ export function useUpdateProfile() {
       void qc.invalidateQueries({ queryKey: [PROFILE_KEY] });
       // Update auth store with new full name
       if (user) {
-        const fullName = [data.firstName, data.middleName, data.surname]
+        const fullName = [data.surname, data.middleName, data.firstName]
           .filter(Boolean)
           .join(' ');
         setUser({ ...user, fullName });

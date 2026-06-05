@@ -86,7 +86,7 @@ export function useDeleteRuleDetail() {
 
 export function usePreviewApproval() {
   return useMutation({
-    mutationFn: (input: { submissionType: SubmissionType; costCodeId?: string; total?: number }) =>
+    mutationFn: (input: { submissionType: SubmissionType; costCodeId?: string; total?: number; departmentId?: string }) =>
       approvalRulesApi.preview(input),
   });
 }

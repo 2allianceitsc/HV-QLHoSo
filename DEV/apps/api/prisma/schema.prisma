@@ -164,9 +164,10 @@ model Department {
   managers DepartmentManager[]
 
   // HV relations
-  costCodes      CostCode[]
-  approvalConfig ApprovalConfig?
-  submissions    Submission[]
+  costCodes              CostCode[]
+  approvalConfig         ApprovalConfig?
+  submissions            Submission[]
+  approvalRuleDetails    CostCodeApprovalRuleDetail[]
 
   @@map("Department")
 }
@@ -1257,8 +1258,10 @@ model CostCodeApprovalRuleDetail {
   stepLabel   String? @map("StepLabel")
   minAmount   BigInt? @map("MinAmount")
   maxAmount   BigInt? @map("MaxAmount")
-  approverId  String  @map("ApproverId")
-  mode        String  @default("ANY") @map("Mode")
+  approverId   String  @map("ApproverId")
+  mode         String  @default("ANY") @map("Mode")
+  // NT only: NULL = fallback (all depts); non-null = route for that specific dept. Always NULL for MS.
+  departmentId String? @map("DepartmentId")
 
   isDeleted    Boolean  @default(false) @map("IsDeleted")
   logCreatedAt DateTime @default(now()) @map("Log_CreatedAt") @db.Timestamptz
@@ -1266,8 +1269,9 @@ model CostCodeApprovalRuleDetail {
   logUpdatedAt DateTime @updatedAt @map("Log_UpdatedAt") @db.Timestamptz
   logUpdatedBy String?  @map("Log_UpdatedBy")
 
-  rule     CostCodeApprovalRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
-  approver Staff                @relation(fields: [approverId], references: [id])
+  rule       CostCodeApprovalRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  approver   Staff                @relation(fields: [approverId], references: [id])
+  department Department?          @relation(fields: [departmentId], references: [id])
 
   @@index([ruleId, stepOrder, isDeleted])
   @@map("CostCodeApprovalRuleDetail")

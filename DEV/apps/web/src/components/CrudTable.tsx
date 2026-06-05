@@ -69,7 +69,7 @@ function getDeleteTargetLabel<T extends object>(target: T | null): string {
 
   const firstName = typeof record.firstName === 'string' ? record.firstName.trim() : '';
   const surname = typeof record.surname === 'string' ? record.surname.trim() : '';
-  const fullName = [firstName, surname].filter(Boolean).join(' ').trim();
+  const fullName = [surname, firstName].filter(Boolean).join(' ').trim();
   if (fullName) {
     return fullName;
   }
