@@ -19,6 +19,7 @@ export interface IHvUser {
 export interface IHvDepartment {
   id: string;
   name: string;
+  isDisabled: boolean;
 }
 
 type ApiWrap<T> = { success: boolean; data: T };
@@ -53,4 +54,7 @@ export const hvAdminApi = {
 
   deleteDepartment: (id: string) =>
     apiClient.delete<ApiWrap<{ message: string }>>(`/admin/departments/${id}`).then((r) => r.data.data),
+
+  toggleDepartmentDisabled: (id: string, isDisabled: boolean) =>
+    apiClient.put<ApiWrap<IHvDepartment>>(`/admin/departments/${id}/toggle-disabled`, { isDisabled }).then((r) => r.data.data),
 };

@@ -75,3 +75,12 @@ export function useDeleteHvDepartment() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [DEPTS_KEY] }),
   });
 }
+
+export function useToggleHvDepartmentDisabled() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, isDisabled }: { id: string; isDisabled: boolean }) =>
+      hvAdminApi.toggleDepartmentDisabled(id, isDisabled),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [DEPTS_KEY] }),
+  });
+}

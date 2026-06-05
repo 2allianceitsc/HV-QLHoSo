@@ -75,7 +75,7 @@ export function ApprovalConfigPage() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {departments.map((dept) => {
+            {departments.filter((dept) => !dept.isDisabled).map((dept) => {
               const row = getRow(dept.id);
               const isSaving = saving === dept.id;
               return (

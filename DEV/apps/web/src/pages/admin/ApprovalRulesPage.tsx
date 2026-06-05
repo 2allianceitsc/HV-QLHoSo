@@ -205,7 +205,7 @@ function MsDetailView() {
     <div className="flex gap-4 min-h-[60vh]">
       {/* Sidebar */}
       <aside className="w-72 border rounded-lg overflow-y-auto max-h-[75vh]">
-        {departments.map((d) => {
+        {departments.filter((d) => !d.isDisabled).map((d) => {
           const codes = codesByDept.get(d.id) ?? [];
           if (!codes.length) return null;
           return (
@@ -569,9 +569,13 @@ function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, appr
                       <SelectItem value={FALLBACK_DEPT_VALUE}>
                         <span className="text-muted-foreground italic">Tất cả bộ phận</span>
                       </SelectItem>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
-                      ))}
+                      {departments
+                        .filter((dept) => !dept.isDisabled || dept.id === d.departmentId)
+                        .map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name}{dept.isDisabled ? ' (vô hiệu)' : ''}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </td>
