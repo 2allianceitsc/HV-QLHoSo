@@ -31,7 +31,7 @@ function UserDialog({ user, onClose }: { user?: IHvUser | null; onClose: () => v
   const { mutateAsync: update, isPending: updating } = useUpdateHvUser();
   const { toast } = useToast();
 
-  const { register, handleSubmit, control } = useForm<UserFormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<UserFormValues>({
     defaultValues: {
       username: user?.userLogin?.username ?? '',
       email: user?.companyEmailAddress ?? '',
@@ -71,25 +71,39 @@ function UserDialog({ user, onClose }: { user?: IHvUser | null; onClose: () => v
               {!user && (
                 <div className="col-span-2 space-y-2">
                   <Label>Username <span className="text-destructive">*</span></Label>
-                  <Input {...register('username', { required: true })} />
+                  <Input {...register('username', { required: 'Vui lòng nhập username' })} />
+                  {errors.username && <p className="text-xs text-destructive">{errors.username.message}</p>}
                 </div>
               )}
-              <div className="space-y-2"><Label>Họ <span className="text-destructive">*</span></Label><Input {...register('surname', { required: true })} /></div>
+              <div className="space-y-2">
+                <Label>Họ <span className="text-destructive">*</span></Label>
+                <Input {...register('surname', { required: 'Vui lòng nhập họ' })} />
+                {errors.surname && <p className="text-xs text-destructive">{errors.surname.message}</p>}
+              </div>
               <div className="space-y-2"><Label>Tên lót</Label><Input {...register('middleName')} /></div>
-              <div className="space-y-2"><Label>Tên <span className="text-destructive">*</span></Label><Input {...register('firstName', { required: true })} /></div>
-              <div className="space-y-2"><Label>Email <span className="text-destructive">*</span></Label><Input type="email" {...register('email', { required: true })} /></div>
+              <div className="space-y-2">
+                <Label>Tên <span className="text-destructive">*</span></Label>
+                <Input {...register('firstName', { required: 'Vui lòng nhập tên' })} />
+                {errors.firstName && <p className="text-xs text-destructive">{errors.firstName.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>Email <span className="text-destructive">*</span></Label>
+                <Input type="email" {...register('email', { required: 'Vui lòng nhập email' })} />
+                {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label>Bộ phận <span className="text-destructive">*</span></Label>
-              <Controller name="departmentId" control={control} rules={{ required: true }}
+              <Controller name="departmentId" control={control} rules={{ required: 'Vui lòng chọn bộ phận' }}
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger><SelectValue placeholder="Chọn bộ phận" /></SelectTrigger>
+                    <SelectTrigger className={errors.departmentId ? 'border-destructive' : ''}><SelectValue placeholder="Chọn bộ phận" /></SelectTrigger>
                     <SelectContent>{departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
                   </Select>
                 )}
               />
+              {errors.departmentId && <p className="text-xs text-destructive">{errors.departmentId.message}</p>}
             </div>
 
             <div className="space-y-2">

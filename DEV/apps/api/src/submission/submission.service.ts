@@ -254,7 +254,7 @@ export class SubmissionService {
           code,
           submitterId: user.staffId,
           departmentId: dto.departmentId,
-          costCodeId: dto.costCodeId ?? null,
+          costCodeId: dto.costCodeId || null,
           submittedDate: new Date(dto.submittedDate),
           title: dto.title,
           content: dto.content ?? '',
