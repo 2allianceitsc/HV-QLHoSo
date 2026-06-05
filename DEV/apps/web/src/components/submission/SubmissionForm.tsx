@@ -197,6 +197,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
     content: data.content ?? '',
     expenseLines: data.expenseLines ?? [],
     existingInventory: [],
+    costCodeId: data.costCodeId || undefined,
     contractStartDate: data.contractStartDate || undefined,
     contractEndDate: data.contractEndDate || undefined,
     supplier: data.supplier || undefined,
