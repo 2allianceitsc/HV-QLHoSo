@@ -23,7 +23,10 @@ export interface IApprovalRuleDetail {
   maxAmount: string | null;
   approverId: string;
   mode: StepMode;
+  /** NT only: null = fallback (all depts); non-null = specific dept routing. Always null for MS. */
+  departmentId: string | null;
   approver: IStaffRef;
+  department?: { id: string; name: string } | null;
 }
 
 export interface IApprovalRule {
@@ -83,6 +86,8 @@ export interface ICreateRuleDetailInput {
   maxAmount?: string | number | null;
   approverId: string;
   mode?: StepMode;
+  /** NT only: null = fallback; non-null UUID = specific dept. Must be omitted/null for MS. */
+  departmentId?: string | null;
 }
 
 export type IUpdateRuleDetailInput = Partial<ICreateRuleDetailInput>;
@@ -127,6 +132,6 @@ export const approvalRulesApi = {
       .delete<ApiWrap<{ message: string }>>(`/approval-rule-details/${id}`)
       .then((r) => r.data.data),
 
-  preview: (data: { submissionType: SubmissionType; costCodeId?: string; total?: number }) =>
+  preview: (data: { submissionType: SubmissionType; costCodeId?: string; total?: number; departmentId?: string }) =>
     apiClient.post<ApiWrap<IPreviewResult>>('/approval-rules/preview', data).then((r) => r.data.data),
 };

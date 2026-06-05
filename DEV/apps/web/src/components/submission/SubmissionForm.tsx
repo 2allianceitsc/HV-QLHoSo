@@ -127,7 +127,8 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
 
   useEffect(() => {
     if (type === 'NT') {
-      preview({ submissionType: 'NT' });
+      if (departmentId) preview({ submissionType: 'NT', departmentId });
+      else resetPreview();
       return;
     }
     if (!costCodeId) { resetPreview(); return; }
@@ -138,7 +139,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
       costCodeId,
       ...(expenseLines.length > 0 ? { total: totalIncVat } : {}),
     });
-  }, [type, costCodeId, totalIncVat, expenseLines.length, preview, resetPreview]);
+  }, [type, departmentId, costCodeId, totalIncVat, expenseLines.length, preview, resetPreview]);
 
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);

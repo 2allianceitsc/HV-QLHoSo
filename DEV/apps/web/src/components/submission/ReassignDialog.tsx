@@ -17,7 +17,7 @@ interface Props {
 }
 
 function fullName(s: IStaffOption) {
-  return [s.firstName, s.middleName, s.surname].filter(Boolean).join(' ');
+  return [s.surname, s.middleName, s.firstName].filter(Boolean).join(' ');
 }
 
 /**

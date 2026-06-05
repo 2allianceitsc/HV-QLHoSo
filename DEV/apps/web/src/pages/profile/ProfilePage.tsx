@@ -177,7 +177,7 @@ export function ProfilePage() {
   const avatarUrl = user?.photoBusiness ?? profile?.photoBusiness ?? null;
   const firstName = profile?.firstName ?? '';
   const surname = profile?.surname ?? '';
-  const fullName = [profile?.firstName, profile?.middleName, profile?.surname]
+  const fullName = [profile?.surname, profile?.middleName, profile?.firstName]
     .filter(Boolean)
     .join(' ');
 

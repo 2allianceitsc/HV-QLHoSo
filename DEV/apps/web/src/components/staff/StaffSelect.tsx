@@ -33,8 +33,8 @@ interface StaffSelectProps {
 }
 
 function toStaffOption(emp: IEmployee): StaffOption {
-  const firstPart = [emp.firstName, emp.middleName].filter(Boolean).join(' ').trim();
-  const fullName = [firstPart, emp.surname].filter(Boolean).join(' ').trim() || emp.employeeId;
+  const lastPart = [emp.middleName, emp.firstName].filter(Boolean).join(' ').trim();
+  const fullName = [emp.surname, lastPart].filter(Boolean).join(' ').trim() || emp.employeeId;
   return {
     id: emp.id,
     name: fullName,

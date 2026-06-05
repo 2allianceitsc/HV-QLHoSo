@@ -1,0 +1,2147 @@
+[
+  {
+    "id": "019e91c9-7ca1-79fc-bd40-6db5e476e132",
+    "submissionType": "MS",
+    "costCodeId": "019e0806-cdbb-7032-8994-77a8a9c46e66",
+    "name": null,
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T08:39:21.506Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T08:39:21.506Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e0806-cdbb-7032-8994-77a8a9c46e66",
+      "code": "Alliance01",
+      "name": "CP Alliance",
+      "departmentId": "019e07f3-d821-7b6e-a0dd-530de06da237"
+    },
+    "details": [
+      {
+        "id": "019e91c9-9b78-7073-abc9-ffd9b72cb73e",
+        "ruleId": "019e91c9-7ca1-79fc-bd40-6db5e476e132",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e07b0-3f40-79d6-93f7-d77f5bce4268",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T08:39:29.401Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T08:39:32.430Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e07b0-3f40-79d6-93f7-d77f5bce4268",
+          "firstName": "Khánh",
+          "surname": "Trương",
+          "employeeId": "ESC018"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e91c9-e11c-7268-8957-5d6297f26a54",
+    "submissionType": "MS",
+    "costCodeId": "019e07b0-b3c4-716d-ac2e-0c5a9ea06a49",
+    "name": "Chi phí điện thoại, Internet",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T08:39:47.229Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T08:39:47.229Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e07b0-b3c4-716d-ac2e-0c5a9ea06a49",
+      "code": "CS0001",
+      "name": "Chi phí điện thoại, Internet",
+      "departmentId": "019e07b0-a1af-71db-8a56-a0d280eb3611"
+    },
+    "details": [
+      {
+        "id": "019e91c9-ed0c-75ee-9638-0d4b767d255b",
+        "ruleId": "019e91c9-e11c-7268-8957-5d6297f26a54",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T08:39:50.285Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:01:46.860Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e91ce-84fc-7af9-85cf-a1ca8ca25003",
+        "ruleId": "019e91c9-e11c-7268-8957-5d6297f26a54",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T08:44:51.324Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:01:52.304Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e92f2-2526-7e77-bd93-5b43428fa710",
+    "submissionType": "MS",
+    "costCodeId": "019e2561-8a8d-7c78-b7e3-358aad28bd8a",
+    "name": "Chi phí tiếp khách đối ngoại",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:03:23.303Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:03:23.303Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e2561-8a8d-7c78-b7e3-358aad28bd8a",
+      "code": "CS0002",
+      "name": "Chi phí tiếp khách đối ngoại",
+      "departmentId": "019e07b0-a1af-71db-8a56-a0d280eb3611"
+    },
+    "details": [
+      {
+        "id": "019e92f2-41e0-760d-9b18-dcd3402cedaf",
+        "ruleId": "019e92f2-2526-7e77-bd93-5b43428fa710",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:03:30.658Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:03:47.994Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e92f2-6569-744c-8fb8-8937bbd24166",
+        "ruleId": "019e92f2-2526-7e77-bd93-5b43428fa710",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": "3000000",
+        "approverId": "019e21a4-9dab-77b6-b1cd-bbadb9d32d02",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:03:39.755Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:04:07.376Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9dab-77b6-b1cd-bbadb9d32d02",
+          "firstName": "Tân",
+          "surname": "Trương",
+          "employeeId": "A078"
+        }
+      },
+      {
+        "id": "019e92f2-d645-723c-ba85-a9ffb6010881",
+        "ruleId": "019e92f2-2526-7e77-bd93-5b43428fa710",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "3000000",
+        "maxAmount": "5000000",
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:04:08.647Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:04:22.719Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      },
+      {
+        "id": "019e92f3-10b8-72fe-a79e-a8a48745936e",
+        "ruleId": "019e92f2-2526-7e77-bd93-5b43428fa710",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "5000000",
+        "maxAmount": "10000000",
+        "approverId": "019e21a4-9edb-7e4b-9fbd-06d6dd59b87a",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:04:23.610Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:04:32.418Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9edb-7e4b-9fbd-06d6dd59b87a",
+          "firstName": "Vân",
+          "surname": "Lê",
+          "employeeId": "A002"
+        }
+      },
+      {
+        "id": "019e92f3-373a-7c01-ae9e-a290240a2a53",
+        "ruleId": "019e92f2-2526-7e77-bd93-5b43428fa710",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "10000000",
+        "maxAmount": null,
+        "approverId": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:04:33.467Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:04:33.467Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+          "firstName": "Hồng",
+          "surname": "Dương",
+          "employeeId": "A001"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e92f6-c939-764e-b4d1-b29953187575",
+    "submissionType": "MS",
+    "costCodeId": "019e2561-f6e6-78d1-8955-61c0f7281138",
+    "name": "Bồi thường cho KH bằng tiền mặt, quà tặng, dịch vụ do lỗi phát sinh khi phục vụ khách hàng",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:08:27.450Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:08:27.450Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e2561-f6e6-78d1-8955-61c0f7281138",
+      "code": "CS0003",
+      "name": "Bồi thường cho KH bằng tiền mặt, quà tặng, dịch vụ do lỗi phát sinh khi phục vụ khách hàng",
+      "departmentId": "019e07b0-a1af-71db-8a56-a0d280eb3611"
+    },
+    "details": [
+      {
+        "id": "019e92f6-d88e-7b07-844c-e09e03ba9997",
+        "ruleId": "019e92f6-c939-764e-b4d1-b29953187575",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:08:31.375Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:08:39.101Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e92f7-24c6-7066-9fed-a5189908cf9f",
+        "ruleId": "019e92f6-c939-764e-b4d1-b29953187575",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "5000000",
+        "maxAmount": null,
+        "approverId": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:08:50.888Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:08:58.749Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+          "firstName": "Nhung",
+          "surname": "Trần",
+          "employeeId": "A003"
+        }
+      },
+      {
+        "id": "019e92f6-fa96-7ee2-b986-e7561ef7df49",
+        "ruleId": "019e92f6-c939-764e-b4d1-b29953187575",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": "5000000",
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:08:40.088Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:08:55.123Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e92f7-88c8-7ac0-845a-fc0521d708da",
+    "submissionType": "MS",
+    "costCodeId": "019e07b0-b1c3-7785-9ed4-8cea66402f90",
+    "name": "Các khoản thuế phải trả theo quy định của HĐ, thuế TNDN, thuế TNCN, thuế môn bài",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:09:16.489Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:09:16.489Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e07b0-b1c3-7785-9ed4-8cea66402f90",
+      "code": "KT0001",
+      "name": "Các khoản thuế phải trả theo quy định của HĐ, thuế TNDN, thuế TNCN, thuế môn bài",
+      "departmentId": "019e07b0-a246-73cb-927d-a46e2d7091de"
+    },
+    "details": [
+      {
+        "id": "019e92f7-9a36-7616-b8a6-e570f537393d",
+        "ruleId": "019e92f7-88c8-7ac0-845a-fc0521d708da",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:09:20.951Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:09:25.177Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      },
+      {
+        "id": "019e92f7-9e6f-7b77-ad62-7d20d2762772",
+        "ruleId": "019e92f7-88c8-7ac0-845a-fc0521d708da",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:09:22.034Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:09:22.034Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+          "firstName": "Hồng",
+          "surname": "Dương",
+          "employeeId": "A001"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e92f7-fa08-7cf9-af43-cc1147eb0f8d",
+    "submissionType": "MS",
+    "costCodeId": "019e2563-423c-7edf-b2a4-e02fea71af89",
+    "name": "Chi phí dịch vụ mua ngoài như vận chuyển, dịch vụ văn phòng, dịch vụ nhỏ lặt vặt (rửa xe, chuyển đồ)",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:09:45.481Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:09:45.481Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e2563-423c-7edf-b2a4-e02fea71af89",
+      "code": "KT0002",
+      "name": "Chi phí dịch vụ mua ngoài khác (Vệ sinh, CCDC, thuê tài sản,…)",
+      "departmentId": "019e07b0-a246-73cb-927d-a46e2d7091de"
+    },
+    "details": [
+      {
+        "id": "019e92f8-0d4a-7e62-ad26-c4ea96af1848",
+        "ruleId": "019e92f7-fa08-7cf9-af43-cc1147eb0f8d",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:09:50.411Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:09:54.575Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e92f8-10c2-7caa-9a80-cd7ecf051887",
+        "ruleId": "019e92f7-fa08-7cf9-af43-cc1147eb0f8d",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": "2000000",
+        "approverId": "019e21a4-9dab-77b6-b1cd-bbadb9d32d02",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:09:51.299Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:10:03.482Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9dab-77b6-b1cd-bbadb9d32d02",
+          "firstName": "Tân",
+          "surname": "Trương",
+          "employeeId": "A078"
+        }
+      },
+      {
+        "id": "019e92f8-43b0-74dc-8b85-5283385c3ced",
+        "ruleId": "019e92f7-fa08-7cf9-af43-cc1147eb0f8d",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "2000000",
+        "maxAmount": null,
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:10:04.337Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:10:07.849Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e92f8-a8c5-7acd-a3f0-1e7a9aefc3cc",
+    "submissionType": "MS",
+    "costCodeId": "019e2560-fa90-7637-86a5-c13f3d4c88ef",
+    "name": "Chi phí Marketing, truyền thông: công cụ dụng cụ, vật tư phục vụ MKT, dịch vụ quảng cáo booking KOLs, mua quà tặng , KM cho khách hàng",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:10:30.214Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:10:44.822Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e2560-fa90-7637-86a5-c13f3d4c88ef",
+      "code": "MK0001",
+      "name": "Chi phí Marketing, truyền thông: công cụ dụng cụ, vật tư phục vụ MKT, dịch vụ quảng cáo booking KOLs, mua quà tặng , KM cho khách hàng,...",
+      "departmentId": "019e07b0-a2ab-7c41-90a6-c9a3ebd37fa2"
+    },
+    "details": [
+      {
+        "id": "019e92f8-e964-7fc2-9544-74632e6fdfe7",
+        "ruleId": "019e92f8-a8c5-7acd-a3f0-1e7a9aefc3cc",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định bước 1",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9b4c-780f-8f2a-32ac2e4ca45d",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:10:46.757Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:11:05.436Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9b4c-780f-8f2a-32ac2e4ca45d",
+          "firstName": "Quỳnh",
+          "surname": "Dương",
+          "employeeId": "A267"
+        }
+      },
+      {
+        "id": "019e92f8-f213-736e-a07c-865a77749d51",
+        "ruleId": "019e92f8-a8c5-7acd-a3f0-1e7a9aefc3cc",
+        "stepOrder": 2,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định bước 2",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:10:48.980Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:11:09.881Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e92f9-86ac-7b91-a4f4-096d644d54bc",
+        "ruleId": "019e92f8-a8c5-7acd-a3f0-1e7a9aefc3cc",
+        "stepOrder": 3,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "5000000",
+        "maxAmount": null,
+        "approverId": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:11:27.021Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:11:30.620Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+          "firstName": "Nhung",
+          "surname": "Trần",
+          "employeeId": "A003"
+        }
+      },
+      {
+        "id": "019e92f9-198d-799e-985a-9b6092b60fc1",
+        "ruleId": "019e92f8-a8c5-7acd-a3f0-1e7a9aefc3cc",
+        "stepOrder": 3,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": "5000000",
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:10:59.086Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:11:25.987Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e92f9-cf83-760f-8dbd-815f467c8454",
+    "submissionType": "MS",
+    "costCodeId": "019e2567-5fb0-7b52-9f51-56956a271cce",
+    "name": "Chi phí IT: mua sắm phần cứng, phần mềm, dịch vụ CNTT,...",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:11:45.670Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:11:45.670Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e2567-5fb0-7b52-9f51-56956a271cce",
+      "code": "IT0001",
+      "name": "Chi phí IT : mua sắm phần cứng, phần mềm , dịch vụ CNTT,...",
+      "departmentId": "019e07b0-a312-7062-a0c0-d09f481bfed6"
+    },
+    "details": [
+      {
+        "id": "019e92f9-d823-7c1b-929e-84a9c3c9bbb8",
+        "ruleId": "019e92f9-cf83-760f-8dbd-815f467c8454",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định bước 1",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9b4c-780f-8f2a-32ac2e4ca45d",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:11:47.876Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:12:13.458Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9b4c-780f-8f2a-32ac2e4ca45d",
+          "firstName": "Quỳnh",
+          "surname": "Dương",
+          "employeeId": "A267"
+        }
+      },
+      {
+        "id": "019e92f9-e185-796b-9782-7f798f31fbe7",
+        "ruleId": "019e92f9-cf83-760f-8dbd-815f467c8454",
+        "stepOrder": 2,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định bước 2",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:11:50.278Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:12:17.478Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e92fd-8b19-7c87-ace0-75faca703ab5",
+        "ruleId": "019e92f9-cf83-760f-8dbd-815f467c8454",
+        "stepOrder": 3,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "15000000",
+        "maxAmount": "50000000",
+        "approverId": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:15:50.300Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:15:56.162Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+          "firstName": "Nhung",
+          "surname": "Trần",
+          "employeeId": "A003"
+        }
+      },
+      {
+        "id": "019e92fb-a3ea-7a82-9952-3875d18ed25b",
+        "ruleId": "019e92f9-cf83-760f-8dbd-815f467c8454",
+        "stepOrder": 3,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": "15000000",
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:13:45.579Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:15:47.507Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      },
+      {
+        "id": "019e92fd-a6f2-774a-9564-866bee7f0769",
+        "ruleId": "019e92f9-cf83-760f-8dbd-815f467c8454",
+        "stepOrder": 3,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "50000000",
+        "maxAmount": null,
+        "approverId": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:15:57.427Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:15:57.427Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+          "firstName": "Hồng",
+          "surname": "Dương",
+          "employeeId": "A001"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e92fd-f82a-7f5b-a3c5-52819a946dc5",
+    "submissionType": "MS",
+    "costCodeId": "019e255e-971f-736d-b9c3-ae00d0d6770e",
+    "name": "Mua sắm TSCĐ, CCDC, trang thiết bị, đồ dùng, dụng cụ thường niên và cho quầy mới/CBNV mới theo biên chế được duyệt",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:16:18.219Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:16:18.219Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e255e-971f-736d-b9c3-ae00d0d6770e",
+      "code": "MH0002",
+      "name": "Mua sắm TSCĐ, CCDC, trang thiết bị, đồ dùng, dụng cụ thường niên và cho quầy mới/CBNV mới theo biên chế được duyệt",
+      "departmentId": "019e07b0-a312-7062-a0c0-d09f481bfed6"
+    },
+    "details": [
+      {
+        "id": "019e92fe-05ab-7cc5-995e-52ae62c628ba",
+        "ruleId": "019e92fd-f82a-7f5b-a3c5-52819a946dc5",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định bước 1",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9b4c-780f-8f2a-32ac2e4ca45d",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:16:21.677Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:16:36.467Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9b4c-780f-8f2a-32ac2e4ca45d",
+          "firstName": "Quỳnh",
+          "surname": "Dương",
+          "employeeId": "A267"
+        }
+      },
+      {
+        "id": "019e92fe-0dcf-7b1c-9445-3f14e5622f4d",
+        "ruleId": "019e92fd-f82a-7f5b-a3c5-52819a946dc5",
+        "stepOrder": 2,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định bước 2",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:16:23.761Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:16:40.769Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e92fe-58c7-7727-b47c-471c2b650b00",
+        "ruleId": "019e92fd-f82a-7f5b-a3c5-52819a946dc5",
+        "stepOrder": 3,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": "15000000",
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:16:42.952Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:16:59.400Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      },
+      {
+        "id": "019e92fe-bd1d-7498-bce7-01bdcf8972d2",
+        "ruleId": "019e92fd-f82a-7f5b-a3c5-52819a946dc5",
+        "stepOrder": 3,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "50000000",
+        "maxAmount": null,
+        "approverId": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:17:08.638Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:17:08.638Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+          "firstName": "Hồng",
+          "surname": "Dương",
+          "employeeId": "A001"
+        }
+      },
+      {
+        "id": "019e92fe-9dfd-7738-b2be-152a5f4091be",
+        "ruleId": "019e92fd-f82a-7f5b-a3c5-52819a946dc5",
+        "stepOrder": 3,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "15000000",
+        "maxAmount": "50000000",
+        "approverId": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:17:00.670Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:17:06.855Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+          "firstName": "Nhung",
+          "surname": "Trần",
+          "employeeId": "A003"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e92ff-05bc-736c-ba03-34cae4528af5",
+    "submissionType": "MS",
+    "costCodeId": "019e07b0-b292-7732-9342-f5220c2ccd97",
+    "name": "Các chi phí nhân sự (lương, BHXH theo luật, chi phí phúc lợi theo chính sách quy định",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:17:27.230Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:17:27.230Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e07b0-b292-7732-9342-f5220c2ccd97",
+      "code": "NS0001",
+      "name": "Các chi phí nhân sự (lương, BHXH theo luật, chi phí phúc lợi theo chính sách quy định",
+      "departmentId": "019e2126-a5be-7140-b5be-cdd5c5508adb"
+    },
+    "details": [
+      {
+        "id": "019e92ff-1035-709e-823b-4101387fa59b",
+        "ruleId": "019e92ff-05bc-736c-ba03-34cae4528af5",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:17:29.911Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:17:34.807Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e92ff-1475-76a6-8105-8b14a4acdeb6",
+        "ruleId": "019e92ff-05bc-736c-ba03-34cae4528af5",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:17:30.998Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:17:37.786Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+          "firstName": "Nhung",
+          "surname": "Trần",
+          "employeeId": "A003"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e92ff-5c5f-7059-9697-c669e53769d6",
+    "submissionType": "MS",
+    "costCodeId": "019e07b0-b22d-7429-b5a7-421630bf376c",
+    "name": "Chi phí công tác (Tiền vé máy bay, tàu xe, visa, khách sạn…)",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:17:49.408Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:17:49.408Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e07b0-b22d-7429-b5a7-421630bf376c",
+      "code": "NS0002",
+      "name": "Chi phí công tác (Tiền vé máy bay, tàu xe, visa, khách sạn…)",
+      "departmentId": "019e2126-a5be-7140-b5be-cdd5c5508adb"
+    },
+    "details": [
+      {
+        "id": "019e92ff-6f1a-7f43-a8b5-5b8e4d4aeb49",
+        "ruleId": "019e92ff-5c5f-7059-9697-c669e53769d6",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:17:54.203Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:17:59.279Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e92ff-7479-71b4-9ac2-7bf97ad64254",
+        "ruleId": "019e92ff-5c5f-7059-9697-c669e53769d6",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": "2000000",
+        "approverId": "019e21a4-9dab-77b6-b1cd-bbadb9d32d02",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:17:55.578Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:18:06.894Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9dab-77b6-b1cd-bbadb9d32d02",
+          "firstName": "Tân",
+          "surname": "Trương",
+          "employeeId": "A078"
+        }
+      },
+      {
+        "id": "019e92ff-a6c1-754a-80a0-9c34e9f8ccfb",
+        "ruleId": "019e92ff-5c5f-7059-9697-c669e53769d6",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "2000000",
+        "maxAmount": null,
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:18:08.450Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:18:10.843Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e92ff-e09a-7088-8fb0-413fe3c785dc",
+    "submissionType": "MS",
+    "costCodeId": "019e255f-703c-708f-b066-cde3e1c95fc2",
+    "name": "Chi phí đào tạo, thuê ngoài",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:18:23.259Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:18:23.259Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e255f-703c-708f-b066-cde3e1c95fc2",
+      "code": "NS0003",
+      "name": "Chi phí đào tạo, thuê ngoài",
+      "departmentId": "019e2126-a5be-7140-b5be-cdd5c5508adb"
+    },
+    "details": [
+      {
+        "id": "019e92ff-eabd-7b45-8356-46b7126c5d19",
+        "ruleId": "019e92ff-e09a-7088-8fb0-413fe3c785dc",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:18:25.855Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:18:33.145Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e9300-3581-7fb8-8d96-11793f41eb60",
+        "ruleId": "019e92ff-e09a-7088-8fb0-413fe3c785dc",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "15000000",
+        "maxAmount": "50000000",
+        "approverId": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:18:44.994Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:18:51.333Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+          "firstName": "Nhung",
+          "surname": "Trần",
+          "employeeId": "A003"
+        }
+      },
+      {
+        "id": "019e9300-5027-7eb8-a237-8e2882514f14",
+        "ruleId": "019e92ff-e09a-7088-8fb0-413fe3c785dc",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "50000000",
+        "maxAmount": null,
+        "approverId": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:18:51.816Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:18:51.816Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+          "firstName": "Hồng",
+          "surname": "Dương",
+          "employeeId": "A001"
+        }
+      },
+      {
+        "id": "019e92ff-f2fe-7192-8df9-6eeaf98511bc",
+        "ruleId": "019e92ff-e09a-7088-8fb0-413fe3c785dc",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": "15000000",
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:18:27.967Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:18:43.631Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e9300-ed25-7d0c-97f9-7d88184a0358",
+    "submissionType": "MS",
+    "costCodeId": "019e255f-bab4-709a-86f4-1ad556b56862",
+    "name": "Chi phí đồng phục",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:19:32.007Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:19:32.007Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e255f-bab4-709a-86f4-1ad556b56862",
+      "code": "NS0004",
+      "name": "Chi phí đồng phục",
+      "departmentId": "019e2126-a5be-7140-b5be-cdd5c5508adb"
+    },
+    "details": [
+      {
+        "id": "019e9300-f2b6-7595-a427-b4777af88090",
+        "ruleId": "019e9300-ed25-7d0c-97f9-7d88184a0358",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định bước 1",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9b4c-780f-8f2a-32ac2e4ca45d",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:19:33.432Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:20:22.468Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9b4c-780f-8f2a-32ac2e4ca45d",
+          "firstName": "Quỳnh",
+          "surname": "Dương",
+          "employeeId": "A267"
+        }
+      },
+      {
+        "id": "019e9300-f96b-7557-aaa9-1f4080d100a5",
+        "ruleId": "019e9300-ed25-7d0c-97f9-7d88184a0358",
+        "stepOrder": 2,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định bước 2",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:19:35.148Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:20:26.579Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e9301-c9bb-75c6-91b3-8f866dd88823",
+        "ruleId": "019e9300-ed25-7d0c-97f9-7d88184a0358",
+        "stepOrder": 3,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": "15000000",
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:20:28.476Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:20:39.833Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      },
+      {
+        "id": "019e9302-1412-7bb6-93dd-67b33e0088f8",
+        "ruleId": "019e9300-ed25-7d0c-97f9-7d88184a0358",
+        "stepOrder": 3,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "50000000",
+        "maxAmount": null,
+        "approverId": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:20:47.507Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:20:47.507Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+          "firstName": "Hồng",
+          "surname": "Dương",
+          "employeeId": "A001"
+        }
+      },
+      {
+        "id": "019e9301-f983-7bef-9f69-8b6a9391d2c8",
+        "ruleId": "019e9300-ed25-7d0c-97f9-7d88184a0358",
+        "stepOrder": 3,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "15000000",
+        "maxAmount": "50000000",
+        "approverId": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:20:40.710Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:20:46.226Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+          "firstName": "Nhung",
+          "surname": "Trần",
+          "employeeId": "A003"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e9302-3f0e-76ad-a198-1c7fb22b9ea2",
+    "submissionType": "MS",
+    "costCodeId": "019e07b0-b15b-751d-a972-f1d2c53162fa",
+    "name": "Chi phí điện, nước, nhiên liệu cho máy móc thiết bị (kiểm tra lượng tiêu hao, làm rõ bất thường…)",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:20:58.512Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:20:58.512Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e07b0-b15b-751d-a972-f1d2c53162fa",
+      "code": "VH0001",
+      "name": "Chi phí điện, nước, nhiên liệu cho máy móc thiết bị (kiểm tra lượng tiêu hao, làm rõ bất thường…)",
+      "departmentId": "019e2127-4356-705c-840c-3b09b02db34e"
+    },
+    "details": [
+      {
+        "id": "019e9302-49e8-72a5-b7b7-de998ded49f7",
+        "ruleId": "019e9302-3f0e-76ad-a198-1c7fb22b9ea2",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:21:01.289Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:21:10.175Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e9302-56d1-7610-9635-ab72fac76aae",
+        "ruleId": "019e9302-3f0e-76ad-a198-1c7fb22b9ea2",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:21:04.594Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:21:13.582Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e9302-9b4f-7740-802d-3c05d43b88d7",
+    "submissionType": "MS",
+    "costCodeId": "019e07b0-b360-79c7-b866-755db59fd6cb",
+    "name": "Chuyển phát nhanh, VPP",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:21:22.128Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:21:22.128Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e07b0-b360-79c7-b866-755db59fd6cb",
+      "code": "VH0002",
+      "name": "Chuyển phát nhanh, VPP",
+      "departmentId": "019e2127-4356-705c-840c-3b09b02db34e"
+    },
+    "details": [
+      {
+        "id": "019e9302-a34e-7e3c-a42d-dd01eb3c9ec0",
+        "ruleId": "019e9302-9b4f-7740-802d-3c05d43b88d7",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:21:24.175Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:21:27.039Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e9302-a786-776e-8cf2-b07277e1f806",
+        "ruleId": "019e9302-9b4f-7740-802d-3c05d43b88d7",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:21:25.256Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:21:29.001Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e9302-d55a-7e0e-8b17-40feff8a1240",
+    "submissionType": "MS",
+    "costCodeId": "019e07b0-b2f7-7ecd-8dc8-240d3aeb4b26",
+    "name": "Phí kiểm định, kiểm tra, đăng kiểm, xét nghiệm mẫu, lệ phí (cầu đường, đường bộ, trước bạ…) theo yêu cầu của CQ chức năng",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:21:36.988Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:21:36.988Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e07b0-b2f7-7ecd-8dc8-240d3aeb4b26",
+      "code": "VH0003",
+      "name": "Phí kiểm định, kiểm tra, đăng kiểm, xét nghiệm mẫu, lệ phí (cầu đường, đường bộ, trước bạ…) theo yêu cầu của CQ chức năng",
+      "departmentId": "019e2127-4356-705c-840c-3b09b02db34e"
+    },
+    "details": [
+      {
+        "id": "019e9302-dd9c-75ad-96aa-2305fb4c7785",
+        "ruleId": "019e9302-d55a-7e0e-8b17-40feff8a1240",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:21:39.102Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:21:41.875Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e9302-e1f5-7d63-a711-1652476d4134",
+        "ruleId": "019e9302-d55a-7e0e-8b17-40feff8a1240",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:21:40.215Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:21:43.273Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e9303-077b-77a5-914a-329ecb57ba23",
+    "submissionType": "MS",
+    "costCodeId": "019e07b0-b429-7dba-a48e-4c0fe49d84c3",
+    "name": "Chi phí bản quyền, nhãn hiệu",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:21:49.821Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:21:49.821Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e07b0-b429-7dba-a48e-4c0fe49d84c3",
+      "code": "VH0004",
+      "name": "Chi phí bản quyền, nhãn hiệu",
+      "departmentId": "019e2127-4356-705c-840c-3b09b02db34e"
+    },
+    "details": [
+      {
+        "id": "019e9303-1272-7597-ac93-c54cf49edc84",
+        "ruleId": "019e9303-077b-77a5-914a-329ecb57ba23",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:21:52.627Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:21:55.361Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      },
+      {
+        "id": "019e9303-1fd1-7a97-a172-4d9317e4d6b6",
+        "ruleId": "019e9303-077b-77a5-914a-329ecb57ba23",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:21:56.050Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:21:56.050Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+          "firstName": "Hồng",
+          "surname": "Dương",
+          "employeeId": "A001"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e9303-4fef-7347-b69e-dbda87b2c9bf",
+    "submissionType": "MS",
+    "costCodeId": "019e07b0-b05e-7028-823e-d307a30ef438",
+    "name": "Các khoản chi phí dịch vụ thường xuyên (Thuê địa điểm, thuê bằng…)",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:22:08.368Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:22:08.368Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e07b0-b05e-7028-823e-d307a30ef438",
+      "code": "VH0005",
+      "name": "Các khoản chi phí dịch vụ thường xuyên (Thuê địa điểm, thuê bằng…)",
+      "departmentId": "019e2127-4356-705c-840c-3b09b02db34e"
+    },
+    "details": [
+      {
+        "id": "019e9303-650a-7dde-aad1-69fffbcbdc7f",
+        "ruleId": "019e9303-4fef-7347-b69e-dbda87b2c9bf",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:22:13.771Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:22:17.579Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e9303-6a84-71e2-ba08-0a44d58701f2",
+        "ruleId": "019e9303-4fef-7347-b69e-dbda87b2c9bf",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:22:15.173Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:22:20.978Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e9303-a934-7b41-83c9-978232310651",
+    "submissionType": "MS",
+    "costCodeId": "019e07b0-b0f6-7646-b352-b1f768e4a8c8",
+    "name": "Chi phí vật tư, vật liệu tiêu hao theo định mức",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:22:31.221Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:22:31.221Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e07b0-b0f6-7646-b352-b1f768e4a8c8",
+      "code": "VH0006",
+      "name": "Chi phí vật tư, vật liệu tiêu hao theo định mức",
+      "departmentId": "019e2127-4356-705c-840c-3b09b02db34e"
+    },
+    "details": [
+      {
+        "id": "019e9304-f68a-72e7-bbe2-11c8485e159f",
+        "ruleId": "019e9303-a934-7b41-83c9-978232310651",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định bước 1",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:23:56.555Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-05T07:14:06.839Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e9304-fcfb-7160-aaa3-4c002f791314",
+        "ruleId": "019e9303-a934-7b41-83c9-978232310651",
+        "stepOrder": 2,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định bước 2",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:23:58.204Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-05T07:14:12.040Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      },
+      {
+        "id": "019e9305-948c-7603-9250-389b9a5539d5",
+        "ruleId": "019e9303-a934-7b41-83c9-978232310651",
+        "stepOrder": 3,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:24:37.006Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:24:47.305Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+          "firstName": "Nhung",
+          "surname": "Trần",
+          "employeeId": "A003"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e9305-f541-79b1-b25c-f482842561ba",
+    "submissionType": "MS",
+    "costCodeId": "019e255c-77fa-7462-ae74-3c5e3e90b324",
+    "name": "Chi phí dịch vụ mua ngoài khác (Vệ sinh, CCDC, thuê tài sản…)",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:25:01.763Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:25:01.763Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e255c-77fa-7462-ae74-3c5e3e90b324",
+      "code": "VH0007",
+      "name": "Chi phí dịch vụ mua ngoài như vận chuyển, dịch vụ văn phòng, dịch vụ nhỏ lặt vặt (rửa xe, chuyển đồ)",
+      "departmentId": "019e2127-4356-705c-840c-3b09b02db34e"
+    },
+    "details": [
+      {
+        "id": "019e9306-01b9-7ea7-bcc0-65007a8219e8",
+        "ruleId": "019e9305-f541-79b1-b25c-f482842561ba",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:25:04.954Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:25:11.170Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e9306-0591-774c-905e-f126660b1ce7",
+        "ruleId": "019e9305-f541-79b1-b25c-f482842561ba",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": "5000000",
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:25:05.938Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:25:22.908Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      },
+      {
+        "id": "019e9306-4d0a-756c-8cd1-911db3782fe5",
+        "ruleId": "019e9305-f541-79b1-b25c-f482842561ba",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "5000000",
+        "maxAmount": null,
+        "approverId": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:25:24.235Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:25:29.545Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+          "firstName": "Nhung",
+          "surname": "Trần",
+          "employeeId": "A003"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e9306-8db6-73d1-b54b-f9496070516a",
+    "submissionType": "MS",
+    "costCodeId": "019e255e-e79a-774a-bfdc-deb8f6019772",
+    "name": "Dịch vụ tư vấn, giao dịch, tư vấn pháp lý, kiểm soát",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:25:40.791Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:25:40.791Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e255e-e79a-774a-bfdc-deb8f6019772",
+      "code": "VH0008",
+      "name": "Dịch vụ tư vấn, giao dịch, tư vấn pháp lý, kiểm soát",
+      "departmentId": "019e2127-4356-705c-840c-3b09b02db34e"
+    },
+    "details": [
+      {
+        "id": "019e9307-187e-79ad-98e0-46a5bbf0c06d",
+        "ruleId": "019e9306-8db6-73d1-b54b-f9496070516a",
+        "stepOrder": 1,
+        "stepType": "APPROVE",
+        "stepLabel": "Thẩm định",
+        "minAmount": "50000000",
+        "maxAmount": null,
+        "approverId": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:26:16.319Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:26:16.319Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+          "firstName": "Hồng",
+          "surname": "Dương",
+          "employeeId": "A001"
+        }
+      },
+      {
+        "id": "019e9306-f543-7dfd-a2e8-ccfb68e25028",
+        "ruleId": "019e9306-8db6-73d1-b54b-f9496070516a",
+        "stepOrder": 1,
+        "stepType": "APPROVE",
+        "stepLabel": "Thẩm định",
+        "minAmount": "15000000",
+        "maxAmount": "50000000",
+        "approverId": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:26:07.300Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:26:15.269Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+          "firstName": "Nhung",
+          "surname": "Trần",
+          "employeeId": "A003"
+        }
+      },
+      {
+        "id": "019e9306-ba31-7c72-a9fa-c9fa35f9d136",
+        "ruleId": "019e9306-8db6-73d1-b54b-f9496070516a",
+        "stepOrder": 1,
+        "stepType": "APPROVE",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": "15000000",
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:25:52.178Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:26:06.428Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e9307-3ea5-7ead-a554-c80761855253",
+    "submissionType": "MS",
+    "costCodeId": "019e2562-3788-7e37-9b99-446ed2da9f02",
+    "name": "Chi phí cho hoạt động VHDN, tổ chức hội nghị, hội thảo",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:26:26.086Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:26:26.086Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e2562-3788-7e37-9b99-446ed2da9f02",
+      "code": "VH0009",
+      "name": "Chi phí cho hoạt động VHDN, tổ chức hội nghị, hội thảo",
+      "departmentId": "019e2127-4356-705c-840c-3b09b02db34e"
+    },
+    "details": [
+      {
+        "id": "019e9307-7343-7e69-9609-b7dbb3630cae",
+        "ruleId": "019e9307-3ea5-7ead-a554-c80761855253",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:26:39.556Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:26:43.797Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e9307-787b-7c8a-b3a4-4f68fe202848",
+        "ruleId": "019e9307-3ea5-7ead-a554-c80761855253",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": "5000000",
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:26:40.896Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:26:52.196Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      },
+      {
+        "id": "019e9307-a95e-7cef-951d-4ed1a4ad0a9c",
+        "ruleId": "019e9307-3ea5-7ead-a554-c80761855253",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "5000000",
+        "maxAmount": null,
+        "approverId": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:26:53.407Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:26:57.458Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9f73-725b-bd94-ff3c25e9d03e",
+          "firstName": "Nhung",
+          "surname": "Trần",
+          "employeeId": "A003"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e9307-e356-768c-a107-b72662d3e3e1",
+    "submissionType": "MS",
+    "costCodeId": "019e2566-9114-722a-8de3-d361b0aef762",
+    "name": "Chi phí hủy, thanh lý tài sản, CCDC theo quy trình",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:27:08.248Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:27:08.248Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e2566-9114-722a-8de3-d361b0aef762",
+      "code": "VH0010",
+      "name": "Chi phí hủy, thanh lý tài sản, CCDC theo quy trình",
+      "departmentId": "019e2127-4356-705c-840c-3b09b02db34e"
+    },
+    "details": [
+      {
+        "id": "019e9307-ed07-7d8b-a1fd-ee9c185c30fe",
+        "ruleId": "019e9307-e356-768c-a107-b72662d3e3e1",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:27:10.728Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:27:13.828Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e9308-2655-72b0-9791-5dae5639815d",
+        "ruleId": "019e9307-e356-768c-a107-b72662d3e3e1",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": "10000000",
+        "maxAmount": null,
+        "approverId": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:27:25.398Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:27:25.398Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+          "firstName": "Hồng",
+          "surname": "Dương",
+          "employeeId": "A001"
+        }
+      },
+      {
+        "id": "019e9307-f0c9-75e5-9049-94edc7bec570",
+        "ruleId": "019e9307-e356-768c-a107-b72662d3e3e1",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": "10000000",
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:27:11.691Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:27:24.170Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e9308-5f35-7453-a9a4-6be053826319",
+    "submissionType": "MS",
+    "costCodeId": "019e2567-a974-720c-aa2d-f0e4bb1bb434",
+    "name": "Chi phí cải tạo sửa chữa lớn cho quầy",
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:27:39.959Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:27:39.959Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": {
+      "id": "019e2567-a974-720c-aa2d-f0e4bb1bb434",
+      "code": "VH0011",
+      "name": "Chi phí cải tạo sửa chữa lớn cho quầy",
+      "departmentId": "019e2127-4356-705c-840c-3b09b02db34e"
+    },
+    "details": [
+      {
+        "id": "019e9308-6520-7a6f-837b-e8dc6e8d2092",
+        "ruleId": "019e9308-5f35-7453-a9a4-6be053826319",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định bước 1",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9b4c-780f-8f2a-32ac2e4ca45d",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:27:41.474Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:28:12.142Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9b4c-780f-8f2a-32ac2e4ca45d",
+          "firstName": "Quỳnh",
+          "surname": "Dương",
+          "employeeId": "A267"
+        }
+      },
+      {
+        "id": "019e9308-6cf6-73dc-b5d3-295c004e8116",
+        "ruleId": "019e9308-5f35-7453-a9a4-6be053826319",
+        "stepOrder": 2,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định bước 2",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:27:43.480Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:28:15.425Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-92f5-7f58-a50c-1768adbeb046",
+          "firstName": "Gấm",
+          "surname": "Dương",
+          "employeeId": "A197"
+        }
+      },
+      {
+        "id": "019e9308-72a4-7c4a-b01a-03a38fb9eb58",
+        "ruleId": "019e9308-5f35-7453-a9a4-6be053826319",
+        "stepOrder": 3,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định bước 3",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:27:44.933Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:28:19.274Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      },
+      {
+        "id": "019e9308-78f5-7636-b934-ef0b434ee23b",
+        "ruleId": "019e9308-5f35-7453-a9a4-6be053826319",
+        "stepOrder": 4,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:27:46.553Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:27:46.553Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9e43-7487-bb63-7990c65bf34e",
+          "firstName": "Hồng",
+          "surname": "Dương",
+          "employeeId": "A001"
+        }
+      }
+    ]
+  },
+  {
+    "id": "019e930a-0c2b-791a-8ef3-b4d17c87eda5",
+    "submissionType": "NT",
+    "costCodeId": null,
+    "name": null,
+    "isActive": true,
+    "isDeleted": false,
+    "logCreatedAt": "2026-06-04T14:29:29.772Z",
+    "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "logUpdatedAt": "2026-06-04T14:29:29.772Z",
+    "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+    "costCode": null,
+    "details": [
+      {
+        "id": "019e930b-7a81-7975-958c-8abfff3541ac",
+        "ruleId": "019e930a-0c2b-791a-8ef3-b4d17c87eda5",
+        "stepOrder": 1,
+        "stepType": "REVIEW",
+        "stepLabel": "Thẩm định",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:31:03.554Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:31:48.985Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      },
+      {
+        "id": "019e930b-806b-7ff4-8622-3c648a6f18ae",
+        "ruleId": "019e930a-0c2b-791a-8ef3-b4d17c87eda5",
+        "stepOrder": 2,
+        "stepType": "APPROVE",
+        "stepLabel": "Phê duyệt",
+        "minAmount": null,
+        "maxAmount": null,
+        "approverId": "019e21a4-9687-7946-9f5c-219b2514deea",
+        "mode": "ANY",
+        "isDeleted": false,
+        "logCreatedAt": "2026-06-04T14:31:05.069Z",
+        "logCreatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "logUpdatedAt": "2026-06-04T14:31:50.693Z",
+        "logUpdatedBy": "019e07b0-2786-769c-8ff1-2421a94ba063",
+        "approver": {
+          "id": "019e21a4-9687-7946-9f5c-219b2514deea",
+          "firstName": "My",
+          "surname": "Dương",
+          "employeeId": "A160"
+        }
+      }
+    ]
+  }
+]
