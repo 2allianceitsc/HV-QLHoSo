@@ -75,7 +75,13 @@ function CostCodeDialog({ code, onClose }: { code?: ICostCode | null; onClose: (
                       <SelectValue placeholder="Chọn bộ phận" />
                     </SelectTrigger>
                     <SelectContent>
-                      {departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                      {departments
+                        .filter((d) => !d.isDisabled || d.id === field.value)
+                        .map((d) => (
+                          <SelectItem key={d.id} value={d.id}>
+                            {d.name}{d.isDisabled ? ' (vô hiệu)' : ''}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 )}

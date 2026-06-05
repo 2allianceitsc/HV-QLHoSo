@@ -99,7 +99,15 @@ function UserDialog({ user, onClose }: { user?: IHvUser | null; onClose: () => v
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger className={errors.departmentId ? 'border-destructive' : ''}><SelectValue placeholder="Chọn bộ phận" /></SelectTrigger>
-                    <SelectContent>{departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {departments
+                        .filter((d) => !d.isDisabled || d.id === field.value)
+                        .map((d) => (
+                          <SelectItem key={d.id} value={d.id}>
+                            {d.name}{d.isDisabled ? ' (vô hiệu)' : ''}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
                   </Select>
                 )}
               />

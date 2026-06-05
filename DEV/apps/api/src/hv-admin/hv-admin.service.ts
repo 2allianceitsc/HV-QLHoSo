@@ -152,9 +152,13 @@ export class HvAdminService {
   listDepartments() {
     return this.prisma.department.findMany({
       where: { isDeleted: false },
-      select: { id: true, name: true },
+      select: { id: true, name: true, isDisabled: true },
       orderBy: { name: 'asc' },
     });
+  }
+
+  toggleDepartmentDisabled(id: string, isDisabled: boolean, updatedBy: string) {
+    return this.prisma.department.update({ where: { id }, data: { isDisabled, logUpdatedBy: updatedBy } });
   }
 
   async createDepartment(name: string, createdBy: string) {

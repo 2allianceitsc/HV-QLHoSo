@@ -230,7 +230,7 @@ export const submissionApi = {
     apiClient.get<ApiWrap<IStatusCatalogItem[]>>('/submissions/status-catalog').then((r) => r.data.data),
 
   listDepartments: () =>
-    apiClient.get<ApiWrap<{ id: string; name: string }[]>>('/submissions/departments').then((r) => r.data.data),
+    apiClient.get<ApiWrap<{ id: string; name: string; isDisabled: boolean }[]>>('/submissions/departments').then((r) => r.data.data),
 
   listFilterStaff: (hvRole: 'reviewer' | 'approver') =>
     apiClient.get<ApiWrap<{ id: string; firstName: string; middleName?: string | null; surname: string }[]>>('/submissions/filter-staff', { params: { hvRole } }).then((r) => r.data.data),

@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { useHvDepartments, useCreateHvDepartment, useUpdateHvDepartment, useDeleteHvDepartment } from '@/hooks/useHvAdmin';
+import { useHvDepartments, useCreateHvDepartment, useUpdateHvDepartment, useDeleteHvDepartment, useToggleHvDepartmentDisabled } from '@/hooks/useHvAdmin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Tip } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, EyeOff, Eye } from 'lucide-react';
 import type { IHvDepartment } from '@/api/hvAdmin.api';
 
 function DeptDialog({ dept, onClose }: { dept?: IHvDepartment | null; onClose: () => void }) {
@@ -61,6 +62,7 @@ function DeptDialog({ dept, onClose }: { dept?: IHvDepartment | null; onClose: (
 export function DepartmentManagementPage() {
   const { data: departments = [], isLoading } = useHvDepartments();
   const { mutateAsync: deleteDept, isPending: deleting } = useDeleteHvDepartment();
+  const { mutateAsync: toggleDisabled } = useToggleHvDepartmentDisabled();
   const { toast } = useToast();
   const [editDept, setEditDept] = useState<IHvDepartment | null | undefined>(undefined);
   const [confirmDelete, setConfirmDelete] = useState<IHvDepartment | null>(null);
@@ -77,6 +79,15 @@ export function DepartmentManagementPage() {
     }
   };
 
+  const handleToggleDisabled = async (d: IHvDepartment) => {
+    try {
+      await toggleDisabled({ id: d.id, isDisabled: !d.isDisabled });
+      toast({ title: d.isDisabled ? `Đã kích hoạt bộ phận "${d.name}"` : `Đã vô hiệu hóa bộ phận "${d.name}"` });
+    } catch {
+      toast({ title: 'Có lỗi xảy ra', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -89,15 +100,26 @@ export function DepartmentManagementPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Tên bộ phận</TableHead>
-              <TableHead className="w-20"></TableHead>
+              <TableHead>Trạng thái</TableHead>
+              <TableHead className="w-28"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {departments.map((d) => (
-              <TableRow key={d.id}>
+              <TableRow key={d.id} className={d.isDisabled ? 'opacity-60' : ''}>
                 <TableCell>{d.name}</TableCell>
                 <TableCell>
+                  {d.isDisabled
+                    ? <Badge variant="secondary">Vô hiệu</Badge>
+                    : <Badge variant="outline" className="text-green-600 border-green-300">Hoạt động</Badge>}
+                </TableCell>
+                <TableCell>
                   <div className="flex items-center justify-end gap-1">
+                    <Tip label={d.isDisabled ? 'Kích hoạt' : 'Vô hiệu hóa'}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleToggleDisabled(d)}>
+                        {d.isDisabled ? <Eye size={15} className="text-green-600" /> : <EyeOff size={15} className="text-amber-600" />}
+                      </Button>
+                    </Tip>
                     <Tip label="Sửa">
                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditDept(d)}>
                         <Pencil size={15} />

@@ -89,7 +89,7 @@ export class SubmissionService {
   listDepartments() {
     return this.prisma.department.findMany({
       where: { isDeleted: false },
-      select: { id: true, name: true },
+      select: { id: true, name: true, isDisabled: true },
       orderBy: { name: 'asc' },
     });
   }
