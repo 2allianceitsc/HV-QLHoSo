@@ -43,6 +43,9 @@ export class CreateApprovalRuleDetailDto {
 
   @IsUUID() approverId!: string;
   @IsEnum(['ANY', 'ALL']) @IsOptional() mode?: StepMode;
+
+  // NT only: NULL = fallback; non-null = route for that department. Rejected for MS (validated in service).
+  @IsUUID() @IsOptional() departmentId?: string | null;
 }
 
 export class UpdateApprovalRuleDetailDto {
@@ -53,10 +56,13 @@ export class UpdateApprovalRuleDetailDto {
   @IsOptional() maxAmount?: string | number | null;
   @IsUUID() @IsOptional() approverId?: string;
   @IsEnum(['ANY', 'ALL']) @IsOptional() mode?: StepMode;
+  @IsUUID() @IsOptional() departmentId?: string | null;
 }
 
 export class PreviewApprovalDto {
   @IsEnum(['MS', 'NT']) submissionType!: SubmissionType;
   @IsUUID() @IsOptional() costCodeId?: string;
   @IsNumber() @Min(0) @IsOptional() total?: number;
+  // NT only: submitter's departmentId for per-department routing preview
+  @IsUUID() @IsOptional() departmentId?: string;
 }

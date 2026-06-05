@@ -29,7 +29,7 @@ import type {
 import type { IStaffOption } from '@/api/approvalConfig.api';
 
 function fullName(s: { firstName: string; middleName?: string | null; surname: string }) {
-  return [s.firstName, s.middleName, s.surname].filter(Boolean).join(' ');
+  return [s.surname, s.middleName, s.firstName].filter(Boolean).join(' ');
 }
 
 /** Minimal switch — no extra dep. */
@@ -447,25 +447,28 @@ interface StepGroupProps {
   approvers: IStaffOption[];
 }
 
+const FALLBACK_DEPT_VALUE = '__fallback__';
+
 function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, approvers }: StepGroupProps) {
   const { mutateAsync: addDetail } = useAddRuleDetail();
   const { mutateAsync: updateDetail } = useUpdateRuleDetail();
   const { mutateAsync: removeDetail } = useDeleteRuleDetail();
+  const { data: departments = [] } = useHvDepartments();
   const { toast } = useToast();
   const first = details[0];
   const pool = first.stepType === 'REVIEW' ? reviewers : approvers;
+  const isNt = submissionType === 'NT';
+
+  const hasFallback = isNt && details.some((d) => d.departmentId === null);
 
   const handleAddSibling = async () => {
     const fallback = pool[0];
     if (!fallback) return;
-    // Default the new range to [highest existing max, null) so it doesn't overlap
-    // siblings. For NT (no thresholds) and rules with all-null ranges, fall back to [null, null].
     const isMs = submissionType === 'MS';
     const usesThresholds = isMs && details.some((d) => d.minAmount !== null || d.maxAmount !== null);
     let nextMin: string | null = null;
     if (usesThresholds) {
       const maxes = details.map((d) => d.maxAmount).filter((v): v is string => v !== null);
-      // If any sibling has maxAmount=null it already covers +∞; we still propose its highest min instead.
       if (maxes.length > 0) {
         nextMin = maxes.reduce((a, b) => (BigInt(a) > BigInt(b) ? a : b));
       } else {
@@ -484,6 +487,7 @@ function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, appr
           mode: first.mode,
           minAmount: nextMin,
           maxAmount: null,
+          ...(isNt && { departmentId: null }),
         },
       });
     } catch (err) {
@@ -493,7 +497,7 @@ function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, appr
 
   const updateField = async (
     detail: IApprovalRuleDetail,
-    field: 'stepType' | 'stepLabel' | 'approverId' | 'mode' | 'minAmount' | 'maxAmount',
+    field: 'stepType' | 'stepLabel' | 'approverId' | 'mode' | 'minAmount' | 'maxAmount' | 'departmentId',
     value: string | StepType | StepMode | null,
   ) => {
     try {
@@ -528,12 +532,19 @@ function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, appr
         />
       </div>
 
+      {isNt && !hasFallback && (
+        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
+          ⚠️ Bước này chưa có dòng "Tất cả bộ phận". Bộ phận chưa được cấu hình sẽ không thể submit tờ trình.
+        </div>
+      )}
+
       <table className="w-full text-sm">
         <thead>
           <tr className="text-xs text-muted-foreground">
+            {isNt && <th className="text-left font-normal p-1">Bộ phận</th>}
             <th className="text-left font-normal p-1">Người duyệt</th>
             <th className="text-left font-normal p-1">Mode</th>
-            {submissionType === 'MS' && (
+            {!isNt && (
               <>
                 <th className="text-left font-normal p-1">Từ (VND, để trống = −∞)</th>
                 <th className="text-left font-normal p-1">Đến (VND, để trống = +∞)</th>
@@ -544,7 +555,27 @@ function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, appr
         </thead>
         <tbody>
           {details.map((d) => (
-            <tr key={d.id} className="border-t">
+            <tr key={d.id} className={`border-t ${isNt && d.departmentId === null ? 'bg-muted/20' : ''}`}>
+              {isNt && (
+                <td className="p-1">
+                  <Select
+                    value={d.departmentId ?? FALLBACK_DEPT_VALUE}
+                    onValueChange={(v) =>
+                      updateField(d, 'departmentId', v === FALLBACK_DEPT_VALUE ? null : v)
+                    }
+                  >
+                    <SelectTrigger className="h-8 min-w-[160px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={FALLBACK_DEPT_VALUE}>
+                        <span className="text-muted-foreground italic">Tất cả bộ phận</span>
+                      </SelectItem>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </td>
+              )}
               <td className="p-1">
                 <Select value={d.approverId} onValueChange={(v) => updateField(d, 'approverId', v)}>
                   <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
@@ -564,7 +595,7 @@ function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, appr
                   </SelectContent>
                 </Select>
               </td>
-              {submissionType === 'MS' && (
+              {!isNt && (
                 <>
                   <td className="p-1">
                     <MoneyInput
@@ -592,7 +623,7 @@ function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, appr
 
       <Button variant="ghost" size="sm" onClick={handleAddSibling}>
         <Plus size={12} className="mr-1" />
-        {submissionType === 'MS' ? 'Thêm dòng (ngưỡng khác)' : 'Thêm người duyệt cùng cấp'}
+        {isNt ? 'Thêm dòng phân quyền' : 'Thêm dòng (ngưỡng khác)'}
       </Button>
     </div>
   );

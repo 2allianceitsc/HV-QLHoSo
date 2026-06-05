@@ -225,10 +225,20 @@ export class SubmissionService {
     let plan: Awaited<ReturnType<ApprovalRulesService['resolvePlan']>>['plan'] | null = null;
     if (isSubmit) {
       const total = dto.type === 'NT' ? null : this.sumLines(dto.expenseLines ?? []);
+      // BA §6.1: dept = submission.submitter.departmentId (Staff record, always reliable).
+      let submitterDeptId: string | null = null;
+      if (dto.type === 'NT') {
+        const staff = await this.prisma.staff.findUnique({
+          where: { id: user.staffId },
+          select: { departmentId: true },
+        });
+        submitterDeptId = staff?.departmentId ?? null;
+      }
       const resolved = await this.approvalRules.resolvePlan(
         dto.type,
         dto.type === 'NT' ? null : dto.costCodeId ?? null,
         total,
+        submitterDeptId,
       );
       plan = resolved.plan;
     }
@@ -414,10 +424,21 @@ export class SubmissionService {
       ? null
       : await this.computeTotal(id);
 
+    // BA §6.1: dept = submission.submitter.departmentId (Staff record, always reliable).
+    let submitterDeptId: string | null = null;
+    if (submission.type === 'NT') {
+      const staff = await this.prisma.staff.findUnique({
+        where: { id: submission.submitterId },
+        select: { departmentId: true },
+      });
+      submitterDeptId = staff?.departmentId ?? null;
+    }
+
     const { plan } = await this.approvalRules.resolvePlan(
       submission.type as 'MS' | 'NT',
       submission.type === 'NT' ? null : submission.costCodeId,
       total,
+      submitterDeptId,
     );
 
     return this.prisma.$transaction(async (tx) => {
@@ -812,7 +833,7 @@ export class SubmissionService {
     db: Prisma.TransactionClient = this.prisma as unknown as Prisma.TransactionClient,
   ) {
     const staffName = (s: { firstName: string | null; middleName?: string | null; surname: string | null } | null) =>
-      [s?.firstName, s?.middleName, s?.surname].filter(Boolean).join(' ') || '';
+      [s?.surname, s?.middleName, s?.firstName].filter(Boolean).join(' ') || '';
 
     const [toStaff, submission, subjectRow, bodyRow] = await Promise.all([
       db.staff.findUnique({ where: { id: toStaffId }, select: { companyEmailAddress: true, firstName: true, middleName: true, surname: true } }),

@@ -11,7 +11,7 @@ const ACTION_LABEL: Record<string, string> = {
 };
 
 function fullName(user: { firstName: string; middleName?: string | null; surname: string }) {
-  return [user.firstName, user.middleName, user.surname].filter(Boolean).join(' ');
+  return [user.surname, user.middleName, user.firstName].filter(Boolean).join(' ');
 }
 
 export function WorkflowTimeline({ logs }: { logs: ISubmissionLog[] }) {

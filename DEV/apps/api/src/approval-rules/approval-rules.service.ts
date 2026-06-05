@@ -57,6 +57,7 @@ export class ApprovalRulesService {
           orderBy: [{ stepOrder: 'asc' }, { logCreatedAt: 'asc' }],
           include: {
             approver: { select: { id: true, firstName: true, middleName: true, surname: true } },
+            department: { select: { id: true, name: true } },
           },
         },
       },
@@ -86,7 +87,7 @@ export class ApprovalRulesService {
       .map((r) => {
         const cells: Record<string, Array<{ stepLabel: string | null; minAmount: string | null; maxAmount: string | null; mode: string }>> = {};
         for (const d of r.details) {
-          const fullName = [d.approver.firstName, d.approver.middleName, d.approver.surname]
+          const fullName = [d.approver.surname, d.approver.middleName, d.approver.firstName]
             .filter(Boolean)
             .join(' ');
           if (!staffMap.has(d.approverId)) staffMap.set(d.approverId, { id: d.approverId, name: fullName });
@@ -113,6 +114,7 @@ export class ApprovalRulesService {
           orderBy: [{ stepOrder: 'asc' }, { logCreatedAt: 'asc' }],
           include: {
             approver: { select: { id: true, firstName: true, middleName: true, surname: true } },
+            department: { select: { id: true, name: true } },
           },
         },
       },
@@ -179,11 +181,17 @@ export class ApprovalRulesService {
     if (isNt && (this.toBigInt(dto.minAmount) !== null || this.toBigInt(dto.maxAmount) !== null))
       throw new BadRequestException('NT rule details must not have minAmount/maxAmount');
 
+    if (!isNt && dto.departmentId)
+      throw new BadRequestException('departmentId is only valid for NT rules');
+
     if (min !== null && max !== null && min >= max)
       throw new BadRequestException('minAmount must be less than maxAmount');
 
     // overlap check among MS details in the same step
     if (!isNt) await this.assertNoOverlap(ruleId, dto.stepOrder, min, max, null);
+
+    // NT duplicate: same (ruleId, stepOrder, departmentId, approverId) is redundant
+    if (isNt) await this.assertNoDuplicateNt(ruleId, dto.stepOrder, dto.departmentId ?? null, dto.approverId, null);
 
     return this.prisma.costCodeApprovalRuleDetail.create({
       data: {
@@ -196,6 +204,7 @@ export class ApprovalRulesService {
         maxAmount: max,
         approverId: dto.approverId,
         mode: dto.mode ?? 'ANY',
+        departmentId: isNt ? (dto.departmentId ?? null) : null,
         logCreatedBy: actor,
         logUpdatedBy: actor,
       },
@@ -210,6 +219,9 @@ export class ApprovalRulesService {
     if (!detail || detail.isDeleted) throw new NotFoundException('Detail not found');
     const isNt = detail.rule.submissionType === 'NT';
 
+    if (!isNt && dto.departmentId)
+      throw new BadRequestException('departmentId is only valid for NT rules');
+
     const min = isNt ? null
       : dto.minAmount !== undefined ? this.toBigInt(dto.minAmount) : detail.minAmount;
     const max = isNt ? null
@@ -221,6 +233,12 @@ export class ApprovalRulesService {
 
     if (!isNt) await this.assertNoOverlap(detail.ruleId, stepOrder, min, max, id);
 
+    if (isNt && (dto.departmentId !== undefined || dto.approverId !== undefined || dto.stepOrder !== undefined)) {
+      const deptId = dto.departmentId !== undefined ? (dto.departmentId ?? null) : detail.departmentId;
+      const approverId = dto.approverId ?? detail.approverId;
+      await this.assertNoDuplicateNt(detail.ruleId, stepOrder, deptId, approverId, id);
+    }
+
     return this.prisma.costCodeApprovalRuleDetail.update({
       where: { id },
       data: {
@@ -231,6 +249,7 @@ export class ApprovalRulesService {
         ...(dto.maxAmount !== undefined && { maxAmount: max }),
         ...(dto.approverId !== undefined && { approverId: dto.approverId }),
         ...(dto.mode !== undefined && { mode: dto.mode }),
+        ...(isNt && dto.departmentId !== undefined && { departmentId: dto.departmentId ?? null }),
         logUpdatedBy: actor,
       },
     });
@@ -251,8 +270,14 @@ export class ApprovalRulesService {
    * Resolve plan for a submission about to be submitted.
    * Returns the ordered list of (stepOrder, stepType, stepLabel, approverId, mode) tuples
    * that the caller should snapshot into SubmissionApprovalStep.
+   * @param submitterDeptId - required for NT to apply per-department routing (BA §6.1, D11).
    */
-  async resolvePlan(submissionType: 'MS' | 'NT', costCodeId: string | null, total: bigint | null) {
+  async resolvePlan(
+    submissionType: 'MS' | 'NT',
+    costCodeId: string | null,
+    total: bigint | null,
+    submitterDeptId?: string | null,
+  ) {
     const rule = await this.findHeader(submissionType, costCodeId);
     if (!rule) {
       throw new BadRequestException(
@@ -267,14 +292,43 @@ export class ApprovalRulesService {
       orderBy: [{ stepOrder: 'asc' }, { logCreatedAt: 'asc' }],
     });
 
-    const matches = submissionType === 'NT'
-      ? details
-      : details.filter((d) => {
-          if (total === null) return d.minAmount === null && d.maxAmount === null;
-          if (d.minAmount !== null && total < d.minAmount) return false;
-          if (d.maxAmount !== null && total >= d.maxAmount) return false;
-          return true;
-        });
+    let matches: typeof details;
+
+    if (submissionType === 'NT') {
+      // Per-department routing: for each stepOrder, prefer specific (matching dept) over fallback (null).
+      const specific = details.filter((d) => d.departmentId !== null && d.departmentId === submitterDeptId);
+      const fallback = details.filter((d) => d.departmentId === null);
+
+      // Collect stepOrders that have at least one specific row.
+      const stepOrdersWithSpecific = new Set(specific.map((d) => d.stepOrder));
+
+      // For each step: use specific rows if available, else use fallback rows.
+      matches = details.filter((d) => {
+        if (stepOrdersWithSpecific.has(d.stepOrder)) return d.departmentId === submitterDeptId;
+        return fallback.some((f) => f.stepOrder === d.stepOrder) && d.departmentId === null;
+      });
+
+      if (!matches.length && details.length > 0) {
+        // Some steps exist but none matched this dept — check if it's a dept-not-configured error
+        const hasFallbackForAllSteps = [...new Set(details.map((d) => d.stepOrder))].every((so) =>
+          details.some((d) => d.stepOrder === so && d.departmentId === null),
+        );
+        if (!hasFallbackForAllSteps) {
+          throw new BadRequestException(
+            'Chưa có cấu hình duyệt cho bộ phận này trên tờ trình Nguyên tắc. Vui lòng liên hệ admin.',
+          );
+        }
+        // Pure-fallback case (all steps have fallback, none are specific for this dept)
+        matches = fallback;
+      }
+    } else {
+      matches = details.filter((d) => {
+        if (total === null) return d.minAmount === null && d.maxAmount === null;
+        if (d.minAmount !== null && total < d.minAmount) return false;
+        if (d.maxAmount !== null && total >= d.maxAmount) return false;
+        return true;
+      });
+    }
 
     if (!matches.length)
       throw new BadRequestException('Chưa có cấu hình duyệt phù hợp ở mức tiền này.');
@@ -314,6 +368,7 @@ export class ApprovalRulesService {
             dto.submissionType,
             dto.costCodeId ?? null,
             dto.submissionType === 'NT' ? null : BigInt(Math.trunc(dto.total!)),
+            dto.submissionType === 'NT' ? (dto.departmentId ?? null) : null,
           )
         ).plan;
 
@@ -325,7 +380,7 @@ export class ApprovalRulesService {
     });
     const nameOf = (id: string) => {
       const s = staff.find((x) => x.id === id);
-      return s ? [s.firstName, s.middleName, s.surname].filter(Boolean).join(' ') : '';
+      return s ? [s.surname, s.middleName, s.firstName].filter(Boolean).join(' ') : '';
     };
 
     // Group by stepOrder. In exploratory mode every detail is its own "branch" with its own threshold.
@@ -371,12 +426,33 @@ export class ApprovalRulesService {
     });
     const nameOf = (id: string) => {
       const s = staff.find((x) => x.id === id);
-      return s ? [s.firstName, s.middleName, s.surname].filter(Boolean).join(' ') : '';
+      return s ? [s.surname, s.middleName, s.firstName].filter(Boolean).join(' ') : '';
     };
     return details.map((d) => ({ ...d, name: nameOf(d.approverId) }));
   }
 
   // ───────────────────────── helpers ─────────────────────────
+
+  /** Reject duplicate (ruleId, stepOrder, departmentId, approverId) for NT details. */
+  private async assertNoDuplicateNt(
+    ruleId: string,
+    stepOrder: number,
+    departmentId: string | null,
+    approverId: string,
+    excludeDetailId: string | null,
+  ) {
+    const dup = await this.prisma.costCodeApprovalRuleDetail.findFirst({
+      where: {
+        ruleId,
+        stepOrder,
+        departmentId: departmentId ?? null,
+        approverId,
+        isDeleted: false,
+        ...(excludeDetailId ? { NOT: { id: excludeDetailId } } : {}),
+      },
+    });
+    if (dup) throw new BadRequestException('Đã tồn tại cấu hình cho bộ phận và người duyệt này trong cùng bước.');
+  }
 
   /**
    * Reject if the new range [min,max) overlaps any other live detail in the same

@@ -135,7 +135,7 @@ export class SystemWarningsService {
       staffId: row.staff?.id ?? null,
       username: row.username,
       email: row.email,
-      fullName: [row.staff?.firstName, row.staff?.middleName, row.staff?.surname]
+      fullName: [row.staff?.surname, row.staff?.middleName, row.staff?.firstName]
         .filter(Boolean)
         .join(' ') || row.username,
       allSessionsRevokedAt: row.allSessionsRevokedAt!.toISOString(),
@@ -178,7 +178,7 @@ export class SystemWarningsService {
     const candidates = staffs
       .map((s) => ({
         staffId: s.id,
-        fullName: `${s.firstName ?? ''} ${s.surname ?? ''}`.trim() || 'Unknown',
+        fullName: `${s.surname ?? ''} ${s.firstName ?? ''}`.trim() || 'Unknown',
         photoUrl: s.photoBusiness?.trim() ?? '',
       }))
       .filter((s) => !!s.photoUrl);
