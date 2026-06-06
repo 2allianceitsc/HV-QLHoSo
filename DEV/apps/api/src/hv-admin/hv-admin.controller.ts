@@ -5,10 +5,11 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HvRoleGuard } from '../common/guards/hv-role.guard';
 import { HvRoles } from '../common/decorators/hv-roles.decorator';
 import { IJwtPayload } from '../auth/strategies/jwt.strategy';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
 
 class CreateDeptDto { @IsString() @IsNotEmpty() name!: string; }
 class UpdateDeptDto { @IsString() @IsNotEmpty() name!: string; }
+class ToggleDeptDto { @IsBoolean() isDisabled!: boolean; }
 
 @UseGuards(JwtAuthGuard, HvRoleGuard)
 @HvRoles('admin')
@@ -54,6 +55,11 @@ export class HvAdminController {
   @Put('departments/:id')
   updateDepartment(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateDeptDto) {
     return this.service.updateDepartment(id, dto.name, (req.user as IJwtPayload).staffId);
+  }
+
+  @Put('departments/:id/toggle-disabled')
+  toggleDepartmentDisabled(@Req() req: Request, @Param('id') id: string, @Body() dto: ToggleDeptDto) {
+    return this.service.toggleDepartmentDisabled(id, dto.isDisabled, (req.user as IJwtPayload).staffId);
   }
 
   @Delete('departments/:id')

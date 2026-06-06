@@ -197,6 +197,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
     content: data.content ?? '',
     expenseLines: data.expenseLines ?? [],
     existingInventory: [],
+    costCodeId: data.costCodeId || undefined,
     contractStartDate: data.contractStartDate || undefined,
     contractEndDate: data.contractEndDate || undefined,
     supplier: data.supplier || undefined,
@@ -240,7 +241,13 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
               <Select value={departmentId} onValueChange={(v) => setValue('departmentId', v)}>
                 <SelectTrigger><SelectValue placeholder="Chọn bộ phận" /></SelectTrigger>
                 <SelectContent>
-                  {departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                  {departments
+                    .filter((d) => !d.isDisabled || d.id === departmentId)
+                    .map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name}{d.isDisabled ? ' (vô hiệu)' : ''}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
               {errors.departmentId && <p className="text-xs text-destructive">{errors.departmentId.message}</p>}
