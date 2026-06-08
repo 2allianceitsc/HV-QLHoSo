@@ -30,7 +30,9 @@ const TEMPLATE_VARS: Array<{ key: string; desc: string }> = [
   { key: '{code}', desc: 'Mã tờ trình' },
   { key: '{title}', desc: 'Tiêu đề tờ trình' },
   { key: '{submitter}', desc: 'Người gửi' },
+  { key: '{submitter_username}', desc: 'Username người gửi' },
   { key: '{recipient}', desc: 'Người nhận thông báo' },
+  { key: '{recipient_username}', desc: 'Username người nhận' },
   { key: '{link}', desc: 'Link tờ trình' },
 ];
 

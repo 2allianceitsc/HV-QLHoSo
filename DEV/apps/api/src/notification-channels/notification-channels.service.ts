@@ -28,6 +28,8 @@ export interface IWebhookPayload {
   triggeredAt: string; // ISO
   deciderName?: string;  // E005/E006: người từ chối
   reason?: string;       // E005/E006: lý do từ chối
+  submitterUsername?: string;
+  recipientUsername?: string;
 }
 
 @Injectable()
@@ -99,6 +101,8 @@ export class NotificationChannelsService {
       recipientName: 'Người dùng thử nghiệm',
       submitterName: 'Người gửi thử nghiệm',
       triggeredAt: new Date().toISOString(),
+      submitterUsername: 'nguoi_gui_thu',
+      recipientUsername: 'nguoi_nhan_thu',
     };
 
     if (type === 'email') {
@@ -202,6 +206,8 @@ export class NotificationChannelsService {
       link: payload.submissionUrl,
       ...(payload.deciderName !== undefined && { decider: payload.deciderName }),
       ...(payload.reason !== undefined && { reason: payload.reason }),
+      ...(payload.submitterUsername !== undefined && { submitter_username: payload.submitterUsername }),
+      ...(payload.recipientUsername !== undefined && { recipient_username: payload.recipientUsername }),
     };
     return Object.entries(vars).reduce(
       (acc, [k, v]) => acc.replaceAll(`{${k}}`, v),
