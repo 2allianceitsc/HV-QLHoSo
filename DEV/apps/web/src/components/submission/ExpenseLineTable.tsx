@@ -159,12 +159,13 @@ export function ExpenseLineTable({ control, departmentId, lockedCostCodeId, read
               ) : (
                 <Input
                   type="number"
-                  min={1}
+                  min={0}
                   max={100}
                   defaultValue={field.vatRate ?? 10}
                   className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   onChange={(e) => {
-                    const v = Math.min(100, Math.max(1, parseInt(e.target.value) || 10));
+                    const parsed = parseInt(e.target.value);
+                    const v = Math.min(100, Math.max(0, isNaN(parsed) ? 0 : parsed));
                     setValue(`expenseLines.${i}.vatRate`, v);
                   }}
                 />
@@ -174,7 +175,7 @@ export function ExpenseLineTable({ control, departmentId, lockedCostCodeId, read
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Giá có VAT (VND)</Label>
               <p className="text-sm h-10 flex items-center font-medium text-foreground">
-                {formatVND(Math.round((watchedLines[i]?.amountExVat ?? 0) * (1 + (watchedLines[i]?.vatRate ?? 10) / 100)))}
+                {formatVND(Math.round((watchedLines[i]?.amountExVat ?? 0) * (1 + (watchedLines[i]?.vatRate ?? 0) / 100)))}
               </p>
             </div>
           </div>
@@ -239,7 +240,7 @@ export function ExpenseLineTable({ control, departmentId, lockedCostCodeId, read
       {fields.length > 0 && (
         <div className="text-sm text-right text-muted-foreground">
           Tổng chưa VAT: <strong>{formatVND(watchedLines.reduce((s, l) => s + (l?.amountExVat || 0), 0))}</strong>
-          {' '}· Tổng đã VAT: <strong>{formatVND(watchedLines.reduce((s, l) => s + Math.round((l?.amountExVat || 0) * (1 + (l?.vatRate ?? 10) / 100)), 0))}</strong>
+          {' '}· Tổng đã VAT: <strong>{formatVND(watchedLines.reduce((s, l) => s + Math.round((l?.amountExVat || 0) * (1 + (l?.vatRate ?? 0) / 100)), 0))}</strong>
         </div>
       )}
     </div>

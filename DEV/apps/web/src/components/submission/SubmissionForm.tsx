@@ -29,7 +29,7 @@ const expenseLineSchema = z.object({
   costCodeId: z.string(),
   costCodeName: z.string(),
   amountExVat: z.number().min(0),
-  vatRate: z.number().int().min(1).max(100).default(10),
+  vatRate: z.number().int().min(0).max(100).default(10),
   supplier: z.string().optional(),
   purchasedFor: z.string().optional(),
   purpose: z.string().optional(),
@@ -121,7 +121,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
   // Workflow preview: re-run when costCode or total changes (MS), or once for NT.
   const { mutate: preview, data: previewResult, isPending: previewing, reset: resetPreview } = usePreviewApproval();
   const totalIncVat = expenseLines.reduce(
-    (s, l) => s + Math.round((l.amountExVat ?? 0) * (1 + (l.vatRate ?? 10) / 100)),
+    (s, l) => s + Math.round((l.amountExVat ?? 0) * (1 + (l.vatRate ?? 0) / 100)),
     0,
   );
 

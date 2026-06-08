@@ -21,7 +21,7 @@ export class ExpenseLineDto {
   @IsUUID() costCodeId!: string;
   @IsString() @IsNotEmpty() costCodeName!: string;
   @IsNumber() @Min(0) amountExVat!: number;
-  @IsInt() @Min(1) @Max(100) @IsOptional() vatRate?: number;
+  @IsInt() @Min(0) @Max(100) @IsOptional() vatRate?: number;
   @IsString() @IsOptional() supplier?: string;
   @IsString() @IsOptional() purchasedFor?: string;
   @IsString() @IsOptional() purpose?: string;
