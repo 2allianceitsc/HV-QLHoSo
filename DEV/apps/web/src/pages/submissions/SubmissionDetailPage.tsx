@@ -44,8 +44,8 @@ export function SubmissionDetailPage() {
   const [rejectStepTarget, setRejectStepTarget] = useState<ISubmissionApprovalStep | null>(null);
   const [reassignStepTarget, setReassignStepTarget] = useState<ISubmissionApprovalStep | null>(null);
 
-  if (isLoading) return <div className="p-6 text-muted-foreground">Đang tải...</div>;
-  if (!submission) return <div className="p-6 text-muted-foreground">Không tìm thấy tờ trình.</div>;
+  if (isLoading) return <div className="p-3 sm:p-6 text-muted-foreground">Đang tải...</div>;
+  if (!submission) return <div className="p-3 sm:p-6 text-muted-foreground">Không tìm thấy tờ trình.</div>;
 
   const isOwner = currentUser?.staffId === submission.submitter.id;
   const isAdmin = hvRoles.includes('admin');
@@ -110,34 +110,39 @@ export function SubmissionDetailPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/submissions')}>
+    <div className="max-w-4xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex items-start gap-2">
+        <Button variant="ghost" size="sm" className="shrink-0 mt-0.5" onClick={() => navigate('/submissions')}>
           <ArrowLeft size={16} />
         </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-sm text-muted-foreground">{submission.code}</span>
             <SubmissionStatusBadge status={submission.status} />
+            <div className="ml-auto flex items-center gap-1.5">
+              <Button variant="outline" size="sm" onClick={() => navigate('/submissions/new', { state: { cloneFrom: submission } })}>
+                <Copy size={14} className="mr-1" />
+                <span className="hidden xs:inline">Tạo lại</span>
+              </Button>
+              {canEdit && (
+                <Button variant="outline" size="sm" onClick={() => navigate(`/submissions/${submission.id}/edit`)}>
+                  <Pencil size={14} className="mr-1" />
+                  <span className="hidden xs:inline">Sửa</span>
+                </Button>
+              )}
+              {canDelete && (
+                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={handleDelete} disabled={deleting}>
+                  <Trash2 size={14} className="mr-1" />
+                  <span className="hidden xs:inline">Xóa</span>
+                </Button>
+              )}
+            </div>
           </div>
-          <h1 className="text-xl font-semibold mt-0.5">{submission.title}</h1>
+          <h1 className="text-lg sm:text-xl font-semibold mt-0.5 leading-snug">{submission.title}</h1>
         </div>
-        <Button variant="outline" size="sm" onClick={() => navigate('/submissions/new', { state: { cloneFrom: submission } })}>
-          <Copy size={14} className="mr-1" /> Tạo lại
-        </Button>
-        {canEdit && (
-          <Button variant="outline" size="sm" onClick={() => navigate(`/submissions/${submission.id}/edit`)}>
-            <Pencil size={14} className="mr-1" /> Sửa
-          </Button>
-        )}
-        {canDelete && (
-          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={handleDelete} disabled={deleting}>
-            <Trash2 size={14} className="mr-1" /> Xóa
-          </Button>
-        )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border rounded-lg p-4 bg-muted/20">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-sm border rounded-lg p-3 sm:p-4 bg-muted/20">
         <div><span className="text-muted-foreground block">Loại</span><strong>{submission.type}</strong></div>
         <div><span className="text-muted-foreground block">Bộ phận</span><strong>{submission.department.name}</strong></div>
         <div><span className="text-muted-foreground block">Ngày lập</span><strong>{format(new Date(submission.submittedDate), 'dd/MM/yyyy')}</strong></div>
@@ -193,10 +198,47 @@ export function SubmissionDetailPage() {
         const hasPurpose = lines.some(l => l.purpose);
         const hasUsedBy = lines.some(l => l.usedBy);
         const optionalCols = (hasPurchasedFor ? 1 : 0) + (hasPurpose ? 1 : 0) + (hasUsedBy ? 1 : 0);
+        const totalExVat = lines.reduce((s, el) => s + el.amountExVat, 0);
+        const totalIncVat = lines.reduce((s, el) => s + el.amountIncVat, 0);
         return (
           <div className="space-y-2">
             <h2 className="font-semibold">Chi tiết chi phí</h2>
-            <div className="overflow-x-auto">
+
+            {/* Mobile: card list */}
+            <div className="sm:hidden space-y-2">
+              {lines.map((el, i) => (
+                <div key={el.id} className="border rounded-md p-3 bg-background">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="min-w-0">
+                      <span className="text-xs text-muted-foreground mr-1.5">{i + 1}.</span>
+                      <span className="text-sm font-medium">{el.costCodeName}</span>
+                    </div>
+                    <span className="text-sm font-semibold tabular-nums shrink-0">{formatVND(el.amountIncVat)}</span>
+                  </div>
+                  {el.supplier && (
+                    <p className="text-xs text-muted-foreground mb-1.5">{el.supplier}</p>
+                  )}
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                    <span>Chưa VAT: <strong className="text-foreground">{formatVND(el.amountExVat)}</strong></span>
+                    <span>VAT {el.vatRate ?? 10}%</span>
+                  </div>
+                  {(el.purchasedFor || el.purpose || el.usedBy) && (
+                    <div className="mt-1.5 pt-1.5 border-t text-xs text-muted-foreground space-y-0.5">
+                      {el.purchasedFor && <div><span className="font-medium">Mua cho:</span> {el.purchasedFor}</div>}
+                      {el.purpose && <div><span className="font-medium">Mục đích:</span> {el.purpose}</div>}
+                      {el.usedBy && <div><span className="font-medium">Người dùng:</span> {el.usedBy}</div>}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div className="flex flex-wrap justify-end gap-x-4 gap-y-0.5 text-sm text-muted-foreground">
+                <span>Tổng chưa VAT: <strong className="text-foreground">{formatVND(totalExVat)}</strong></span>
+                <span>Tổng có VAT: <strong className="text-foreground">{formatVND(totalIncVat)}</strong></span>
+              </div>
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr className="border-b bg-muted/40">
@@ -227,8 +269,8 @@ export function SubmissionDetailPage() {
                   ))}
                   <tr className="font-semibold bg-muted/20">
                     <td colSpan={3} className="p-2 text-right">Tổng</td>
-                    <td className="p-2 text-right">{formatVND(lines.reduce((s, el) => s + el.amountExVat, 0))}</td>
-                    <td className="p-2 text-right">{formatVND(lines.reduce((s, el) => s + el.amountIncVat, 0))}</td>
+                    <td className="p-2 text-right">{formatVND(totalExVat)}</td>
+                    <td className="p-2 text-right">{formatVND(totalIncVat)}</td>
                     <td colSpan={1 + optionalCols} />
                   </tr>
                 </tbody>
@@ -241,7 +283,7 @@ export function SubmissionDetailPage() {
       {submission.type === 'NT' && (submission.supplier || submission.contractStartDate) && (
         <div className="space-y-2">
           <h2 className="font-semibold">Thông tin hợp đồng</h2>
-          <div className="grid grid-cols-3 gap-4 text-sm border rounded-md p-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm border rounded-md p-3">
             {submission.supplier && <div><span className="text-muted-foreground block">Nhà cung cấp</span>{submission.supplier}</div>}
             {submission.contractStartDate && <div><span className="text-muted-foreground block">Từ ngày</span>{format(new Date(submission.contractStartDate), 'dd/MM/yyyy')}</div>}
             {submission.contractEndDate && <div><span className="text-muted-foreground block">Đến ngày</span>{format(new Date(submission.contractEndDate), 'dd/MM/yyyy')}</div>}
@@ -281,8 +323,8 @@ export function SubmissionDetailPage() {
       </div>
 
       {canSubmit && (
-        <div className="flex gap-3 pt-2 border-t">
-          <Button onClick={handleSubmit} disabled={submitting}>
+        <div className="pt-2 border-t">
+          <Button className="w-full sm:w-auto" onClick={handleSubmit} disabled={submitting}>
             {submitting ? 'Đang gửi...' : 'Gửi tờ trình'}
           </Button>
         </div>

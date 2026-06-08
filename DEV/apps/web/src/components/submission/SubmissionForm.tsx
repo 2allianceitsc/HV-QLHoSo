@@ -29,7 +29,7 @@ const expenseLineSchema = z.object({
   costCodeId: z.string(),
   costCodeName: z.string(),
   amountExVat: z.number().min(0),
-  vatRate: z.number().int().min(1).max(100).default(10),
+  vatRate: z.number().int().min(0).max(100).default(10),
   supplier: z.string().optional(),
   purchasedFor: z.string().optional(),
   purpose: z.string().optional(),
@@ -121,7 +121,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
   // Workflow preview: re-run when costCode or total changes (MS), or once for NT.
   const { mutate: preview, data: previewResult, isPending: previewing, reset: resetPreview } = usePreviewApproval();
   const totalIncVat = expenseLines.reduce(
-    (s, l) => s + Math.round((l.amountExVat ?? 0) * (1 + (l.vatRate ?? 10) / 100)),
+    (s, l) => s + Math.round((l.amountExVat ?? 0) * (1 + (l.vatRate ?? 0) / 100)),
     0,
   );
 
@@ -212,7 +212,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
 
         {/* Thông tin chung */}
-        <section className="border rounded-lg p-4 space-y-4">
+        <section className="border rounded-lg p-3 sm:p-4 space-y-4">
           <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Thông tin chung</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -354,7 +354,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
         </section>
 
         {/* Nội dung đề xuất */}
-        <section className="border rounded-lg p-4 space-y-4">
+        <section className="border rounded-lg p-3 sm:p-4 space-y-4">
           <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Nội dung đề xuất</h2>
 
           <Textarea {...register('content')} onPaste={handlePaste} placeholder="Mô tả chi tiết nội dung tờ trình..." rows={5} />
@@ -368,7 +368,10 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
               onDragOver={(e) => e.preventDefault()}
             >
               <Paperclip className="mx-auto mb-1 text-muted-foreground" size={20} />
-              <p className="text-sm text-muted-foreground">Kéo thả hoặc nhấn để chọn file — hoặc paste ảnh vào ô nội dung bên trên</p>
+              <p className="text-sm text-muted-foreground">
+                Kéo thả hoặc nhấn để chọn file
+                <span className="hidden sm:inline"> — hoặc paste ảnh vào ô nội dung bên trên</span>
+              </p>
             </div>
             <input
               ref={fileInputRef}
@@ -407,7 +410,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
 
         {/* Thông tin hợp đồng — chỉ hiện với loại NT */}
         {type === 'NT' && (
-          <section className="border rounded-lg p-4 space-y-4">
+          <section className="border rounded-lg p-3 sm:p-4 space-y-4">
             <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Thông tin hợp đồng</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
@@ -443,7 +446,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
 
         {/* Hợp đồng đã ký kết — chỉ hiện với loại NT */}
         {type === 'NT' && (
-          <section className="border rounded-lg p-4 space-y-3">
+          <section className="border rounded-lg p-3 sm:p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Hợp đồng đã ký kết</h2>
               <Button type="button" variant="outline" size="sm" onClick={() => signedContractInputRef.current?.click()}>
@@ -474,7 +477,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
 
         {/* Chi phí — chỉ hiện với loại MS */}
         {type === 'MS' && (
-          <section className="border rounded-lg p-4">
+          <section className="border rounded-lg p-3 sm:p-4">
             <ExpenseLineTable
               control={methods.control as unknown as Control<ICreateSubmissionInput>}
               departmentId={departmentId || undefined}
@@ -483,14 +486,14 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
           </section>
         )}
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2">
           {onSaveDraft && (
-            <Button type="button" variant="outline" disabled={loading}
+            <Button type="button" variant="outline" disabled={loading} className="sm:w-auto w-full"
               onClick={handleSubmit((d) => onSaveDraft(buildPayload(d, 'draft'), pendingFiles, signedContractFile))}>
               {saveDraftLabel}
             </Button>
           )}
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading} className="sm:w-auto w-full">
             {loading ? 'Đang lưu...' : 'Gửi tờ trình'}
           </Button>
         </div>

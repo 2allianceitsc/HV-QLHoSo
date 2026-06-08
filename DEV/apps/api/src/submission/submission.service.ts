@@ -836,12 +836,12 @@ export class SubmissionService {
       [s?.surname, s?.middleName, s?.firstName].filter(Boolean).join(' ') || '';
 
     const [toStaff, submission, subjectRow, bodyRow] = await Promise.all([
-      db.staff.findUnique({ where: { id: toStaffId }, select: { companyEmailAddress: true, firstName: true, middleName: true, surname: true } }),
+      db.staff.findUnique({ where: { id: toStaffId }, select: { companyEmailAddress: true, firstName: true, middleName: true, surname: true, userLogin: { select: { username: true } } } }),
       db.submission.findUnique({
         where: { id: submissionId },
         select: {
           code: true, title: true, submittedDate: true,
-          submitter: { select: { firstName: true, middleName: true, surname: true } },
+          submitter: { select: { firstName: true, middleName: true, surname: true, userLogin: { select: { username: true } } } },
           reviewer:  { select: { firstName: true, middleName: true, surname: true } },
           approver:  { select: { firstName: true, middleName: true, surname: true } },
           department: { select: { name: true } },
@@ -866,6 +866,8 @@ export class SubmissionService {
         ? new Date(submission.submittedDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
         : '',
       link: this.submissionUrl(submissionId),
+      submitter_username: submission.submitter?.userLogin?.username ?? '',
+      recipient_username: toStaff?.userLogin?.username ?? '',
       ...extra,
     };
 
@@ -904,6 +906,8 @@ export class SubmissionService {
         recipientName: staffName(toStaff),
         submitterName: staffName(submission.submitter),
         triggeredAt: new Date().toISOString(),
+        submitterUsername: submission.submitter?.userLogin?.username ?? undefined,
+        recipientUsername: toStaff?.userLogin?.username ?? undefined,
         ...(extra['decider.fullName'] !== undefined && { deciderName: extra['decider.fullName'] }),
         ...(extra['reason'] !== undefined && { reason: extra['reason'] }),
       });

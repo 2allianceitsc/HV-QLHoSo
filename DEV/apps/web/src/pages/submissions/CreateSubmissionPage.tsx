@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useCreateSubmission, useDeleteSubmission } from '@/hooks/useSubmission';
+import { useCreateSubmission, useDeleteSubmission, useSubmission } from '@/hooks/useSubmission';
 import { useToast } from '@/hooks/use-toast';
 import { SubmissionForm } from '@/components/submission/SubmissionForm';
 import { uploadApi } from '@/api/upload.api';
@@ -19,8 +19,11 @@ export function CreateSubmissionPage() {
   const { mutateAsync: del } = useDeleteSubmission();
   const { toast } = useToast();
 
-  const cloneDefaults: Partial<ISubmission> | undefined = cloneFrom
-    ? { ...cloneFrom, submittedDate: new Date().toISOString().slice(0, 10) }
+  // Fetch full detail to get complete expenseLines — list API only returns amountIncVat per line.
+  const { data: cloneDetail, isLoading: cloneLoading } = useSubmission(cloneFrom?.id ?? '');
+
+  const cloneDefaults: Partial<ISubmission> | undefined = cloneDetail
+    ? { ...cloneDetail, submittedDate: new Date().toISOString().slice(0, 10) }
     : undefined;
 
   const handleSubmit = async (data: ICreateSubmissionInput, files: File[], signedContract: File | null) => {
@@ -64,8 +67,12 @@ export function CreateSubmissionPage() {
     }
   };
 
+  if (cloneFrom && cloneLoading) {
+    return <div className="max-w-3xl mx-auto p-3 sm:p-6 text-sm text-muted-foreground">Đang tải dữ liệu tờ trình gốc…</div>;
+  }
+
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
+    <div className="max-w-3xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">{cloneFrom ? 'Tạo lại tờ trình' : 'Tạo tờ trình'}</h1>
         <p className="text-sm text-muted-foreground mt-1">

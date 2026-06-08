@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Plus, Search, FileCheck2, Copy, Filter, Trash2 } from 'lucide-react';
+import { Plus, Search, FileCheck2, Copy, Filter, Trash2, Building2, Calendar, User } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +47,148 @@ function StatCard({ label, value, colorClass = 'text-foreground' }: StatCardProp
     <div className="rounded-lg border border-border bg-card px-4 py-3">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className={`text-2xl font-bold mt-0.5 ${colorClass}`}>{value}</p>
+    </div>
+  );
+}
+
+// ─── Submission Card (mobile) ─────────────────────────────────────────────────
+
+interface SubmissionCardProps {
+  s: any;
+  idx: number;
+  page: number;
+  type: SubmissionType;
+  approvedColor: string;
+  currentUser: any;
+  onNavigate: (id: string) => void;
+  onClone: (s: any) => void;
+  onDelete: (id: string, e: React.MouseEvent) => void;
+}
+
+function SubmissionCard({ s, idx, page, type, approvedColor, currentUser, onNavigate, onClone, onDelete }: SubmissionCardProps) {
+  const totalIncVat = (s.expenseLines ?? []).reduce((sum: number, l: any) => sum + (l.amountIncVat ?? 0), 0);
+  const signedContract = (s.attachments ?? []).find((a: any) => a.fileType === 'signed_contract');
+  const rowNum = (page - 1) * 20 + idx + 1;
+  const isAdmin = currentUser?.hvRoles?.includes('admin');
+  const reviewSteps = (s.approvalSteps ?? []).filter((st: any) => st.stepType === 'REVIEW');
+  const approveSteps = (s.approvalSteps ?? []).filter((st: any) => st.stepType === 'APPROVE');
+  const needsReview = !isAdmin && reviewSteps.some((st: any) => st.approverId === currentUser?.staffId && st.status === 'in_progress');
+  const needsApproval = !isAdmin && approveSteps.some((st: any) => st.approverId === currentUser?.staffId && st.status === 'in_progress');
+
+  return (
+    <div
+      className="rounded-lg border border-border bg-card p-3 cursor-pointer hover:bg-muted/40 active:bg-muted/60 transition-colors"
+      onClick={() => onNavigate(s.id)}
+    >
+      {/* Top row: code + status + actions */}
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-xs text-muted-foreground w-5 shrink-0">{rowNum}.</span>
+          <Link
+            to={`/submissions/${s.id}`}
+            className="font-mono text-sm font-semibold text-primary hover:underline shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {s.code}
+          </Link>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {needsReview && (
+            <span className="inline-block rounded-full px-1.5 py-0.5 text-[10px] font-semibold bg-amber-500 text-white">Thẩm định</span>
+          )}
+          {needsApproval && (
+            <span className="inline-block rounded-full px-1.5 py-0.5 text-[10px] font-semibold bg-blue-600 text-white">Phê duyệt</span>
+          )}
+          <SubmissionStatusBadge status={s.status} />
+        </div>
+      </div>
+
+      {/* Title */}
+      <p className="text-sm font-medium leading-snug mb-2 line-clamp-2">{s.title || <span className="text-muted-foreground">—</span>}</p>
+
+      {/* Meta row */}
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mb-2">
+        <span className="flex items-center gap-1">
+          <Building2 size={11} />
+          {s.department.name}
+        </span>
+        <span className="flex items-center gap-1">
+          <Calendar size={11} />
+          {format(new Date(s.submittedDate), 'dd/MM/yyyy')}
+        </span>
+        {type === 'MS' && totalIncVat > 0 && (
+          <span className="font-medium text-foreground tabular-nums">{fmtMoney(totalIncVat)}</span>
+        )}
+        {type === 'NT' && s.supplier && (
+          <span className="truncate max-w-[160px]">{s.supplier}</span>
+        )}
+        {type === 'NT' && signedContract && (
+          <a
+            href={signedContract.publicUrl}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1 text-green-600 font-medium"
+          >
+            <FileCheck2 size={11} /> HĐ đã ký
+          </a>
+        )}
+      </div>
+
+      {/* Reviewer / Approver + actions */}
+      <div className="flex items-end justify-between gap-2">
+        <div className="space-y-0.5 min-w-0">
+          {reviewSteps.length > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+              <User size={11} className="shrink-0" />
+              <span className="truncate">
+                {reviewSteps.map((st: any, i: number) => (
+                  <span key={st.id}>
+                    {i > 0 && ', '}
+                    <span style={{ color: ['approved', 'rejected'].includes(st.status) ? approvedColor : undefined }}>
+                      {fullName(st.approver)}
+                    </span>
+                  </span>
+                ))}
+              </span>
+            </div>
+          )}
+          {approveSteps.length > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+              <User size={11} className="shrink-0 opacity-0" />
+              <span className="truncate">
+                {approveSteps.map((st: any, i: number) => (
+                  <span key={st.id}>
+                    {i > 0 && ', '}
+                    <span style={{ color: ['approved', 'rejected'].includes(st.status) ? approvedColor : undefined }}>
+                      {fullName(st.approver)}
+                    </span>
+                  </span>
+                ))}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <button
+            title="Tạo lại tờ trình"
+            className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => onClone(s)}
+          >
+            <Copy size={14} />
+          </button>
+          {currentUser?.staffId === s.submitter.id && s.status === 'draft' && (
+            <button
+              title="Xóa tờ trình"
+              className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
+              onClick={(e) => onDelete(s.id, e)}
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -113,7 +255,26 @@ function SubmissionTable({ type, status, q, approvedColor, department, supplier,
 
   return (
     <>
-      <div className="rounded-md border border-border overflow-hidden">
+      {/* Mobile: card list */}
+      <div className="sm:hidden space-y-2">
+        {data.items.map((s, idx) => (
+          <SubmissionCard
+            key={s.id}
+            s={s}
+            idx={idx}
+            page={page}
+            type={type}
+            approvedColor={approvedColor}
+            currentUser={currentUser}
+            onNavigate={(id) => navigate(`/submissions/${id}`)}
+            onClone={(s) => navigate('/submissions/new', { state: { cloneFrom: s } })}
+            onDelete={handleDelete}
+          />
+        ))}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="hidden sm:block rounded-md border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -202,7 +363,7 @@ function SubmissionTable({ type, status, q, approvedColor, department, supplier,
                         reviewSteps.map((st, i) => (
                           <span key={st.id}>
                             {i > 0 && ', '}
-                            <span style={{ color: ['approved', 'skipped'].includes(st.status) ? approvedColor : undefined }}>
+                            <span style={{ color: ['approved', 'rejected'].includes(st.status) ? approvedColor : undefined }}>
                               {fullName(st.approver)}
                             </span>
                           </span>
@@ -217,7 +378,7 @@ function SubmissionTable({ type, status, q, approvedColor, department, supplier,
                         approveSteps.map((st, i) => (
                           <span key={st.id}>
                             {i > 0 && ', '}
-                            <span style={{ color: ['approved', 'skipped'].includes(st.status) ? approvedColor : undefined }}>
+                            <span style={{ color: ['approved', 'rejected'].includes(st.status) ? approvedColor : undefined }}>
                               {fullName(st.approver)}
                             </span>
                           </span>
@@ -329,17 +490,19 @@ export function SubmissionListPage() {
   const approvedColor = (catalog.find((c: IStatusCatalogItem) => c.code === 'approved')?.colorHex) ?? '#22c55e';
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-4 p-3 sm:p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Tờ trình</h1>
-        <Button onClick={() => navigate('/submissions/new')}>
-          <Plus size={16} className="mr-2" /> Tạo tờ trình
+        <h1 className="text-xl sm:text-2xl font-semibold">Tờ trình</h1>
+        <Button size="sm" onClick={() => navigate('/submissions/new')}>
+          <Plus size={15} className="mr-1.5" />
+          <span className="hidden xs:inline">Tạo tờ trình</span>
+          <span className="xs:hidden">Tạo mới</span>
         </Button>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <StatCard label="Tổng số" value={stats?.total ?? 0} />
         <StatCard label="Chờ thẩm định" value={stats?.pending_review ?? 0} colorClass="text-amber-600" />
         <StatCard label="Chờ phê duyệt" value={stats?.in_review ?? 0} colorClass="text-blue-600" />
@@ -348,7 +511,7 @@ export function SubmissionListPage() {
 
       {/* Search + Filter toggle */}
       <div className="flex items-center gap-2">
-        <div className="relative max-w-sm flex-1">
+        <div className="relative flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
@@ -366,7 +529,7 @@ export function SubmissionListPage() {
           )}
         </Button>
         {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={clearFilters}>
+          <Button variant="ghost" size="sm" className="text-muted-foreground hidden sm:flex" onClick={clearFilters}>
             Xóa lọc
           </Button>
         )}

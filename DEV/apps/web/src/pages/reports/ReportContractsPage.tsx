@@ -44,9 +44,9 @@ function DaysLeftCell({ endDate }: { endDate: string | null }) {
 
 function StatCard({ label, value, colorClass = 'text-foreground' }: { label: string; value: number; colorClass?: string }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`text-2xl font-bold mt-0.5 ${colorClass}`}>{value}</p>
+    <div className="rounded-lg border border-border bg-card px-2 sm:px-4 py-2 sm:py-3">
+      <p className="text-xs text-muted-foreground leading-tight">{label}</p>
+      <p className={`text-xl sm:text-2xl font-bold mt-0.5 ${colorClass}`}>{value}</p>
     </div>
   );
 }
@@ -83,13 +83,13 @@ export function ReportContractsPage() {
   const clearFilters = () => { setQInput(''); setQ(''); setContractStatus(''); setEndDateFrom(''); setEndDateTo(''); };
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-3 sm:p-6 space-y-4">
 
       {/* Header — hidden when printing */}
       <div className="flex items-center justify-between print:hidden">
-        <h1 className="text-2xl font-semibold">Báo cáo Hợp đồng</h1>
-        <Button variant="outline" onClick={() => window.print()}>
-          <Printer size={15} className="mr-2" /> In / PDF
+        <h1 className="text-xl sm:text-2xl font-semibold">Báo cáo Hợp đồng</h1>
+        <Button variant="outline" size="sm" onClick={() => window.print()}>
+          <Printer size={15} className="mr-1.5" /> In / PDF
         </Button>
       </div>
 
@@ -98,7 +98,7 @@ export function ReportContractsPage() {
 
       {/* Summary cards */}
       {data?.summary && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 print:hidden">
           <StatCard label="Tổng hợp đồng" value={data.summary.total} />
           <StatCard label="Sắp hết hạn (≤ 30 ngày)" value={data.summary.expiringSoon} colorClass="text-amber-600" />
           <StatCard label="Đã hết hạn" value={data.summary.expired} colorClass="text-red-600" />
@@ -107,7 +107,7 @@ export function ReportContractsPage() {
 
       {/* Filters — hidden when printing */}
       <div className="flex flex-wrap items-center gap-2 print:hidden">
-        <div className="relative max-w-xs flex-1">
+        <div className="relative w-full sm:max-w-xs sm:flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
@@ -138,7 +138,7 @@ export function ReportContractsPage() {
           ))}
         </div>
 
-        <div className="w-72">
+        <div className="w-full sm:w-72">
           <DateRangePresetPicker
             label=""
             placeholder="Ngày hết hạn: Từ – Đến"
@@ -159,7 +159,54 @@ export function ReportContractsPage() {
 
       {data && (
         <>
-          <div className="rounded-md border border-border overflow-hidden">
+          {/* Mobile: card list */}
+          <div className="sm:hidden space-y-2 print:hidden">
+            {data.data.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Không có dữ liệu.</p>
+            ) : data.data.map((item, idx) => {
+              const signedContract = item.attachments[0];
+              const rowNum = (page - 1) * 20 + idx + 1;
+              return (
+                <div key={item.id} className="border rounded-md p-3 bg-card space-y-1.5">
+                  {/* Row 1: code + status + signed contract */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-muted-foreground shrink-0">{rowNum}.</span>
+                    <Link
+                      to={`/submissions/${item.id}`}
+                      className="font-mono text-sm font-semibold text-primary hover:underline"
+                    >
+                      {item.code}
+                    </Link>
+                    <SubmissionStatusBadge status={item.status as import('@/api/submission.api').SubmissionStatus} />
+                    {signedContract && (
+                      <a href={signedContract.publicUrl} target="_blank" rel="noreferrer" title={signedContract.name}
+                        className="ml-auto flex items-center gap-1 text-xs text-green-600 font-medium">
+                        <FileCheck2 size={13} /> HĐ ký
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Row 2: title */}
+                  <p className="text-sm font-medium leading-snug line-clamp-2">{item.title}</p>
+
+                  {/* Row 3: supplier + department */}
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                    {item.supplier && <span>{item.supplier}</span>}
+                    <span>{item.department.name}</span>
+                  </div>
+
+                  {/* Row 4: dates + days left */}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                    <span className="font-mono">{fmtDate(item.contractStartDate)} – {fmtDate(item.contractEndDate)}</span>
+                    <DaysLeftCell endDate={item.contractEndDate} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden sm:block rounded-md border border-border overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>

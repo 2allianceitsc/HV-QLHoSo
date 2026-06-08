@@ -34,7 +34,7 @@ export const hvAdminApi = {
   }) =>
     apiClient.post<ApiWrap<IHvUser>>('/admin/users', data).then((r) => r.data.data),
 
-  updateUser: (id: string, data: Partial<{ email: string; firstName: string; middleName: string; surname: string; departmentId: string; hvRoles: HvRole[]; isActive: boolean }>) =>
+  updateUser: (id: string, data: Partial<{ username: string; email: string; firstName: string; middleName: string; surname: string; departmentId: string; hvRoles: HvRole[]; isActive: boolean }>) =>
     apiClient.put<ApiWrap<IHvUser>>(`/admin/users/${id}`, data).then((r) => r.data.data),
 
   deleteUser: (id: string) =>
