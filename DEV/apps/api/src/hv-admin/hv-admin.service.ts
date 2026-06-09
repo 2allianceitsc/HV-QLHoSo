@@ -31,6 +31,7 @@ export class CreateHvUserDto {
 }
 
 export class UpdateHvUserDto {
+  @IsString() @IsNotEmpty() @IsOptional() username?: string;
   @IsEmail() @IsOptional() email?: string;
   @IsString() @IsOptional() firstName?: string;
   @IsString() @IsOptional() middleName?: string;
@@ -104,8 +105,15 @@ export class HvAdminService {
     const staff = await this.prisma.staff.findFirst({ where: { id: staffId, isDeleted: false } });
     if (!staff) throw new NotFoundException('User not found');
 
-    if (staff.userLoginId && (dto.email || dto.isActive !== undefined)) {
+    if (staff.userLoginId && (dto.email || dto.username || dto.isActive !== undefined)) {
+      if (dto.username) {
+        const conflict = await this.prisma.userLogin.findFirst({
+          where: { username: dto.username, isDeleted: false, NOT: { id: staff.userLoginId } },
+        });
+        if (conflict) throw new ConflictException('Username already taken');
+      }
       const loginData: Record<string, unknown> = { logUpdatedBy: updatedBy };
+      if (dto.username) loginData.username = dto.username;
       if (dto.email) loginData.email = dto.email;
       if (dto.isActive !== undefined) {
         loginData.isActive = dto.isActive;

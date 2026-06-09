@@ -94,8 +94,8 @@ export function ExpenseLineTable({ control, departmentId, lockedCostCodeId, read
       </div>
 
       {fields.map((field, i) => (
-        <div key={field.id} className="border rounded-md p-4 space-y-3 bg-background">
-          <div className="grid grid-cols-2 gap-4">
+        <div key={field.id} className="border rounded-md p-3 sm:p-4 space-y-3 bg-background">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Mã phí</Label>
               {readOnly || lockedCostCode ? (
@@ -139,7 +139,7 @@ export function ExpenseLineTable({ control, departmentId, lockedCostCodeId, read
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-[1fr_72px_1fr] sm:grid-cols-3 gap-3 sm:gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Giá chưa VAT (VND)</Label>
               {readOnly ? (
@@ -180,7 +180,7 @@ export function ExpenseLineTable({ control, departmentId, lockedCostCodeId, read
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Mua cho ai</Label>
               {readOnly ? (
@@ -238,9 +238,9 @@ export function ExpenseLineTable({ control, departmentId, lockedCostCodeId, read
       ))}
 
       {fields.length > 0 && (
-        <div className="text-sm text-right text-muted-foreground">
-          Tổng chưa VAT: <strong>{formatVND(watchedLines.reduce((s, l) => s + (l?.amountExVat || 0), 0))}</strong>
-          {' '}· Tổng đã VAT: <strong>{formatVND(watchedLines.reduce((s, l) => s + Math.round((l?.amountExVat || 0) * (1 + (l?.vatRate ?? 0) / 100)), 0))}</strong>
+        <div className="flex flex-wrap justify-end gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
+          <span>Tổng chưa VAT: <strong>{formatVND(watchedLines.reduce((s, l) => s + (l?.amountExVat || 0), 0))}</strong></span>
+          <span>Tổng đã VAT: <strong>{formatVND(watchedLines.reduce((s, l) => s + Math.round((l?.amountExVat || 0) * (1 + (l?.vatRate ?? 0) / 100)), 0))}</strong></span>
         </div>
       )}
     </div>

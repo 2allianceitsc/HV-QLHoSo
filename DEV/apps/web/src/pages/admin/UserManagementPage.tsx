@@ -46,8 +46,7 @@ function UserDialog({ user, onClose }: { user?: IHvUser | null; onClose: () => v
   const onSubmit = async (data: UserFormValues) => {
     try {
       if (user) {
-        const { username: _u, ...updateData } = data;
-        await update({ id: user.id, ...updateData });
+        await update({ id: user.id, ...data });
         toast({ title: 'Đã cập nhật người dùng' });
       } else {
         await create(data);
@@ -68,13 +67,11 @@ function UserDialog({ user, onClose }: { user?: IHvUser | null; onClose: () => v
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="px-6 py-2 space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              {!user && (
-                <div className="col-span-2 space-y-2">
-                  <Label>Username <span className="text-destructive">*</span></Label>
-                  <Input {...register('username', { required: 'Vui lòng nhập username' })} />
-                  {errors.username && <p className="text-xs text-destructive">{errors.username.message}</p>}
-                </div>
-              )}
+              <div className="col-span-2 space-y-2">
+                <Label>Username <span className="text-destructive">*</span></Label>
+                <Input {...register('username', { required: 'Vui lòng nhập username' })} />
+                {errors.username && <p className="text-xs text-destructive">{errors.username.message}</p>}
+              </div>
               <div className="space-y-2">
                 <Label>Họ <span className="text-destructive">*</span></Label>
                 <Input {...register('surname', { required: 'Vui lòng nhập họ' })} />

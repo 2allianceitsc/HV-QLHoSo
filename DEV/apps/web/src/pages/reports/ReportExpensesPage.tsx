@@ -52,16 +52,16 @@ export function ReportExpensesPage() {
   const hasActiveFilter = !!(fromDate || toDate || supplier);
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-3 sm:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-semibold">Báo cáo chi tiết chi phí</h1>
-        <Button variant="outline" onClick={handleExport} disabled={exporting}>
-          <Download size={15} className="mr-2" />
+        <h1 className="text-xl sm:text-2xl font-semibold">Báo cáo chi tiết chi phí</h1>
+        <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
+          <Download size={15} className="mr-1.5" />
           {exporting ? 'Đang xuất...' : 'Xuất Excel'}
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-3 items-end">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:items-end">
         <DateRangePresetPicker
           label="Khoảng thời gian"
           value={{ startDate: fromDate, endDate: toDate }}
@@ -70,11 +70,11 @@ export function ReportExpensesPage() {
             setToDate(endDate ?? '');
             setPage(1);
           }}
-          className="w-72"
+          className="w-full sm:w-72"
         />
-        <div>
+        <div className="w-full sm:w-auto">
           <p className="text-xs text-muted-foreground mb-1">Nhà cung cấp</p>
-          <Input placeholder="Lọc NCC..." value={supplier} onChange={(e) => { setSupplier(e.target.value); setPage(1); }} className="w-48" />
+          <Input placeholder="Lọc NCC..." value={supplier} onChange={(e) => { setSupplier(e.target.value); setPage(1); }} className="w-full sm:w-48" />
         </div>
         {hasActiveFilter && (
           <Button variant="outline" onClick={() => { setFromDate(''); setToDate(''); setSupplier(''); setPage(1); }}>
@@ -84,10 +84,19 @@ export function ReportExpensesPage() {
       </div>
 
       {data?.summary && (
-        <div className="flex gap-6 border rounded-lg p-4 bg-muted/20">
-          <div><span className="text-muted-foreground text-sm">Tổng chưa VAT</span><p className="text-xl font-bold">{formatVND(data.summary.totalExVat)}</p></div>
-          <div><span className="text-muted-foreground text-sm">Tổng đã VAT</span><p className="text-xl font-bold">{formatVND(data.summary.totalIncVat)}</p></div>
-          <div><span className="text-muted-foreground text-sm">Số dòng</span><p className="text-xl font-bold">{data.total}</p></div>
+        <div className="grid grid-cols-3 gap-2 sm:gap-6 border rounded-lg p-3 sm:p-4 bg-muted/20">
+          <div>
+            <span className="text-muted-foreground text-xs sm:text-sm">Tổng chưa VAT</span>
+            <p className="text-base sm:text-xl font-bold tabular-nums">{formatVND(data.summary.totalExVat)}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground text-xs sm:text-sm">Tổng đã VAT</span>
+            <p className="text-base sm:text-xl font-bold tabular-nums">{formatVND(data.summary.totalIncVat)}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground text-xs sm:text-sm">Số dòng</span>
+            <p className="text-base sm:text-xl font-bold">{data.total}</p>
+          </div>
         </div>
       )}
 
@@ -95,39 +104,70 @@ export function ReportExpensesPage() {
 
       {data && (
         <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tờ trình</TableHead>
-                <TableHead>Bộ phận</TableHead>
-                <TableHead>Mã phí</TableHead>
-                <TableHead>Nhà cung cấp</TableHead>
-                <TableHead className="text-right">Chưa VAT</TableHead>
-                <TableHead className="text-right">Đã VAT</TableHead>
-                <TableHead>Ngày</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-mono text-xs">{item.submission.code}</TableCell>
-                  <TableCell>{item.submission.department.name}</TableCell>
-                  <TableCell>{item.costCode.code}</TableCell>
-                  <TableCell>{item.supplier}</TableCell>
-                  <TableCell className="text-right">{formatVND(item.amountExVat)}</TableCell>
-                  <TableCell className="text-right">{formatVND(item.amountIncVat)}</TableCell>
-                  <TableCell className="text-xs">{format(new Date(item.submission.submittedDate), 'dd/MM/yy')}</TableCell>
-                </TableRow>
-              ))}
-              {data.items.length === 0 && (
+          {/* Mobile: card list */}
+          <div className="sm:hidden space-y-2">
+            {data.items.length === 0 && (
+              <p className="text-center text-muted-foreground py-8">Không có dữ liệu.</p>
+            )}
+            {data.items.map((item) => (
+              <div key={item.id} className="border rounded-md p-3 bg-card space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs text-primary">{item.submission.code}</span>
+                  <span className="text-xs text-muted-foreground">{format(new Date(item.submission.submittedDate), 'dd/MM/yyyy')}</span>
+                </div>
+                <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                  <span>{item.submission.department.name}</span>
+                  <span>·</span>
+                  <span>{item.costCode.code}</span>
+                </div>
+                {item.supplier && (
+                  <p className="text-xs text-muted-foreground truncate">{item.supplier}</p>
+                )}
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm pt-0.5">
+                  <span className="text-muted-foreground text-xs">Chưa VAT: <span className="tabular-nums text-foreground">{formatVND(item.amountExVat)}</span></span>
+                  <span className="text-xs font-semibold tabular-nums">Đã VAT: {formatVND(item.amountIncVat)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden sm:block rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    Không có dữ liệu.
-                  </TableCell>
+                  <TableHead>Tờ trình</TableHead>
+                  <TableHead>Bộ phận</TableHead>
+                  <TableHead>Mã phí</TableHead>
+                  <TableHead>Nhà cung cấp</TableHead>
+                  <TableHead className="text-right">Chưa VAT</TableHead>
+                  <TableHead className="text-right">Đã VAT</TableHead>
+                  <TableHead>Ngày</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {data.items.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-mono text-xs">{item.submission.code}</TableCell>
+                    <TableCell>{item.submission.department.name}</TableCell>
+                    <TableCell>{item.costCode.code}</TableCell>
+                    <TableCell>{item.supplier}</TableCell>
+                    <TableCell className="text-right">{formatVND(item.amountExVat)}</TableCell>
+                    <TableCell className="text-right">{formatVND(item.amountIncVat)}</TableCell>
+                    <TableCell className="text-xs">{format(new Date(item.submission.submittedDate), 'dd/MM/yy')}</TableCell>
+                  </TableRow>
+                ))}
+                {data.items.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                      Không có dữ liệu.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
           {data.totalPages > 1 && <TablePagination page={page} totalPages={data.totalPages} onPageChange={setPage} />}
         </>
       )}
