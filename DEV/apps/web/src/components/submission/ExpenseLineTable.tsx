@@ -51,7 +51,7 @@ function CurrencyInput({
   );
 }
 
-export function ExpenseLineTable({ control, departmentId, lockedCostCodeId, readOnly }: Props) {
+export function ExpenseLineTable({ control, lockedCostCodeId, readOnly }: Props) {
   const { fields, append, remove } = useFieldArray({ control, name: 'expenseLines' });
   const { setValue } = useFormContext<ICreateSubmissionInput>();
   const watchedLines = useWatch({ control, name: 'expenseLines' }) ?? [];
