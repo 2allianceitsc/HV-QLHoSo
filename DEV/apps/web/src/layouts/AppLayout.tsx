@@ -46,31 +46,35 @@ import type { IUserPermissionPayload } from '@/api/permissions.api';
 function isItemVisible(
   item: INavGroupConfig['items'][number],
   roles: string[],
+  hvRoles: string[],
   permissions: IUserPermissionPayload | null,
 ): boolean {
-  // Phase 3+: if the item declares `screen` AND permissions are loaded, the
-  // matrix is the authoritative source. No fall-through to roles — a missing
-  // entry means default-deny.
   if (item.screen && permissions) {
     if (permissions.isSuperAdmin) return true;
     const entries = permissions.permissions.filter((p) => p.screen === item.screen);
     const screenEntry = entries.find((e) => e.tab === null);
     return screenEntry?.actions.includes('VIEW') ?? false;
   }
-  // Pre-load window OR item has no `screen`: legacy role filter.
-  if (!item.roles) return true;
-  return item.roles.some((r) => roles.includes(r));
+  if (!item.roles && !item.hvRoles) return true;
+  if (item.hvRoles?.some((r) => hvRoles.includes(r))) return true;
+  if (item.roles?.some((r) => roles.includes(r))) return true;
+  return false;
 }
 
 function buildNavGroups(
   roles: string[],
+  hvRoles: string[],
   permissions: IUserPermissionPayload | null,
 ): INavGroup[] {
   return NAV_GROUPS
-    .filter((group) => !group.roles || group.roles.some((r) => roles.includes(r)))
+    .filter((group) =>
+      (!group.roles && !group.hvRoles) ||
+      group.roles?.some((r) => roles.includes(r)) ||
+      group.hvRoles?.some((r) => hvRoles.includes(r)),
+    )
     .map((group) => ({
       label: group.label,
-      items: group.items.filter((item) => isItemVisible(item, roles, permissions)),
+      items: group.items.filter((item) => isItemVisible(item, roles, hvRoles, permissions)),
     }))
     .filter((group) => group.items.length > 0);
 }
@@ -136,7 +140,7 @@ export function AppLayout() {
   const location = useLocation();
   const { user, permissions } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
-  const navGroups = buildNavGroups(user?.roles ?? [], permissions);
+  const navGroups = buildNavGroups(user?.roles ?? [], user?.hvRoles ?? [], permissions);
 
   function toggleGroup(gi: number) {
     setCollapsedGroups((prev) => {

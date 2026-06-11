@@ -53,12 +53,17 @@ const STAFF_SELECT = {
 export class HvAdminService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listUsers(hvRole?: string) {
-    return this.prisma.staff.findMany({
+  async listUsers(hvRole?: string, isSuperAdmin = false) {
+    const users = await this.prisma.staff.findMany({
       where: { isDeleted: false, ...(hvRole ? { hvRoles: { has: hvRole } } : {}) },
       select: STAFF_SELECT,
       orderBy: { surname: 'asc' },
     });
+    // Admin (không phải superadmin) không được nhìn thấy tài khoản superadmin
+    if (!isSuperAdmin) {
+      return users.filter((u) => u.userLogin?.username !== 'superadmin');
+    }
+    return users;
   }
 
   async createUser(dto: CreateHvUserDto, createdBy: string) {
