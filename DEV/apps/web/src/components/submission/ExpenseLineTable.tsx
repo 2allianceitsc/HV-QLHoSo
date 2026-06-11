@@ -55,7 +55,7 @@ export function ExpenseLineTable({ control, departmentId, lockedCostCodeId, read
   const { fields, append, remove } = useFieldArray({ control, name: 'expenseLines' });
   const { setValue } = useFormContext<ICreateSubmissionInput>();
   const watchedLines = useWatch({ control, name: 'expenseLines' }) ?? [];
-  const { data: costCodes = [] } = useCostCodes(departmentId);
+  const { data: costCodes = [] } = useCostCodes();
   const lockedCostCode = lockedCostCodeId ? costCodes.find((c) => c.id === lockedCostCodeId) : undefined;
 
   // BA §5.4: when the submission's cost code changes, force every existing line to match.

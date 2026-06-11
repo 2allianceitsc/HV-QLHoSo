@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { cn } from '@/lib/utils';
 import { Paperclip, X, FileText, Image, Upload } from 'lucide-react';
 import { ExpenseLineTable } from '@/components/submission/ExpenseLineTable';
@@ -106,7 +107,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
   const departmentId = watch('departmentId');
   const costCodeId = watch('costCodeId');
   const expenseLines = watch('expenseLines') ?? [];
-  const { data: allCostCodes = [] } = useCostCodes(departmentId || undefined);
+  const { data: allCostCodes = [] } = useCostCodes();
 
   // BA §7.2: changing cost code after lines are entered clears them (with confirm).
   const handleCostCodeChange = (newId: string) => {
@@ -275,14 +276,13 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
           {type === 'MS' && (
             <div className="space-y-1.5">
               <Label>Loại chi phí <span className="text-destructive">*</span></Label>
-              <Select value={costCodeId ?? ''} onValueChange={handleCostCodeChange}>
-                <SelectTrigger><SelectValue placeholder="Chọn loại chi phí" /></SelectTrigger>
-                <SelectContent>
-                  {allCostCodes.map((cc) => (
-                    <SelectItem key={cc.id} value={cc.id}>{cc.code} - {cc.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={costCodeId ?? ''}
+                onValueChange={handleCostCodeChange}
+                options={allCostCodes.map((cc) => ({ value: cc.id, label: `${cc.code} - ${cc.name}` }))}
+                placeholder="Chọn loại chi phí"
+                searchPlaceholder="Tìm theo mã hoặc tên..."
+              />
               {errors.costCodeId && <p className="text-xs text-destructive">{errors.costCodeId.message}</p>}
             </div>
           )}
@@ -292,50 +292,85 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
             <div className="border-l-2 border-primary/40 pl-3 py-2 bg-muted/20 text-xs space-y-1">
               {previewing && <span className="text-muted-foreground">Đang dò luồng duyệt...</span>}
               {!previewing && previewResult && previewResult.steps.length > 0 && (() => {
-                // Distinct step orders for the "N bước" count (branches share a stepOrder).
-                const stepOrders = new Set(previewResult.steps.map((s) => s.stepOrder));
-                const fmtMoneyShort = (v: string) => {
+                // Helpers
+                const fmtAmt = (v: string) => {
                   const n = Number(v);
                   if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString('vi-VN')}tr`;
-                  if (n >= 1_000) return `${(n / 1_000).toLocaleString('vi-VN')}k`;
+                  if (n >= 1_000) return `${Math.round(n / 1_000).toLocaleString('vi-VN')}k`;
                   return n.toLocaleString('vi-VN');
                 };
-                const thresholdText = (min: string | null, max: string | null) => {
-                  if (!min && !max) return '';
-                  if (!min) return ` (<${fmtMoneyShort(max!)})`;
-                  if (!max) return ` (≥${fmtMoneyShort(min)})`;
-                  return ` (${fmtMoneyShort(min)}–${fmtMoneyShort(max)})`;
+                const thresholdLabel = (min: string | null, max: string | null) => {
+                  if (!min && !max) return 'mọi mức';
+                  if (!min) return `<${fmtAmt(max!)}`;
+                  if (!max) return `≥${fmtAmt(min)}`;
+                  return `${fmtAmt(min)}–${fmtAmt(max)}`;
                 };
-                // Build "1, 2, 3.1, 3.2" numbering: each stepOrder gets sub-indices only when it has >1 branch.
-                const branchCountByOrder = new Map<number, number>();
+
+                // Level-1 group: by stepOrder. Level-2 group: by (minAmount, maxAmount).
+                type Branch = { min: string | null; max: string | null; mode: string; approvers: { id: string; name: string }[] };
+                type StepGroup = { stepOrder: number; stepType: string; stepLabel: string | null; branches: Branch[] };
+                const groups: StepGroup[] = [];
+                const byOrder = new Map<number, StepGroup>();
                 for (const s of previewResult.steps) {
-                  branchCountByOrder.set(s.stepOrder, (branchCountByOrder.get(s.stepOrder) ?? 0) + 1);
+                  let g = byOrder.get(s.stepOrder);
+                  if (!g) {
+                    g = { stepOrder: s.stepOrder, stepType: s.stepType, stepLabel: s.stepLabel, branches: [] };
+                    groups.push(g);
+                    byOrder.set(s.stepOrder, g);
+                  }
+                  const key = `${s.minAmount ?? ''}|${s.maxAmount ?? ''}`;
+                  const existing = g.branches.find((b) => `${b.min ?? ''}|${b.max ?? ''}` === key);
+                  if (existing) {
+                    // Same threshold, merge approvers (case A: multi-approver same step)
+                    for (const a of s.approvers) {
+                      if (!existing.approvers.find((ea) => ea.id === a.id)) existing.approvers.push(a);
+                    }
+                  } else {
+                    g.branches.push({ min: s.minAmount, max: s.maxAmount, mode: s.mode, approvers: [...s.approvers] });
+                  }
                 }
-                const orderRank = new Map<number, number>();
-                Array.from(stepOrders).sort((a, b) => a - b).forEach((o, i) => orderRank.set(o, i + 1));
-                const seenPerOrder = new Map<number, number>();
+                groups.sort((a, b) => a.stepOrder - b.stepOrder);
+
+                const isExploratory = expenseLines.length === 0 && type === 'MS';
+
                 return (
                   <>
                     <div className="font-medium">
-                      Luồng duyệt dự kiến ({stepOrders.size} bước):
+                      Luồng duyệt dự kiến ({groups.length} bước){isExploratory ? ' — tất cả ngưỡng' : ''}:
                     </div>
-                    <ul className="ml-5 space-y-0.5">
-                      {previewResult.steps.map((s, i) => {
-                        const rank = orderRank.get(s.stepOrder)!;
-                        const hasBranches = (branchCountByOrder.get(s.stepOrder) ?? 1) > 1;
-                        const subIdx = (seenPerOrder.get(s.stepOrder) ?? 0) + 1;
-                        seenPerOrder.set(s.stepOrder, subIdx);
-                        const num = hasBranches ? `${rank}.${subIdx}` : `${rank}`;
+                    <ul className="space-y-1">
+                      {groups.map((g, gi) => {
+                        const rank = gi + 1;
+                        const stepName = g.stepLabel ?? (g.stepType === 'REVIEW' ? 'Thẩm định' : 'Phê duyệt');
+                        const hasBranches = g.branches.length > 1;
                         return (
-                          <li key={`${s.stepOrder}-${i}`} className="flex gap-1.5">
-                            <span className="tabular-nums text-muted-foreground shrink-0">{num}.</span>
-                            <span>
-                              <span className="font-medium">{s.stepLabel ?? (s.stepType === 'REVIEW' ? 'Thẩm định' : 'Phê duyệt')}</span>
-                              <span className="text-muted-foreground">{thresholdText(s.minAmount, s.maxAmount)}</span>
-                              {' — '}
-                              {s.approvers.map((a) => a.name).join(s.mode === 'ALL' ? ' + ' : ' / ')}
-                              {s.mode === 'ALL' && ' (tất cả)'}
-                            </span>
+                          <li key={g.stepOrder}>
+                            <div className="flex gap-1.5">
+                              <span className="tabular-nums text-muted-foreground shrink-0">{rank}.</span>
+                              <span className="font-medium">{stepName}</span>
+                            </div>
+                            {hasBranches ? (
+                              <ul className="ml-5 mt-0.5 space-y-0.5">
+                                {g.branches.map((b, bi) => (
+                                  <li key={bi} className="flex gap-1.5">
+                                    <span className="tabular-nums text-muted-foreground shrink-0">{rank}.{bi + 1}</span>
+                                    <span>
+                                      <span className="text-muted-foreground">[{thresholdLabel(b.min, b.max)}]</span>
+                                      {' '}{b.approvers.map((a) => a.name).join(b.mode === 'ALL' ? ' VÀ ' : ' HOẶC ')}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <div className="ml-5 flex gap-1 text-muted-foreground">
+                                {(g.branches[0].min || g.branches[0].max) && (
+                                  <span>[{thresholdLabel(g.branches[0].min, g.branches[0].max)}]</span>
+                                )}
+                                <span className="text-foreground">
+                                  {g.branches[0].approvers.map((a) => a.name).join(g.branches[0].mode === 'ALL' ? ' VÀ ' : ' HOẶC ')}
+                                </span>
+                              </div>
+                            )}
                           </li>
                         );
                       })}

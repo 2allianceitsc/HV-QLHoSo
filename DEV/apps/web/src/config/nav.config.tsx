@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 
 export type AppRole = 'EMPLOYEE' | 'MANAGER' | 'HR_ADMIN' | 'SUPER_ADMIN';
+export type HvRoleNav = 'staff' | 'reviewer' | 'approver' | 'admin';
 
 export interface INavItemConfig {
   label: string;
@@ -37,11 +38,13 @@ export interface INavItemConfig {
   end?: boolean;
   screen?: string;
   roles?: AppRole[];
+  hvRoles?: HvRoleNav[];
 }
 
 export interface INavGroupConfig {
   label?: string;
   roles?: AppRole[];
+  hvRoles?: HvRoleNav[];
   items: INavItemConfig[];
 }
 
@@ -66,8 +69,9 @@ export const NAV_GROUPS: INavGroupConfig[] = [
   },
   {
     label: 'Quản trị',
-    // admin only (SUPER_ADMIN maps to hvRole=admin)
+    // SUPER_ADMIN (legacy) hoặc hvRole=admin đều thấy menu này
     roles: ['SUPER_ADMIN'],
+    hvRoles: ['admin'],
     items: [
       { label: 'Người dùng',      path: '/admin/users',           icon: <Users size={16} /> },
       { label: 'Bộ phận',         path: '/admin/departments',     icon: <Building2 size={16} /> },

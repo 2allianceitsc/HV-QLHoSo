@@ -18,8 +18,10 @@ export class HvAdminController {
   constructor(private readonly service: HvAdminService) {}
 
   @Get('users')
-  listUsers(@Query('hvRole') hvRole?: string) {
-    return this.service.listUsers(hvRole);
+  listUsers(@Req() req: Request, @Query('hvRole') hvRole?: string) {
+    const user = req.user as IJwtPayload;
+    const isSuperAdmin = user.roles?.includes('SUPER_ADMIN' as never) ?? false;
+    return this.service.listUsers(hvRole, isSuperAdmin);
   }
 
   @Post('users')
