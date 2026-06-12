@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { ArrowLeft, Pencil, Copy, FileText, Trash2 } from 'lucide-react';
+import { ArrowLeft, Pencil, Copy, FileText, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SubmissionStatusBadge } from '@/components/submission/SubmissionStatusBadge';
 import { StepTimeline } from '@/components/submission/StepTimeline';
@@ -17,6 +18,7 @@ import {
 } from '@/hooks/useSubmission';
 import { useAuthStore } from '@/stores/auth.store';
 import { useToast } from '@/hooks/use-toast';
+import { uploadApi } from '@/api/upload.api';
 import type { HvRole, ISubmissionApprovalStep } from '@/api/submission.api';
 
 function fullName(s: { firstName: string; middleName?: string | null; surname: string }) {
@@ -43,6 +45,26 @@ export function SubmissionDetailPage() {
 
   const [rejectStepTarget, setRejectStepTarget] = useState<ISubmissionApprovalStep | null>(null);
   const [reassignStepTarget, setReassignStepTarget] = useState<ISubmissionApprovalStep | null>(null);
+  const [uploadingContract, setUploadingContract] = useState(false);
+  const contractInputRef = useRef<HTMLInputElement>(null);
+  const qc = useQueryClient();
+
+  const handleContractUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !submission) return;
+    if (file.size > 20 * 1024 * 1024) { toast({ title: 'File không được vượt quá 20MB', variant: 'destructive' }); return; }
+    setUploadingContract(true);
+    try {
+      await uploadApi.uploadFile(file, 'signed_contract', submission.id);
+      await qc.invalidateQueries({ queryKey: ['submissions', submission.id] });
+      toast({ title: 'Đã tải lên hợp đồng đã ký' });
+    } catch {
+      toast({ title: 'Không thể tải lên file', variant: 'destructive' });
+    } finally {
+      setUploadingContract(false);
+    }
+  };
 
   if (isLoading) return <div className="p-3 sm:p-6 text-muted-foreground">Đang tải...</div>;
   if (!submission) return <div className="p-3 sm:p-6 text-muted-foreground">Không tìm thấy tờ trình.</div>;
@@ -192,6 +214,36 @@ export function SubmissionDetailPage() {
         })()}
       </div>
 
+      {submission.type === 'MS' && (() => {
+        const signedContract = submission.attachments?.find((a) => a.fileType === 'signed_contract');
+        return (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold">Hợp đồng đã ký kết</h2>
+              <button
+                type="button"
+                disabled={uploadingContract}
+                onClick={() => contractInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium hover:bg-muted transition-colors disabled:opacity-50"
+              >
+                <Upload size={12} /> {uploadingContract ? 'Đang tải...' : 'Tải lên'}
+              </button>
+            </div>
+            <input ref={contractInputRef} type="file" className="hidden" onChange={handleContractUpload} />
+            <div className="border rounded-md p-3">
+              {signedContract ? (
+                <a href={signedContract.publicUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline">
+                  <FileText size={14} className="shrink-0" />
+                  {signedContract.name}
+                </a>
+              ) : (
+                <p className="text-sm text-muted-foreground">Chưa có hợp đồng đã ký.</p>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {submission.type === 'MS' && submission.expenseLines && submission.expenseLines.length > 0 && (() => {
         const lines = submission.expenseLines!;
         const hasPurchasedFor = lines.some(l => l.purchasedFor);
@@ -295,7 +347,18 @@ export function SubmissionDetailPage() {
         const signedContract = submission.attachments?.find((a) => a.fileType === 'signed_contract');
         return (
           <div className="space-y-2">
-            <h2 className="font-semibold">Hợp đồng đã ký kết</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold">Hợp đồng đã ký kết</h2>
+              <button
+                type="button"
+                disabled={uploadingContract}
+                onClick={() => contractInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium hover:bg-muted transition-colors disabled:opacity-50"
+              >
+                <Upload size={12} /> {uploadingContract ? 'Đang tải...' : 'Tải lên'}
+              </button>
+            </div>
+            <input ref={contractInputRef} type="file" className="hidden" onChange={handleContractUpload} />
             <div className="border rounded-md p-3">
               {signedContract ? (
                 <a href={signedContract.publicUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline">

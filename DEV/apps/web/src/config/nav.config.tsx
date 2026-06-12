@@ -59,11 +59,10 @@ export const NAV_GROUPS: INavGroupConfig[] = [
   },
   {
     label: 'Báo cáo',
-    // reviewer (MANAGER) + approver (HR_ADMIN) + admin (SUPER_ADMIN)
-    roles: ['MANAGER', 'HR_ADMIN', 'SUPER_ADMIN'],
+    hvRoles: ['reviewer', 'approver', 'admin'],
     items: [
       { label: 'Tổng hợp',         path: '/reports',            icon: <BarChart2 size={16} />, end: true },
-      { label: 'Chi tiết chi phí', path: '/reports/expenses',  icon: <DollarSign size={16} />, roles: ['HR_ADMIN', 'SUPER_ADMIN'] },
+      { label: 'Chi tiết chi phí', path: '/reports/expenses',  icon: <DollarSign size={16} />, hvRoles: ['approver', 'admin'] },
       { label: 'Hợp đồng',        path: '/reports/contracts', icon: <FileCheck2 size={16} /> },
     ],
   },
