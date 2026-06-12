@@ -122,7 +122,7 @@ function SubmissionCard({ s, idx, page, type, approvedColor, currentUser, onNavi
         {type === 'NT' && s.supplier && (
           <span className="truncate max-w-[160px]">{s.supplier}</span>
         )}
-        {type === 'NT' && signedContract && (
+        {signedContract && (
           <a
             href={signedContract.publicUrl}
             target="_blank"
@@ -286,7 +286,7 @@ function SubmissionTable({ type, status, q, approvedColor, department, supplier,
                 <TableHead className="whitespace-nowrap">VỀ VIỆC</TableHead>
                 {type === 'NT' && <TableHead className="whitespace-nowrap">NHÀ CUNG CẤP</TableHead>}
                 {type === 'MS' && <TableHead className="whitespace-nowrap text-right">SỐ TIỀN</TableHead>}
-                {type === 'NT' && <TableHead className="whitespace-nowrap">HĐ ĐÃ KÝ</TableHead>}
+                <TableHead className="whitespace-nowrap">HĐ ĐÃ KÝ</TableHead>
                 <TableHead className="whitespace-nowrap">THẨM ĐỊNH</TableHead>
                 <TableHead className="whitespace-nowrap">PHÊ DUYỆT</TableHead>
                 <TableHead className="whitespace-nowrap">TRẠNG THÁI</TableHead>
@@ -344,17 +344,15 @@ function SubmissionTable({ type, status, q, approvedColor, department, supplier,
                       </TableCell>
                     )}
 
-                    {type === 'NT' && (
-                      <TableCell className="text-center">
-                        {signedContract ? (
-                          <a href={signedContract.publicUrl} target="_blank" rel="noreferrer" title={signedContract.name} onClick={(e) => e.stopPropagation()}>
-                            <FileCheck2 size={16} className="mx-auto text-green-600" />
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                    )}
+                    <TableCell className="text-center">
+                      {signedContract ? (
+                        <a href={signedContract.publicUrl} target="_blank" rel="noreferrer" title={signedContract.name} onClick={(e) => e.stopPropagation()}>
+                          <FileCheck2 size={16} className="mx-auto text-green-600" />
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
 
                     <TableCell className="whitespace-nowrap text-sm">
                       {reviewSteps.length === 0 ? (

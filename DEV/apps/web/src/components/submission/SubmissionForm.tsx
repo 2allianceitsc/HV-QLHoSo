@@ -441,6 +441,37 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
             )}
           </div>
 
+          {/* Hợp đồng đã ký kết — MS */}
+          {type === 'MS' && (
+            <div className="space-y-2 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <Label>Hợp đồng đã ký kết</Label>
+                <Button type="button" variant="outline" size="sm" onClick={() => signedContractInputRef.current?.click()}>
+                  <Upload size={13} className="mr-1.5" /> Tải lên
+                </Button>
+              </div>
+              <input ref={signedContractInputRef} type="file" className="hidden" onChange={handleSignedContractChange} />
+              {signedContractFile ? (
+                <div className="flex items-center gap-2 text-sm p-2 rounded-md border bg-muted/20">
+                  <FileText size={14} className="shrink-0 text-muted-foreground" />
+                  <span className="flex-1 truncate">{signedContractFile.name}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">{formatBytes(signedContractFile.size)}</span>
+                  <button type="button" onClick={() => setSignedContractFile(null)} className="shrink-0 text-muted-foreground hover:text-destructive"><X size={14} /></button>
+                </div>
+              ) : existingSignedContract ? (
+                <div className="flex items-center gap-2 text-sm p-2 rounded-md border bg-muted/20">
+                  <FileText size={14} className="shrink-0 text-muted-foreground" />
+                  <a href={existingSignedContract.publicUrl} target="_blank" rel="noreferrer" className="flex-1 truncate text-primary hover:underline">
+                    {existingSignedContract.name}
+                  </a>
+                  <span className="text-xs text-muted-foreground shrink-0">Đã tải lên</span>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Chưa có file. Nhấn "Tải lên" để đính kèm hợp đồng đã ký.</p>
+              )}
+            </div>
+          )}
+
         </section>
 
         {/* Thông tin hợp đồng — chỉ hiện với loại NT */}
