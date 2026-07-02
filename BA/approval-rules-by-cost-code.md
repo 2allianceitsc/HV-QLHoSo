@@ -371,7 +371,19 @@ Có 2 sub-tab:
 ### 7.2 Màn hình tạo tờ trình S06 (sửa)
 
 - **Step 1 (mới):** chọn `CostCode` — required, dropdown có search.
-  - Sau khi chọn, hiển thị preview: "Tờ trình này sẽ qua N bước duyệt (...)" — call API resolve preview với amount=0 để xem các step không phụ thuộc ngưỡng.
+  - Sau khi chọn, hiển thị preview "Luồng duyệt dự kiến" — call `POST /api/approval-rules/preview` với `total=null` (chưa biết).
+  - Quy tắc render preview:
+    - Group detail theo `stepOrder` → mỗi step = 1 dòng heading "Bước N — {stepLabel}".
+    - Trong cùng `stepOrder`, group tiếp theo `(minAmount, maxAmount)` → mỗi nhóm threshold = 1 sub-item.
+      - Nếu chỉ có 1 nhóm threshold (không routing) → render thẳng: "Bước N — {label} — Người A **HOẶC** Người B" (mode=ANY) hoặc "...Người A **VÀ** Người B" (mode=ALL).
+      - Nếu có >1 nhóm threshold → render dạng nhánh:
+        ```
+        Bước N — {label}
+          N.1. {label} (<{max})  — Người A HOẶC Người B
+          N.2. {label} (≥{min})  — Người C
+        ```
+    - Format ngưỡng: `<500k` / `≥500k` / `500k–2tr` / "mọi mức" (nếu cả 2 đều null).
+  - Sau khi user nhập tổng tiền ở step 2, **preview thu gọn** về 1 nhánh threshold thực tế khớp với total.
   - Nếu cost code chưa có rule → disable nút "Tiếp tục", show link liên hệ admin.
 - **Step 2:** nhập các `ExpenseLine` — field `costCodeId` của mỗi line **disable + auto-fill** giá trị ở step 1.
 - **Đổi CostCode sau khi đã nhập line:** confirm dialog "Đổi loại chi phí sẽ xóa các dòng đang nhập. Tiếp tục?".
@@ -443,7 +455,12 @@ Có 2 sub-tab:
 - `approverId`: existing Staff, không deleted.
 - `mode`: enum `ANY`|`ALL`.
 - `departmentId`: optional. **Chỉ hợp lệ khi rule header là NT** — API reject nếu gửi `departmentId` cho rule MS. Nếu có, phải là existing Department, không deleted.
-- **Cross-detail check (MS only):** không overlap với detail khác cùng `(ruleId, stepOrder)`. Cụ thể: 2 khoảng `[min1, max1)` và `[min2, max2)` không được giao nhau (trừ khi cùng người + cùng mode — coi như duplicate, reject).
+- **Cross-detail check (MS only)** — với mỗi cặp detail cùng `(ruleId, stepOrder)`:
+  - (A) Khoảng `[min1,max1)` **bằng nhau hoàn toàn** + `approverId` **khác nhau** → ✅ cho phép (multi-approver same step).
+  - (B) Khoảng **không giao nhau** → ✅ cho phép (threshold routing).
+  - (C) Khoảng **giao nhau nhưng không bằng** → ❌ reject `RULE_OVERLAP` (ambiguity khi resolve).
+  - (D) Khoảng bằng nhau **và** `approverId` bằng nhau → ❌ reject `RULE_DUPLICATE` (trùng lặp).
+  - Khuyến nghị: tại UI, khi user thêm row mới cùng `stepOrder`, mặc định prefill `min/max` giống row đầu tiên trong step để đẩy về case (A).
 - **Cross-detail check (NT only):** không cho duplicate `(ruleId, stepOrder, departmentId, approverId)` — cùng bộ phận + cùng người + cùng bước là thừa.
 
 ---
@@ -552,7 +569,8 @@ Có 2 sub-tab:
 |---|---|---|
 | `RULE_NOT_FOUND` | Submit nhưng không có rule khớp ngưỡng | "Chưa có cấu hình duyệt cho loại chi phí *{costCode}* ở mức *{total}*. Vui lòng liên hệ admin." |
 | `RULE_MISSING_APPROVE` | Có rule REVIEW nhưng thiếu APPROVE | "Cấu hình duyệt cho *{costCode}* thiếu bước Phê duyệt. Liên hệ admin." |
-| `RULE_OVERLAP` | Admin tạo rule có ngưỡng overlap | "Ngưỡng *{min}–{max}* trùng với rule khác trong cùng bước." |
+| `RULE_OVERLAP` | Khoảng tiền giao nhau nhưng không bằng nhau giữa 2 detail cùng step | "Ngưỡng *{min}–{max}* giao với rule khác trong cùng bước. Hai khoảng phải hoặc bằng nhau (multi-approver) hoặc tách rời hoàn toàn (routing)." |
+| `RULE_DUPLICATE` | Trùng `(stepOrder, approverId, khoảng tiền)` | "Người duyệt *{tên}* đã có trong bước này với cùng ngưỡng. Mỗi người chỉ thêm 1 lần / 1 ngưỡng." |
 | `RULE_GAP` | Admin tạo rule có "khoảng hở" (warning) | "Khoảng *{from}–{to}* chưa có rule. Tờ trình rơi vào khoảng này sẽ không submit được." |
 | `NT_DEPT_NOT_CONFIGURED` | Submit NT nhưng không có detail khớp bộ phận và không có fallback | "Chưa có cấu hình duyệt cho bộ phận *{department}* trên tờ trình Nguyên tắc. Vui lòng liên hệ admin." |
 | `STEP_NOT_AUTHORIZED` | User không phải approver bấm duyệt | "Bạn không có quyền duyệt bước này." |

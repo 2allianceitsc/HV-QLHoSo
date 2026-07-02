@@ -188,7 +188,7 @@ export class ApprovalRulesService {
       throw new BadRequestException('minAmount must be less than maxAmount');
 
     // overlap check among MS details in the same step
-    if (!isNt) await this.assertNoOverlap(ruleId, dto.stepOrder, min, max, null);
+    if (!isNt) await this.assertNoOverlap(ruleId, dto.stepOrder, min, max, dto.approverId, null);
 
     // NT duplicate: same (ruleId, stepOrder, departmentId, approverId) is redundant
     if (isNt) await this.assertNoDuplicateNt(ruleId, dto.stepOrder, dto.departmentId ?? null, dto.approverId, null);
@@ -231,7 +231,8 @@ export class ApprovalRulesService {
     if (min !== null && max !== null && min >= max)
       throw new BadRequestException('minAmount must be less than maxAmount');
 
-    if (!isNt) await this.assertNoOverlap(detail.ruleId, stepOrder, min, max, id);
+    const effectiveApproverId = dto.approverId ?? detail.approverId;
+    if (!isNt) await this.assertNoOverlap(detail.ruleId, stepOrder, min, max, effectiveApproverId, id);
 
     if (isNt && (dto.departmentId !== undefined || dto.approverId !== undefined || dto.stepOrder !== undefined)) {
       const deptId = dto.departmentId !== undefined ? (dto.departmentId ?? null) : detail.departmentId;
@@ -455,14 +456,18 @@ export class ApprovalRulesService {
   }
 
   /**
-   * Reject if the new range [min,max) overlaps any other live detail in the same
-   * (ruleId, stepOrder). Treats NULL ends as ±∞.
+   * Validate MS detail ranges per §8.3:
+   *   (A) same range + different approver  → ✅ allowed (multi-approver)
+   *   (B) non-overlapping ranges           → ✅ allowed (threshold routing)
+   *   (C) overlapping but not equal        → ❌ RULE_OVERLAP
+   *   (D) same range + same approver       → ❌ RULE_DUPLICATE
    */
   private async assertNoOverlap(
     ruleId: string,
     stepOrder: number,
     min: bigint | null,
     max: bigint | null,
+    approverId: string,
     excludeDetailId: string | null,
   ) {
     const siblings = await this.prisma.costCodeApprovalRuleDetail.findMany({
@@ -473,15 +478,43 @@ export class ApprovalRulesService {
         ...(excludeDetailId ? { NOT: { id: excludeDetailId } } : {}),
       },
     });
+
+    const eqMin = (a: bigint | null, b: bigint | null) =>
+      a === null ? b === null : b !== null && a === b;
+    const eqMax = (a: bigint | null, b: bigint | null) =>
+      a === null ? b === null : b !== null && a === b;
+
     for (const s of siblings) {
-      const overlap =
+      const sameRange = eqMin(s.minAmount, min) && eqMax(s.maxAmount, max);
+      const overlaps =
         (min === null || s.maxAmount === null || min < s.maxAmount) &&
         (max === null || s.minAmount === null || max > s.minAmount);
-      if (overlap) {
-        throw new BadRequestException(
-          'Khoảng ngưỡng bị trùng với cấu hình hiện có trong cùng bước duyệt.',
-        );
+
+      if (!overlaps) continue; // case (B) — fine
+
+      if (sameRange) {
+        if (s.approverId === approverId) {
+          // case (D) — duplicate
+          const approver = await this.prisma.staff.findUnique({
+            where: { id: approverId },
+            select: { firstName: true, middleName: true, surname: true },
+          });
+          const name = approver
+            ? [approver.surname, approver.middleName, approver.firstName].filter(Boolean).join(' ')
+            : approverId;
+          throw new BadRequestException(
+            `Người duyệt ${name} đã có trong bước này với cùng ngưỡng. Mỗi người chỉ thêm 1 lần / 1 ngưỡng.`,
+          );
+        }
+        // case (A) — same range, different approver → allowed
+        continue;
       }
+
+      // case (C) — overlapping but not equal
+      const fmtAmt = (v: bigint | null) => (v === null ? '∞' : v.toLocaleString('vi-VN'));
+      throw new BadRequestException(
+        `Ngưỡng ${fmtAmt(min)}–${fmtAmt(max)} giao với rule khác trong cùng bước. Hai khoảng phải hoặc bằng nhau (multi-approver) hoặc tách rời hoàn toàn (routing).`,
+      );
     }
   }
 }

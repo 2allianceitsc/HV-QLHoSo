@@ -16,14 +16,14 @@ export function EditSubmissionPage() {
   const { toast } = useToast();
   const isPending = saving || submitting;
 
-  const uploadFiles = async (files: File[], signedContract: File | null) => {
+  const uploadFiles = async (files: File[], signedContracts: File[]) => {
     await Promise.all(files.map((f) => uploadApi.uploadFile(f, 'attachment', id ?? '')));
-    if (signedContract) await uploadApi.uploadFile(signedContract, 'signed_contract', id ?? '');
+    await Promise.all(signedContracts.map((f) => uploadApi.uploadFile(f, 'signed_contract', id ?? '')));
   };
 
-  const handleSave = async (data: ICreateSubmissionInput, files: File[], signedContract: File | null) => {
+  const handleSave = async (data: ICreateSubmissionInput, files: File[], signedContracts: File[]) => {
     try {
-      await uploadFiles(files, signedContract);
+      await uploadFiles(files, signedContracts);
       await update(data);
       toast({ title: 'Đã lưu thông tin' });
       navigate(`/submissions/${id}`);
@@ -32,9 +32,9 @@ export function EditSubmissionPage() {
     }
   };
 
-  const handleSubmit = async (data: ICreateSubmissionInput, files: File[], signedContract: File | null) => {
+  const handleSubmit = async (data: ICreateSubmissionInput, files: File[], signedContracts: File[]) => {
     try {
-      await uploadFiles(files, signedContract);
+      await uploadFiles(files, signedContracts);
       await update(data);
       await submit(id ?? '');
       toast({ title: 'Đã gửi tờ trình để thẩm định' });

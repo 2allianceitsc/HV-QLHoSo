@@ -126,7 +126,7 @@
 | Xoá tờ trình (chỉ `draft`)                        | ✅ (của mình)       | ❌          | ❌          | ✅    |
 | Tạo lại tờ trình (clone)                          | ✅ (bộ phận mình)   | ✅          | ✅          | ✅    |
 | Upload file đính kèm                              | ✅                  | ✅          | ✅          | ✅    |
-| Upload hợp đồng đã ký (NT)                        | ✅ (của mình)       | ✅          | ✅          | ✅    |
+| Upload hợp đồng đã ký (MS / NT)                   | ✅ (của mình)       | ✅          | ✅          | ✅    |
 
 #### Module Báo Cáo
 
@@ -282,6 +282,12 @@ Cấu hình mặc định:
     │   ├─ Tuỳ chọn: purchasedFor, purpose, usedBy
     │   └─ Thêm vật tư có sẵn (không mua thêm, ghi nhận để đối chiếu)
     │
+    ├─ [Nếu type = MS] Section "Hợp đồng đã ký kết" trong vùng "Nội dung đề xuất" (tuỳ chọn)
+    │   ├─ Vị trí: ngay dưới control "Ảnh đính kèm nội dung"
+    │   ├─ Nút [Tải lên]: chọn 1 file bất kỳ từ máy, tối đa 20MB
+    │   ├─ Upload lại ghi đè file cũ (1 tờ trình MS chỉ có 1 signedContract tại 1 thời điểm)
+    │   └─ Sau khi upload: hiển thị tên file dạng link; click → mở file ở tab mới
+    │
     ├─ [Nếu type = NT] Điền thông tin hợp đồng
     │   ├─ supplier (bắt buộc)
     │   ├─ contractStartDate / contractEndDate (bắt buộc)
@@ -430,7 +436,7 @@ Cấu hình mặc định:
     └─ Khi lưu tờ trình: gửi mảng attachmentIds[]
 ```
 
-#### Hợp đồng đã ký kết (signedContract — chỉ NT)
+#### Hợp đồng đã ký kết (signedContract — MS / NT)
 
 ```
 [Người dùng bấm "Tải lên" trong section "Hợp đồng đã ký kết" tại S06/S07/S08]
@@ -655,7 +661,7 @@ Danh sách mặc định: `IT`, `Kế toán`, `Marketing`, `Mua hàng`, `Hành c
 | `reviewedAt`   | TIMESTAMPTZ   | ❌       | Set khi review()                                                                                 | Thời điểm thẩm định xong                      |
 | `approvedAt`   | TIMESTAMPTZ   | ❌       | Set khi approve()                                                                                | Thời điểm phê duyệt xong                      |
 | `rejectionReason` | NTEXT      | ❌       | Required khi status = rejected                                                                   | Lý do từ chối                                 |
-| `signedContractId` | UUID v7  | ❌       | FK → Attachment.id                                                                               | Hợp đồng đã ký (NT)                           |
+| `signedContractId` | UUID v7  | ❌       | FK → Attachment.id                                                                               | Hợp đồng đã ký (MS / NT)                      |
 | `createdAt`    | TIMESTAMPTZ   | ✅       | Auto                                                                                             |                                               |
 | `updatedAt`    | TIMESTAMPTZ   | ✅       | Auto-update                                                                                      |                                               |
 | `createdBy`    | UUID v7       | ✅       | FK → User.id                                                                                     |                                               |
@@ -1254,7 +1260,7 @@ Hiển thị 4 thẻ nằm ngang ngay dưới tiêu đề trang, phía trên tab
 | 5 | **VỀ VIỆC** | `submission.title` | Cắt ngắn nếu quá dài, tooltip full text |
 | 6 | **NHÀ CUNG CẤP** | `submission.supplier` | Trống nếu không có, cắt ngắn nếu quá dài |
 | 7 | **SỐ TIỀN** | Tổng `amountIncVat` của các `ExpenseLine` | Định dạng số tiền VNĐ (`0 ₫` nếu chưa có) |
-| 8 | **HĐ ĐÃ KÝ** | `submission.signedContract` | Hiện `—` nếu chưa có; hiện 📎 + tên file nếu đã upload; click → mở tab mới. Chỉ có giá trị ở tab NT |
+| 8 | **HĐ ĐÃ KÝ** | `submission.signedContract` | Hiện `—` nếu chưa có; hiện 📎 + tên file nếu đã upload; click → mở tab mới. Áp dụng cho cả tab MS và NT |
 | 9 | **THẨM ĐỊNH** | `submission.reviewer.fullName` | **Màu xanh** (= màu trạng thái `approved`) khi tờ trình đã được thẩm định (`status ∈ ['in_review', 'approved']`); màu mặc định khi chưa |
 | 10 | **PHÊ DUYỆT** | `submission.approver.fullName` | **Màu xanh** (= màu trạng thái `approved`) khi tờ trình đã được phê duyệt (`status = 'approved'`); màu mặc định khi chưa |
 | 11 | **TRẠNG THÁI** | `submission.status` | Badge tô màu theo danh mục trạng thái (xem §3.2). Kèm badge phụ **"Cần thẩm định"** hoặc **"Cần phê duyệt"** (xem quy tắc bên dưới) |
@@ -1308,6 +1314,10 @@ Màn hình hiển thị **đầy đủ tất cả thông tin** như khi tạo m�
 │                                                                 │
 │ ┌─ Nội dung ────────────────────────────────────────────────┐   │
 │ │ KG BLĐ xin phê duyệt, ...                                 │   │
+│ └───────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│ ┌─ Hợp đồng đã ký kết ──────────────────────────── [Tải lên] ┐ │
+│ │ (chưa có file)                                              │ │
 │ └───────────────────────────────────────────────────────────┘   │
 │                                                                 │
 │ ┌─ Danh sách chi phí ───────────────────────────────────────┐   │

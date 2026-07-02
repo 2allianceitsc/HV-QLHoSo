@@ -65,8 +65,8 @@ type FormValues = z.infer<typeof schema>;
 
 interface Props {
   defaultValues?: Partial<ISubmission>;
-  onSubmit: (data: ICreateSubmissionInput, files: File[], signedContract: File | null) => void;
-  onSaveDraft?: (data: ICreateSubmissionInput, files: File[], signedContract: File | null) => void;
+  onSubmit: (data: ICreateSubmissionInput, files: File[], signedContracts: File[]) => void;
+  onSaveDraft?: (data: ICreateSubmissionInput, files: File[], signedContracts: File[]) => void;
   saveDraftLabel?: string;
   loading?: boolean;
 }
@@ -145,12 +145,14 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [signedContractFile, setSignedContractFile] = useState<File | null>(null);
+  const [signedContractFiles, setSignedContractFiles] = useState<File[]>([]);
   const signedContractInputRef = useRef<HTMLInputElement>(null);
-  const existingSignedContract = defaultValues?.attachments?.find((a) => a.fileType === 'signed_contract') ?? null;
+  const existingSignedContracts = defaultValues?.attachments?.filter((a) => a.fileType === 'signed_contract') ?? [];
   const existingAttachments = defaultValues?.attachments?.filter((a) => a.fileType !== 'signed_contract') ?? [];
   const [deletedAttachmentIds, setDeletedAttachmentIds] = useState<Set<string>>(new Set());
+  const [deletedSignedContractIds, setDeletedSignedContractIds] = useState<Set<string>>(new Set());
   const visibleExistingAttachments = existingAttachments.filter((a) => !deletedAttachmentIds.has(a.id));
+  const visibleExistingSignedContracts = existingSignedContracts.filter((a) => !deletedSignedContractIds.has(a.id));
 
   const handleDeleteExisting = async (id: string) => {
     try {
@@ -161,13 +163,29 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
     }
   };
 
-  const handleSignedContractChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    e.target.value = '';
-    if (!f) return;
-    if (f.size > 20 * 1024 * 1024) { alert('File không được vượt quá 20MB'); return; }
-    setSignedContractFile(f);
+  const handleDeleteExistingSignedContract = async (id: string) => {
+    try {
+      await uploadApi.deleteUpload(id);
+      setDeletedSignedContractIds((prev) => new Set([...prev, id]));
+    } catch {
+      alert('Không thể xóa file. Vui lòng thử lại.');
+    }
   };
+
+  const handleSignedContractChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const arr = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    if (!arr.length) return;
+    const oversized = arr.filter((f) => f.size > 20 * 1024 * 1024);
+    if (oversized.length) { alert(`${oversized.length} file vượt quá giới hạn 20MB`); return; }
+    setSignedContractFiles((prev) => {
+      const names = new Set(prev.map((f) => f.name + f.size));
+      return [...prev, ...arr.filter((f) => !names.has(f.name + f.size))];
+    });
+  };
+
+  const removeSignedContractFile = (index: number) =>
+    setSignedContractFiles((prev) => prev.filter((_, i) => i !== index));
 
   const addFiles = (incoming: FileList | File[]) => {
     const arr = Array.from(incoming);
@@ -205,7 +223,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
   });
 
   const handleFormSubmit = (data: FormValues) => {
-    onSubmit(buildPayload(data, 'submit'), pendingFiles, signedContractFile);
+    onSubmit(buildPayload(data, 'submit'), pendingFiles, signedContractFiles);
   };
 
   return (
@@ -413,6 +431,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
               type="file"
               multiple
               className="hidden"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.eml,.msg,.mbox"
               onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }}
             />
             {visibleExistingAttachments.length > 0 && (
@@ -450,25 +469,26 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
                   <Upload size={13} className="mr-1.5" /> Tải lên
                 </Button>
               </div>
-              <input ref={signedContractInputRef} type="file" className="hidden" onChange={handleSignedContractChange} />
-              {signedContractFile ? (
-                <div className="flex items-center gap-2 text-sm p-2 rounded-md border bg-muted/20">
-                  <FileText size={14} className="shrink-0 text-muted-foreground" />
-                  <span className="flex-1 truncate">{signedContractFile.name}</span>
-                  <span className="text-xs text-muted-foreground shrink-0">{formatBytes(signedContractFile.size)}</span>
-                  <button type="button" onClick={() => setSignedContractFile(null)} className="shrink-0 text-muted-foreground hover:text-destructive"><X size={14} /></button>
-                </div>
-              ) : existingSignedContract ? (
-                <div className="flex items-center gap-2 text-sm p-2 rounded-md border bg-muted/20">
-                  <FileText size={14} className="shrink-0 text-muted-foreground" />
-                  <a href={existingSignedContract.publicUrl} target="_blank" rel="noreferrer" className="flex-1 truncate text-primary hover:underline">
-                    {existingSignedContract.name}
-                  </a>
-                  <span className="text-xs text-muted-foreground shrink-0">Đã tải lên</span>
-                </div>
-              ) : (
+              <input ref={signedContractInputRef} type="file" multiple className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.eml,.msg,.mbox" onChange={handleSignedContractChange} />
+              {visibleExistingSignedContracts.length === 0 && signedContractFiles.length === 0 && (
                 <p className="text-sm text-muted-foreground">Chưa có file. Nhấn "Tải lên" để đính kèm hợp đồng đã ký.</p>
               )}
+              {visibleExistingSignedContracts.map((a) => (
+                <div key={a.id} className="flex items-center gap-2 text-sm p-2 rounded-md border bg-muted/20">
+                  <FileText size={14} className="shrink-0 text-muted-foreground" />
+                  <a href={a.publicUrl} target="_blank" rel="noreferrer" className="flex-1 truncate text-primary hover:underline">{a.name}</a>
+                  <span className="text-xs text-muted-foreground shrink-0">Đã tải lên</span>
+                  <button type="button" onClick={() => handleDeleteExistingSignedContract(a.id)} className="shrink-0 text-muted-foreground hover:text-destructive"><X size={14} /></button>
+                </div>
+              ))}
+              {signedContractFiles.map((f, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm p-2 rounded-md border bg-muted/20">
+                  <FileText size={14} className="shrink-0 text-muted-foreground" />
+                  <span className="flex-1 truncate">{f.name}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">{formatBytes(f.size)}</span>
+                  <button type="button" onClick={() => removeSignedContractFile(i)} className="shrink-0 text-muted-foreground hover:text-destructive"><X size={14} /></button>
+                </div>
+              ))}
             </div>
           )}
 
@@ -519,25 +539,26 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
                 <Upload size={13} className="mr-1.5" /> Tải lên
               </Button>
             </div>
-            <input ref={signedContractInputRef} type="file" className="hidden" onChange={handleSignedContractChange} />
-            {signedContractFile ? (
-              <div className="flex items-center gap-2 text-sm p-2 rounded-md border bg-muted/20">
-                <FileText size={14} className="shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate">{signedContractFile.name}</span>
-                <span className="text-xs text-muted-foreground shrink-0">{formatBytes(signedContractFile.size)}</span>
-                <button type="button" onClick={() => setSignedContractFile(null)} className="shrink-0 text-muted-foreground hover:text-destructive"><X size={14} /></button>
-              </div>
-            ) : existingSignedContract ? (
-              <div className="flex items-center gap-2 text-sm p-2 rounded-md border bg-muted/20">
-                <FileText size={14} className="shrink-0 text-muted-foreground" />
-                <a href={existingSignedContract.publicUrl} target="_blank" rel="noreferrer" className="flex-1 truncate text-primary hover:underline">
-                  {existingSignedContract.name}
-                </a>
-                <span className="text-xs text-muted-foreground shrink-0">Đã tải lên</span>
-              </div>
-            ) : (
+            <input ref={signedContractInputRef} type="file" multiple className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.eml,.msg,.mbox" onChange={handleSignedContractChange} />
+            {visibleExistingSignedContracts.length === 0 && signedContractFiles.length === 0 && (
               <p className="text-sm text-muted-foreground">Chưa có file. Nhấn "Tải lên" để đính kèm hợp đồng đã ký.</p>
             )}
+            {visibleExistingSignedContracts.map((a) => (
+              <div key={a.id} className="flex items-center gap-2 text-sm p-2 rounded-md border bg-muted/20">
+                <FileText size={14} className="shrink-0 text-muted-foreground" />
+                <a href={a.publicUrl} target="_blank" rel="noreferrer" className="flex-1 truncate text-primary hover:underline">{a.name}</a>
+                <span className="text-xs text-muted-foreground shrink-0">Đã tải lên</span>
+                <button type="button" onClick={() => handleDeleteExistingSignedContract(a.id)} className="shrink-0 text-muted-foreground hover:text-destructive"><X size={14} /></button>
+              </div>
+            ))}
+            {signedContractFiles.map((f, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm p-2 rounded-md border bg-muted/20">
+                <FileText size={14} className="shrink-0 text-muted-foreground" />
+                <span className="flex-1 truncate">{f.name}</span>
+                <span className="text-xs text-muted-foreground shrink-0">{formatBytes(f.size)}</span>
+                <button type="button" onClick={() => removeSignedContractFile(i)} className="shrink-0 text-muted-foreground hover:text-destructive"><X size={14} /></button>
+              </div>
+            ))}
           </section>
         )}
 
@@ -555,7 +576,7 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
         <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2">
           {onSaveDraft && (
             <Button type="button" variant="outline" disabled={loading} className="sm:w-auto w-full"
-              onClick={handleSubmit((d) => onSaveDraft(buildPayload(d, 'draft'), pendingFiles, signedContractFile))}>
+              onClick={handleSubmit((d) => onSaveDraft(buildPayload(d, 'draft'), pendingFiles, signedContractFiles))}>
               {saveDraftLabel}
             </Button>
           )}
