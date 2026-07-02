@@ -6,9 +6,9 @@ import { uploadApi } from '@/api/upload.api';
 import { submissionApi } from '@/api/submission.api';
 import type { ICreateSubmissionInput, ISubmission } from '@/api/submission.api';
 
-async function uploadAttachments(submissionId: string, files: File[], signedContract: File | null) {
+async function uploadAttachments(submissionId: string, files: File[], signedContracts: File[]) {
   await Promise.all(files.map((f) => uploadApi.uploadFile(f, 'attachment', submissionId)));
-  if (signedContract) await uploadApi.uploadFile(signedContract, 'signed_contract', submissionId);
+  await Promise.all(signedContracts.map((f) => uploadApi.uploadFile(f, 'signed_contract', submissionId)));
 }
 
 export function CreateSubmissionPage() {
@@ -26,8 +26,8 @@ export function CreateSubmissionPage() {
     ? { ...cloneDetail, submittedDate: new Date().toISOString().slice(0, 10) }
     : undefined;
 
-  const handleSubmit = async (data: ICreateSubmissionInput, files: File[], signedContract: File | null) => {
-    const hasFiles = files.length > 0 || signedContract !== null;
+  const handleSubmit = async (data: ICreateSubmissionInput, files: File[], signedContracts: File[]) => {
+    const hasFiles = files.length > 0 || signedContracts.length > 0;
     try {
       // Create as draft first when there are files so we can roll back on upload failure.
       // A pending_review submission cannot be deleted, so we must not commit that status
@@ -35,7 +35,7 @@ export function CreateSubmissionPage() {
       const submission = await create({ ...data, action: hasFiles ? 'draft' : 'submit' });
       if (hasFiles) {
         try {
-          await uploadAttachments(submission.id, files, signedContract);
+          await uploadAttachments(submission.id, files, signedContracts);
         } catch (uploadErr) {
           await del(submission.id).catch(() => {});
           throw uploadErr;
@@ -49,12 +49,12 @@ export function CreateSubmissionPage() {
     }
   };
 
-  const handleSaveDraft = async (data: ICreateSubmissionInput, files: File[], signedContract: File | null) => {
+  const handleSaveDraft = async (data: ICreateSubmissionInput, files: File[], signedContracts: File[]) => {
     try {
       const submission = await create({ ...data, action: 'draft' });
-      if (files.length > 0 || signedContract !== null) {
+      if (files.length > 0 || signedContracts.length > 0) {
         try {
-          await uploadAttachments(submission.id, files, signedContract);
+          await uploadAttachments(submission.id, files, signedContracts);
         } catch (uploadErr) {
           await del(submission.id).catch(() => {});
           throw uploadErr;

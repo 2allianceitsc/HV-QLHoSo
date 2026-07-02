@@ -11,7 +11,7 @@ import { IJwtPayload } from '../auth/strategies/jwt.strategy';
 import { uuidv7 } from 'uuidv7';
 import * as path from 'path';
 
-const ATTACHMENT_ALLOWED_EXTS = new Set(['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'jpg', 'jpeg', 'png', 'gif']);
+const ATTACHMENT_ALLOWED_EXTS = new Set(['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'jpg', 'jpeg', 'png', 'gif', 'eml', 'msg', 'mbox']);
 const AVATAR_ALLOWED_EXTS = new Set(['jpg', 'jpeg', 'png', 'webp']);
 const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
@@ -57,19 +57,6 @@ export class UploadService {
     const { publicUrl } = await this.storage.uploadFile(storageKey, file.buffer, file.mimetype);
 
     const fileType = context === 'attachment' ? 'attachment' : 'signed_contract';
-
-    // For signed_contract: delete old one and remove old R2 object
-    if (context === 'signed_contract') {
-      const existing = await this.prisma.attachment.findFirst({
-        where: { submissionId, fileType: 'signed_contract' },
-      });
-      if (existing) {
-        await this.storage.deleteFile(existing.storageKey).catch((err) =>
-          this.logger.warn(`Could not delete old signed_contract R2 key=${existing.storageKey}`, err),
-        );
-        await this.prisma.attachment.delete({ where: { id: existing.id } });
-      }
-    }
 
     const attachment = await this.prisma.attachment.create({
       data: {

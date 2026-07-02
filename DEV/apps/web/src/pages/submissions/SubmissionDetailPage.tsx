@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { ArrowLeft, Pencil, Copy, FileText, Trash2, Upload } from 'lucide-react';
+import { ArrowLeft, Pencil, Copy, FileText, Trash2, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SubmissionStatusBadge } from '@/components/submission/SubmissionStatusBadge';
 import { StepTimeline } from '@/components/submission/StepTimeline';
@@ -50,19 +50,31 @@ export function SubmissionDetailPage() {
   const qc = useQueryClient();
 
   const handleContractUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const arr = Array.from(e.target.files ?? []);
     e.target.value = '';
-    if (!file || !submission) return;
-    if (file.size > 20 * 1024 * 1024) { toast({ title: 'File không được vượt quá 20MB', variant: 'destructive' }); return; }
+    if (!arr.length || !submission) return;
+    const oversized = arr.filter((f) => f.size > 20 * 1024 * 1024);
+    if (oversized.length) { toast({ title: 'Một số file vượt quá 20MB', variant: 'destructive' }); return; }
     setUploadingContract(true);
     try {
-      await uploadApi.uploadFile(file, 'signed_contract', submission.id);
+      await Promise.all(arr.map((f) => uploadApi.uploadFile(f, 'signed_contract', submission.id)));
       await qc.invalidateQueries({ queryKey: ['submissions', submission.id] });
-      toast({ title: 'Đã tải lên hợp đồng đã ký' });
+      toast({ title: `Đã tải lên ${arr.length} file hợp đồng đã ký` });
     } catch {
       toast({ title: 'Không thể tải lên file', variant: 'destructive' });
     } finally {
       setUploadingContract(false);
+    }
+  };
+
+  const handleDeleteContract = async (attachmentId: string) => {
+    if (!submission) return;
+    try {
+      await uploadApi.deleteUpload(attachmentId);
+      await qc.invalidateQueries({ queryKey: ['submissions', submission.id] });
+      toast({ title: 'Đã xóa file hợp đồng' });
+    } catch {
+      toast({ title: 'Không thể xóa file', variant: 'destructive' });
     }
   };
 
@@ -215,7 +227,7 @@ export function SubmissionDetailPage() {
       </div>
 
       {submission.type === 'MS' && (() => {
-        const signedContract = submission.attachments?.find((a) => a.fileType === 'signed_contract');
+        const signedContracts = (submission.attachments ?? []).filter((a) => a.fileType === 'signed_contract');
         return (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -229,15 +241,22 @@ export function SubmissionDetailPage() {
                 <Upload size={12} /> {uploadingContract ? 'Đang tải...' : 'Tải lên'}
               </button>
             </div>
-            <input ref={contractInputRef} type="file" className="hidden" onChange={handleContractUpload} />
-            <div className="border rounded-md p-3">
-              {signedContract ? (
-                <a href={signedContract.publicUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline">
-                  <FileText size={14} className="shrink-0" />
-                  {signedContract.name}
-                </a>
-              ) : (
+            <input ref={contractInputRef} type="file" multiple className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.eml,.msg,.mbox" onChange={handleContractUpload} />
+            <div className="border rounded-md p-3 space-y-2">
+              {signedContracts.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Chưa có hợp đồng đã ký.</p>
+              ) : (
+                signedContracts.map((a) => (
+                  <div key={a.id} className="flex items-center gap-2">
+                    <FileText size={14} className="shrink-0 text-muted-foreground" />
+                    <a href={a.publicUrl} target="_blank" rel="noreferrer" className="flex-1 truncate text-sm text-primary hover:underline">
+                      {a.name}
+                    </a>
+                    <button type="button" onClick={() => handleDeleteContract(a.id)} className="shrink-0 text-muted-foreground hover:text-destructive">
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))
               )}
             </div>
           </div>
@@ -344,7 +363,7 @@ export function SubmissionDetailPage() {
       )}
 
       {submission.type === 'NT' && (() => {
-        const signedContract = submission.attachments?.find((a) => a.fileType === 'signed_contract');
+        const signedContracts = (submission.attachments ?? []).filter((a) => a.fileType === 'signed_contract');
         return (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -358,15 +377,22 @@ export function SubmissionDetailPage() {
                 <Upload size={12} /> {uploadingContract ? 'Đang tải...' : 'Tải lên'}
               </button>
             </div>
-            <input ref={contractInputRef} type="file" className="hidden" onChange={handleContractUpload} />
-            <div className="border rounded-md p-3">
-              {signedContract ? (
-                <a href={signedContract.publicUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline">
-                  <FileText size={14} className="shrink-0" />
-                  {signedContract.name}
-                </a>
-              ) : (
+            <input ref={contractInputRef} type="file" multiple className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.eml,.msg,.mbox" onChange={handleContractUpload} />
+            <div className="border rounded-md p-3 space-y-2">
+              {signedContracts.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Chưa có hợp đồng đã ký.</p>
+              ) : (
+                signedContracts.map((a) => (
+                  <div key={a.id} className="flex items-center gap-2">
+                    <FileText size={14} className="shrink-0 text-muted-foreground" />
+                    <a href={a.publicUrl} target="_blank" rel="noreferrer" className="flex-1 truncate text-sm text-primary hover:underline">
+                      {a.name}
+                    </a>
+                    <button type="button" onClick={() => handleDeleteContract(a.id)} className="shrink-0 text-muted-foreground hover:text-destructive">
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))
               )}
             </div>
           </div>

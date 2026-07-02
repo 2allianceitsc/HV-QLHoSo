@@ -447,6 +447,14 @@ interface StepGroupProps {
   approvers: IStaffOption[];
 }
 
+interface DraftRow {
+  localId: string;
+  mode: StepMode;
+  minAmount: string | null;
+  maxAmount: string | null;
+  departmentId: string | null;
+}
+
 const FALLBACK_DEPT_VALUE = '__fallback__';
 
 function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, approvers }: StepGroupProps) {
@@ -458,24 +466,30 @@ function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, appr
   const first = details[0];
   const pool = first.stepType === 'REVIEW' ? reviewers : approvers;
   const isNt = submissionType === 'NT';
+  const isMs = submissionType === 'MS';
 
   const hasFallback = isNt && details.some((d) => d.departmentId === null);
 
-  const handleAddSibling = async () => {
-    const fallback = pool[0];
-    if (!fallback) return;
-    const isMs = submissionType === 'MS';
-    const usesThresholds = isMs && details.some((d) => d.minAmount !== null || d.maxAmount !== null);
-    let nextMin: string | null = null;
-    if (usesThresholds) {
-      const maxes = details.map((d) => d.maxAmount).filter((v): v is string => v !== null);
-      if (maxes.length > 0) {
-        nextMin = maxes.reduce((a, b) => (BigInt(a) > BigInt(b) ? a : b));
-      } else {
-        const mins = details.map((d) => d.minAmount).filter((v): v is string => v !== null);
-        if (mins.length > 0) nextMin = mins.reduce((a, b) => (BigInt(a) > BigInt(b) ? a : b));
-      }
-    }
+  const [draftRows, setDraftRows] = useState<DraftRow[]>([]);
+
+  const handleAddSibling = () => {
+    // §8.3 UX: prefill min/max from first row (case A), leave approverId empty so user must pick.
+    setDraftRows((prev) => [...prev, {
+      localId: crypto.randomUUID(),
+      mode: first.mode,
+      minAmount: isMs ? (first.minAmount ?? null) : null,
+      maxAmount: isMs ? (first.maxAmount ?? null) : null,
+      departmentId: isNt ? null : null,
+    }]);
+  };
+
+  const updateDraft = (localId: string, patch: Partial<Omit<DraftRow, 'localId'>>) =>
+    setDraftRows((prev) => prev.map((r) => r.localId === localId ? { ...r, ...patch } : r));
+
+  const removeDraft = (localId: string) =>
+    setDraftRows((prev) => prev.filter((r) => r.localId !== localId));
+
+  const commitDraft = async (localId: string, draft: DraftRow, approverId: string) => {
     try {
       await addDetail({
         ruleId,
@@ -483,13 +497,14 @@ function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, appr
           stepOrder,
           stepType: first.stepType,
           stepLabel: first.stepLabel ?? undefined,
-          approverId: fallback.id,
-          mode: first.mode,
-          minAmount: nextMin,
-          maxAmount: null,
-          ...(isNt && { departmentId: null }),
+          approverId,
+          mode: draft.mode,
+          minAmount: isMs ? draft.minAmount : null,
+          maxAmount: isMs ? draft.maxAmount : null,
+          ...(isNt && { departmentId: draft.departmentId }),
         },
       });
+      setDraftRows((prev) => prev.filter((r) => r.localId !== localId));
     } catch (err) {
       toast({ title: extractApiMessage(err, 'Không thể thêm dòng'), variant: 'destructive' });
     }
@@ -535,6 +550,12 @@ function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, appr
       {isNt && !hasFallback && (
         <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
           ⚠️ Bước này chưa có dòng "Tất cả bộ phận". Bộ phận chưa được cấu hình sẽ không thể submit tờ trình.
+        </div>
+      )}
+
+      {draftRows.length > 0 && (
+        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
+          ⚠️ Có {draftRows.length} dòng chưa chọn người duyệt. Vui lòng chọn để lưu.
         </div>
       )}
 
@@ -617,6 +638,73 @@ function StepGroup({ ruleId, submissionType, stepOrder, details, reviewers, appr
               )}
               <td className="p-1">
                 <Button variant="ghost" size="sm" onClick={() => removeDetail(d.id)}>
+                  <Trash2 size={14} className="text-destructive" />
+                </Button>
+              </td>
+            </tr>
+          ))}
+
+          {draftRows.map((draft) => (
+            <tr key={draft.localId} className="border-t border-amber-200 bg-amber-50/40">
+              {isNt && (
+                <td className="p-1">
+                  <Select
+                    value={draft.departmentId ?? FALLBACK_DEPT_VALUE}
+                    onValueChange={(v) =>
+                      updateDraft(draft.localId, { departmentId: v === FALLBACK_DEPT_VALUE ? null : v })
+                    }
+                  >
+                    <SelectTrigger className="h-8 min-w-[160px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={FALLBACK_DEPT_VALUE}>
+                        <span className="text-muted-foreground italic">Tất cả bộ phận</span>
+                      </SelectItem>
+                      {departments.filter((dept) => !dept.isDisabled).map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </td>
+              )}
+              <td className="p-1">
+                <Select onValueChange={(v) => commitDraft(draft.localId, draft, v)}>
+                  <SelectTrigger className="h-8 border-amber-400 text-muted-foreground">
+                    <SelectValue placeholder="— Chọn người duyệt —" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pool.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{fullName(a)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </td>
+              <td className="p-1">
+                <Select value={draft.mode} onValueChange={(v: StepMode) => updateDraft(draft.localId, { mode: v })}>
+                  <SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ANY">ANY</SelectItem>
+                    <SelectItem value="ALL">ALL</SelectItem>
+                  </SelectContent>
+                </Select>
+              </td>
+              {!isNt && (
+                <>
+                  <td className="p-1">
+                    <MoneyInput
+                      initial={draft.minAmount}
+                      onCommit={(v) => updateDraft(draft.localId, { minAmount: v })}
+                    />
+                  </td>
+                  <td className="p-1">
+                    <MoneyInput
+                      initial={draft.maxAmount}
+                      onCommit={(v) => updateDraft(draft.localId, { maxAmount: v })}
+                    />
+                  </td>
+                </>
+              )}
+              <td className="p-1">
+                <Button variant="ghost" size="sm" onClick={() => removeDraft(draft.localId)}>
                   <Trash2 size={14} className="text-destructive" />
                 </Button>
               </td>
