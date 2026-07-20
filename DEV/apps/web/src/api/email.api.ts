@@ -60,6 +60,10 @@ export async function retryEmail(id: string): Promise<void> {
   await apiClient.patch(`/email-queue/${id}/retry`);
 }
 
+export async function resendEmail(id: string, to: string): Promise<void> {
+  await apiClient.patch(`/email-queue/${id}/resend`, { to });
+}
+
 export async function getEmailJobStatus(): Promise<IEmailJobStatus> {
   const res = await apiClient.get('/email-job/status');
   return (res.data as { success: boolean; data: IEmailJobStatus }).data;

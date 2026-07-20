@@ -4,12 +4,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RefreshCw, RotateCcw, Copy, Check } from 'lucide-react';
+import { RefreshCw, RotateCcw, Send, Copy, Check } from 'lucide-react';
 import { DateRangePresetPicker } from '@/components/filters/DateRangePresetPicker';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { formatDateTimeSeconds } from '@/lib/dateFormat';
-import { getEmailQueue, retryEmail, type IEmailQueueItem, type IEmailQueueFilter } from '@/api/email.api';
+import { getEmailQueue, retryEmail, resendEmail, type IEmailQueueItem, type IEmailQueueFilter } from '@/api/email.api';
 import { toast } from '@/hooks/use-toast';
+import { ResendEmailDialog } from './ResendEmailDialog';
 
 const STATUS_VARIANTS: Record<string, 'default' | 'destructive' | 'secondary' | 'outline'> = {
   pending: 'outline',
@@ -40,6 +41,7 @@ export function EmailQueuePage() {
   const [endDate, setEndDate] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [appliedFilter, setAppliedFilter] = useState<IEmailQueueFilter>({ page: 1, limit: LIMIT });
+  const [resendTarget, setResendTarget] = useState<IEmailQueueItem | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -57,6 +59,18 @@ export function EmailQueuePage() {
     },
     onError: () => {
       toast({ title: 'Failed to retry email', variant: 'destructive' });
+    },
+  });
+
+  const resendMutation = useMutation({
+    mutationFn: ({ id, to }: { id: string; to: string }) => resendEmail(id, to),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['email-queue'] });
+      toast({ title: 'Email queued for resend' });
+      setResendTarget(null);
+    },
+    onError: () => {
+      toast({ title: 'Failed to resend email', variant: 'destructive' });
     },
   });
 
@@ -257,6 +271,17 @@ export function EmailQueuePage() {
                           Retry
                         </Button>
                       )}
+                      {item.status === 'ignored' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => setResendTarget(item)}
+                        >
+                          <Send className="h-3 w-3 mr-1" />
+                          Resend
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -271,6 +296,15 @@ export function EmailQueuePage() {
         totalPages={totalPages}
         total={data?.total}
         onPageChange={handlePageChange}
+      />
+
+      <ResendEmailDialog
+        open={!!resendTarget}
+        onClose={() => setResendTarget(null)}
+        onConfirm={(to) => {
+          if (resendTarget) resendMutation.mutate({ id: resendTarget.id, to });
+        }}
+        loading={resendMutation.isPending}
       />
     </div>
   );
