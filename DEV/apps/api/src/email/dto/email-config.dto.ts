@@ -29,6 +29,11 @@ export class CreateEmailConfigDto {
   note?: string;
 }
 
+export class ResendEmailDto {
+  @IsEmail()
+  to!: string;
+}
+
 export class UpdateEmailConfigDto {
   @IsOptional()
   @IsString()

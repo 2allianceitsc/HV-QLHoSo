@@ -1,10 +1,13 @@
-import { Controller, Get, Patch, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Query, Body, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '@shared/enums/user-role.enum';
+import { IJwtPayload } from '../auth/strategies/jwt.strategy';
 import { EmailJobService } from './email-job.service';
+import { ResendEmailDto } from './dto/email-config.dto';
 
 @ApiTags('email-queue')
 @ApiBearerAuth()
@@ -33,5 +36,13 @@ export class EmailQueueController {
   async retry(@Param('id') id: string) {
     await this.emailJobService.retryEmail(id);
     return { success: true, message: 'Email queued for retry' };
+  }
+
+  @Patch(':id/resend')
+  @ApiOperation({ summary: 'Resend an ignored/failed email to an alternate address' })
+  async resend(@Param('id') id: string, @Body() dto: ResendEmailDto, @Req() req: Request) {
+    const user = req.user as IJwtPayload;
+    await this.emailJobService.resendEmail(id, dto.to, user.sub);
+    return { success: true, message: 'Email queued for resend' };
   }
 }

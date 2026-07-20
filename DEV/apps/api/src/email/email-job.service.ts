@@ -69,6 +69,21 @@ export class EmailJobService {
     void this.processQueue();
   }
 
+  async resendEmail(id: string, to: string, updatedBy: string): Promise<void> {
+    await this.prisma.emailQueue.update({
+      where: { id },
+      data: {
+        to,
+        status: 'pending',
+        retryCount: 0,
+        lastError: null,
+        note: null,
+        logUpdatedBy: updatedBy,
+      },
+    });
+    void this.processQueue();
+  }
+
   async getQueueList(
     page: number,
     limit: number,
