@@ -83,7 +83,14 @@ export function SubmissionDetailPage() {
 
   const isOwner = currentUser?.staffId === submission.submitter.id;
   const isAdmin = hvRoles.includes('admin');
-  const canEdit = isOwner && submission.status === 'draft';
+  const noDecidedSteps = !submission.approvalSteps?.some(
+    (s) => !['pending', 'in_progress'].includes(s.status),
+  );
+  const canEdit = isOwner && (
+    submission.status === 'draft' ||
+    submission.status === 'rejected' ||
+    (submission.status === 'pending_review' && noDecidedSteps)
+  );
   const canSubmit = isOwner && submission.status === 'draft';
   const canDelete = isOwner && submission.status === 'draft';
 

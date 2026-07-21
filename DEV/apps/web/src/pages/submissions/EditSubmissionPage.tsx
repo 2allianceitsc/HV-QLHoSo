@@ -46,7 +46,12 @@ export function EditSubmissionPage() {
 
   if (isLoading) return <div className="p-6 text-muted-foreground">Đang tải...</div>;
   if (!submission) return <div className="p-6 text-muted-foreground">Không tìm thấy tờ trình.</div>;
-  if (!['draft', 'rejected'].includes(submission.status)) {
+
+  const noDecidedSteps = !submission.approvalSteps?.some(
+    (s) => !['pending', 'in_progress'].includes(s.status),
+  );
+  const isPendingReviewEditable = submission.status === 'pending_review' && noDecidedSteps;
+  if (!['draft', 'rejected'].includes(submission.status) && !isPendingReviewEditable) {
     return <div className="p-6 text-muted-foreground">Tờ trình không thể chỉnh sửa ở trạng thái hiện tại.</div>;
   }
 
@@ -65,7 +70,8 @@ export function EditSubmissionPage() {
         defaultValues={submission}
         onSaveDraft={handleSave}
         saveDraftLabel="Lưu thông tin"
-        onSubmit={handleSubmit}
+        onSubmit={isPendingReviewEditable ? handleSave : handleSubmit}
+        hideSubmitButton={isPendingReviewEditable}
         loading={isPending}
       />
     </div>

@@ -324,8 +324,10 @@ export class SubmissionService {
 
   async update(user: IJwtPayload, id: string, dto: UpdateSubmissionDto) {
     const submission = await this.getOrThrow(id);
-    if (!['draft', 'rejected'].includes(submission.status)) {
-      throw new BadRequestException('Can only edit draft or rejected submissions');
+    const isPendingReviewEditable =
+      submission.status === 'pending_review' && (await this.hasNoDecidedSteps(id));
+    if (!['draft', 'rejected'].includes(submission.status) && !isPendingReviewEditable) {
+      throw new BadRequestException('Can only edit draft, rejected, or not-yet-reviewed pending submissions');
     }
     this.assertOwnerOrAdmin(user, submission);
 
@@ -391,6 +393,58 @@ export class SubmissionService {
             })),
           });
         }
+      }
+
+      if (isPendingReviewEditable) {
+        // BA §6.1: content changed while still un-reviewed → re-resolve and re-snapshot the approval plan.
+        let submitterDeptId: string | null = null;
+        if (submission.type === 'NT') {
+          const staff = await tx.staff.findUnique({
+            where: { id: submission.submitterId },
+            select: { departmentId: true },
+          });
+          submitterDeptId = staff?.departmentId ?? null;
+        }
+        const total =
+          submission.type === 'NT'
+            ? null
+            : (
+                await tx.expenseLine.aggregate({
+                  where: { submissionId: id },
+                  _sum: { amountIncVat: true },
+                })
+              )._sum.amountIncVat ?? 0n;
+
+        const { plan } = await this.approvalRules.resolvePlan(
+          submission.type as 'MS' | 'NT',
+          submission.type === 'NT' ? null : updated.costCodeId,
+          total,
+          submitterDeptId,
+        );
+
+        // Only notify approvers who are newly assigned to the first (in_progress) step group —
+        // re-editing while pending review must not re-notify approvers unaffected by the change.
+        const oldFirstGroupApproverIds = new Set(
+          (
+            await tx.submissionApprovalStep.findMany({
+              where: { submissionId: id, status: 'in_progress' },
+              select: { approverId: true },
+            })
+          ).map((s) => s.approverId),
+        );
+
+        await tx.submissionApprovalStep.deleteMany({ where: { submissionId: id } });
+        await this.snapshotPlan(tx, id, plan);
+
+        const minStepOrder = Math.min(...plan.map((p) => p.stepOrder));
+        const newFirstGroupApproverIds = new Set(
+          plan.filter((p) => p.stepOrder === minStepOrder).map((p) => p.approverId),
+        );
+        const approversToNotify = new Set(
+          [...newFirstGroupApproverIds].filter((a) => !oldFirstGroupApproverIds.has(a)),
+        );
+
+        await this.activateNextGroup(tx, id, user.staffId, approversToNotify);
       }
 
       await tx.submissionLog.create({
@@ -750,6 +804,7 @@ export class SubmissionService {
     tx: Prisma.TransactionClient,
     submissionId: string,
     _actor: string,
+    notifyApproverIds?: Set<string>,
   ): Promise<string | null> {
     const next = await tx.submissionApprovalStep.findFirst({
       where: { submissionId, status: 'pending' },
@@ -767,10 +822,18 @@ export class SubmissionService {
     });
 
     for (const s of group) {
+      if (notifyApproverIds && !notifyApproverIds.has(s.approverId)) continue;
       const eventId = s.stepType === 'APPROVE' ? 'E002' : 'E001';
       await this.queueNotification(s.approverId, eventId, submissionId, {}, tx);
     }
     return next.stepType;
+  }
+
+  private async hasNoDecidedSteps(submissionId: string): Promise<boolean> {
+    const decided = await this.prisma.submissionApprovalStep.findFirst({
+      where: { submissionId, status: { notIn: ['pending', 'in_progress'] } },
+    });
+    return !decided;
   }
 
   private async loadStepForAction(submissionId: string, stepId: string) {
