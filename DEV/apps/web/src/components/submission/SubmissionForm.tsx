@@ -68,10 +68,11 @@ interface Props {
   onSubmit: (data: ICreateSubmissionInput, files: File[], signedContracts: File[]) => void;
   onSaveDraft?: (data: ICreateSubmissionInput, files: File[], signedContracts: File[]) => void;
   saveDraftLabel?: string;
+  hideSubmitButton?: boolean;
   loading?: boolean;
 }
 
-export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraftLabel = 'Lưu nháp', loading }: Props) {
+export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraftLabel = 'Lưu nháp', hideSubmitButton, loading }: Props) {
   const { data: departments = [] } = useSubmissionDepartments();
   const userDepartmentId = useAuthStore((s) => s.user?.departmentId ?? null);
 
@@ -580,9 +581,11 @@ export function SubmissionForm({ defaultValues, onSubmit, onSaveDraft, saveDraft
               {saveDraftLabel}
             </Button>
           )}
-          <Button type="submit" disabled={loading} className="sm:w-auto w-full">
-            {loading ? 'Đang lưu...' : 'Gửi tờ trình'}
-          </Button>
+          {!hideSubmitButton && (
+            <Button type="submit" disabled={loading} className="sm:w-auto w-full">
+              {loading ? 'Đang lưu...' : 'Gửi tờ trình'}
+            </Button>
+          )}
         </div>
       </form>
     </FormProvider>
