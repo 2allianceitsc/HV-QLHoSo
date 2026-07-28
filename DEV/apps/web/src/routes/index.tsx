@@ -59,6 +59,7 @@ import { NotificationChannelsPage } from '@/pages/system/NotificationChannelsPag
 
 // Misc
 import { ProfilePage, NotFoundPage } from '@/pages/MiscPages';
+import { UserGuidePage } from '@/pages/guide/UserGuidePage';
 
 
 const router = createBrowserRouter(
@@ -146,6 +147,9 @@ const router = createBrowserRouter(
 
         {/* Profile */}
         <Route path="/profile" element={<ProfilePage />} />
+
+        {/* Guide */}
+        <Route path="/guide" element={<UserGuidePage />} />
       </Route>
 
       {/* Redirects */}

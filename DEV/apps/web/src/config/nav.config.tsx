@@ -75,9 +75,8 @@ export const NAV_GROUPS: INavGroupConfig[] = [
       { label: 'Người dùng',      path: '/admin/users',           icon: <Users size={16} /> },
       { label: 'Bộ phận',         path: '/admin/departments',     icon: <Building2 size={16} /> },
       { label: 'Mã phí',          path: '/admin/cost-codes',      icon: <Tag size={16} /> },
-      { label: 'Phân quyền duyệt (cũ)', path: '/admin/approval-config', icon: <ShieldCheck size={16} /> },
-      { label: 'Phân quyền theo loại CP', path: '/admin/approval-rules', icon: <ShieldCheck size={16} /> },
       { label: 'Trạng thái',       path: '/admin/submission-statuses', icon: <Layers size={16} /> },
+      { label: 'Phân quyền theo loại CP', path: '/admin/approval-rules', icon: <ShieldCheck size={16} /> },
     ],
   },
   {
