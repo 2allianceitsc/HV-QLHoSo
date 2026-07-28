@@ -13,6 +13,7 @@ import {
   Sun,
   Moon,
   Waves,
+  BookOpen,
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuthStore } from '@/stores/auth.store';
@@ -415,6 +416,13 @@ export function AppLayout() {
                   >
                     <KeyRound size={14} className="text-muted-foreground" />
                     Change Password
+                  </button>
+                  <button
+                    onClick={() => { setIsDropdownOpen(false); void navigate('/guide'); }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-foreground hover:bg-accent transition-colors"
+                  >
+                    <BookOpen size={14} className="text-muted-foreground" />
+                    Hướng dẫn sử dụng
                   </button>
                   <div className="my-1.5 border-t border-border" />
                   <button
